@@ -312,6 +312,74 @@ export const MOCK_PRODUCTS: Product[] = [
   })
 ];
 
+export const OPEN_POSITIONS = [
+  {
+    title: 'Store Keeper',
+    team: 'Operations',
+    location: 'Chowrangi more, Joteghanashyam, West Bengal 721153',
+    type: 'Full-time',
+    salary: '₹15,000 - ₹20,000',
+    responsibilities: [
+      'Manage daily inventory inflow and outflow',
+      'Maintain warehouse organization and cleanliness',
+      'Perform regular stock audits and reconciliation',
+      'Coordinate with the logistics team for timely dispatches'
+    ]
+  },
+  {
+    title: 'Photo Editor',
+    team: 'Creative',
+    location: 'Chowrangi more, Joteghanashyam, West Bengal 721153',
+    type: 'Full-time',
+    salary: '₹18,000 - ₹25,000',
+    responsibilities: [
+      'Retouch and edit high-quality product imagery',
+      'Maintain color consistency across all digital assets',
+      'Collaborate with photographers for creative direction',
+      'Manage digital asset libraries and archival'
+    ]
+  },
+  {
+    title: 'Customer Support',
+    team: 'Success',
+    location: 'Chowrangi more, Joteghanashyam, West Bengal 721153',
+    type: 'Full-time',
+    salary: '₹12,000 - ₹18,000',
+    responsibilities: [
+      'Resolve customer queries via email, chat, and phone',
+      'Manage order returns and exchange processes',
+      'Coordinate with logistics for delivery tracking',
+      'Collect and summarize customer feedback for product teams'
+    ]
+  },
+  {
+    title: 'Senior Fashion Designer',
+    team: 'Design',
+    location: 'Chowrangi more, Joteghanashyam, West Bengal 721153',
+    type: 'Full-time',
+    salary: '₹35,000 - ₹50,000',
+    responsibilities: [
+      'Conceptualize and design seasonal collections',
+      'Create technical tech packs and material specifications',
+      'Oversee sample development and fitting sessions',
+      'Research global trends and translate them for the GS brand'
+    ]
+  },
+  {
+    title: 'E-commerce Manager',
+    team: 'Operations',
+    location: 'Chowrangi more, Joteghanashyam, West Bengal 721153',
+    type: 'Full-time',
+    salary: '₹25,000 - ₹40,000',
+    responsibilities: [
+      'Optimize online store performance and conversions',
+      'Manage product listings and merchandising strategies',
+      'Analyze sales data and generate performance reports',
+      'Coordinate digital marketing campaigns with the creative team'
+    ]
+  },
+];
+
 export const HOME_CONFIG: HomeConfig = {
   sections: [
     {

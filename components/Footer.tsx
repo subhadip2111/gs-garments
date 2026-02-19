@@ -15,33 +15,46 @@ const Footer: React.FC = () => {
                 Global Style Collective. A curated house of iconic labels and refined essentials, bringing high-performance craft to the modern wardrobe.
               </p>
             </div>
-            
+
             <div className="space-y-4">
               <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-black">Follow Our Journey</h4>
               <div className="flex items-center gap-6">
-                <a 
-                  href="https://instagram.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href="https://instagram.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-vogue-500 hover:text-black hover:border-black transition-all duration-300 group"
                 >
-                  <i className="fa-brands fa-instagram text-lg group-hover:scale-110 transition-transform"></i>
+                  <img
+                    src="https://www.svgrepo.com/show/475658/instagram-color.svg"
+                    alt="Instagram"
+                    className="w-[22px] h-[22px]"
+                  />
+
                 </a>
-                <a 
-                  href="https://facebook.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href="https://facebook.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-vogue-500 hover:text-black hover:border-black transition-all duration-300 group"
                 >
-                  <i className="fa-brands fa-facebook-f text-lg group-hover:scale-110 transition-transform"></i>
+<img
+  src="https://www.svgrepo.com/show/475647/facebook-color.svg"
+  alt="Facebook"
+  className="w-[22px] h-[22px]"
+/>
                 </a>
-                <a 
-                  href="https://pinterest.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href="https://wa.me/+919876543210"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-vogue-500 hover:text-black hover:border-black transition-all duration-300 group"
                 >
-                  <i className="fa-brands fa-pinterest-p text-lg group-hover:scale-110 transition-transform"></i>
+<img
+  src="https://www.svgrepo.com/show/475692/whatsapp-color.svg"
+  alt="WhatsApp"
+  className="w-[22px] h-[22px]"
+/>
                 </a>
               </div>
             </div>
@@ -76,9 +89,9 @@ const Footer: React.FC = () => {
               <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] mb-4 text-vogue-500">The GS Digest</h4>
               <p className="text-[12px] text-gray-500 mb-6 leading-relaxed font-light">Be the first to know about exclusive archive launches and seasonal curations.</p>
               <form className="space-y-3" onSubmit={(e) => e.preventDefault()}>
-                <input 
-                  type="email" 
-                  placeholder="Your preferred email" 
+                <input
+                  type="email"
+                  placeholder="Your preferred email"
                   className="w-full bg-vogue-50 border-none px-4 py-4 text-[12px] focus:ring-1 focus:ring-black outline-none transition-all placeholder:text-gray-300"
                 />
                 <button className="w-full bg-black text-white text-[10px] uppercase font-bold tracking-[0.3em] py-4 hover:bg-zinc-800 transition-all active:scale-95 shadow-lg">Subscribe</button>
@@ -90,7 +103,7 @@ const Footer: React.FC = () => {
         {/* Bottom Bar */}
         <div className="border-t border-gray-200 pt-10 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex flex-col md:flex-row items-center gap-4 md:gap-10">
-            <p className="text-[9px] text-gray-400 uppercase tracking-widest">&copy; 2024 GS GLOBAL STYLE COLLECTIVE. BENGALURU, INDIA.</p>
+            <p className="text-[9px] text-gray-400 uppercase tracking-widest">&copy; {new Date().getFullYear()} GS GLOBAL STYLE COLLECTIVE. BENGALURU, INDIA.</p>
             <div className="flex gap-6 text-[9px] font-bold uppercase tracking-widest text-vogue-500">
               <Link to="/privacy" className="hover:text-black">Terms</Link>
               <Link to="/privacy" className="hover:text-black">Privacy</Link>
