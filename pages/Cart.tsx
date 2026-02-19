@@ -1,12 +1,16 @@
 
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useApp } from '../App';
+import { useAppDispatch, useAppSelector } from '../store';
+import { removeFromCart, updateCartQuantity } from '../store/cartSlice';
 import { MOCK_PRODUCTS, MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
 import { SmartOfferWidget } from './ProductDetail';
 
 const Cart: React.FC = () => {
-  const { cart, removeFromCart, updateCartQuantity, appliedCouponId, comboDiscount } = useApp();
+  const dispatch = useAppDispatch();
+  const cart = useAppSelector((state) => state.cart.cart);
+  const appliedCouponId = useAppSelector((state) => state.cart.appliedCouponId);
+  const comboDiscount = useAppSelector((state) => state.cart.comboDiscount);
   const navigate = useNavigate();
 
   const cartDetails = cart.map(item => {
@@ -63,7 +67,7 @@ const Cart: React.FC = () => {
                   <div className="flex justify-between items-start">
                     <h3 className="text-lg font-medium">{item.product?.name}</h3>
                     <button
-                      onClick={() => removeFromCart(item.productId, item.selectedSize, item.selectedColor)}
+                      onClick={() => dispatch(removeFromCart({ productId: item.productId, size: item.selectedSize, color: item.selectedColor }))}
                       className="text-gray-400 hover:text-red-500 transition-colors"
                     >
                       <i className="fa-regular fa-trash-can"></i>
@@ -86,14 +90,14 @@ const Cart: React.FC = () => {
                 <div className="flex justify-between items-end mt-4">
                   <div className="flex items-center border border-gray-200">
                     <button
-                      onClick={() => updateCartQuantity(item.productId, item.selectedSize, item.selectedColor, -1)}
+                      onClick={() => dispatch(updateCartQuantity({ productId: item.productId, size: item.selectedSize, color: item.selectedColor, delta: -1 }))}
                       className="px-3 py-1 hover:bg-gray-50 transition-colors text-xs font-bold"
                     >
                       -
                     </button>
                     <span className="px-4 py-1 text-xs font-bold">{item.quantity}</span>
                     <button
-                      onClick={() => updateCartQuantity(item.productId, item.selectedSize, item.selectedColor, 1)}
+                      onClick={() => dispatch(updateCartQuantity({ productId: item.productId, size: item.selectedSize, color: item.selectedColor, delta: 1 }))}
                       className="px-3 py-1 hover:bg-gray-50 transition-colors text-xs font-bold"
                     >
                       +

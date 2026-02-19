@@ -1,11 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useApp } from '../App';
+import { useAppSelector } from '../store';
 import { LAUNCH_PROMOS, NAV_ITEMS_STRUCTURE } from '../constants';
 
 const Navbar: React.FC = () => {
-  const { cart, wishlist, user } = useApp();
+  const cart = useAppSelector((state) => state.cart.cart);
+  const wishlist = useAppSelector((state) => state.cart.wishlist);
+  const user = useAppSelector((state) => state.auth.user);
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);

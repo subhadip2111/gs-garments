@@ -108,208 +108,343 @@ export const MOCK_REVIEWS: Review[] = [
 ];
 
 export const MOCK_PRODUCTS: Product[] = [
+  // --- MEN ---
   {
-    id: 'levis-505-straight',
-    name: 'Men 505 Straight Fit Heavy Fade Stretchable Jeans',
+    id: 'men-jeans-1',
+    name: 'Stretchable Slim Fit Blue Jeans',
     brand: 'Levis',
     category: 'Men',
     subcategory: 'Jeans',
-    price: 1733,
-    originalPrice: 3399,
-    description: 'Medium shade, heavy fade blue jeans. Straight fit, mid-rise. Clean look. Stretchable. 5 pocket. Regular length.',
-    images: [
-      'https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=1200',
-      'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&q=80&w=1200',
-      'https://images.unsplash.com/photo-1591047134402-3143c683884e?auto=format&fit=crop&q=80&w=1200'
-    ],
-    sizes: ['28', '30', '32', '34', '36', '38', '40', '42'],
-    colors: ['Medium Blue'],
-    rating: 4.1,
-    reviewsCount: 121,
-    stock: { '28': 10, '30': 15, '32': 20, '34': 3, '36': 10, '38': 1, '40': 5, '42': 0 },
+    price: 2499,
+    originalPrice: 4999,
+    description: 'Classic slim fit blue jeans with a comfortable stretch. Perfect for casual outings.',
+    images: ['https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=1200'],
+    sizes: ['30', '32', '34', '36'],
+    colors: ['Deep Blue'],
+    rating: 4.5,
+    reviewsCount: 850,
+    stock: { '30': 20, '32': 25, '34': 15 },
     isTrending: true,
-    sku: '35552268',
-    fabric: '83% Cotton, 16% Polyester, 1% Elastane',
-    sizeAndFit: [
-      'Fit: Straight Fit',
-      'Stretchable',
-      "The model (height 6') is wearing a size 32"
-    ],
-    materialAndCare: [
-      '83% Cotton, 16% Polyester, 1% Elastane',
-      'Machine Wash'
-    ],
-    specifications: [
-      'Medium shade, heavy fade blue jeans',
-      'Straight fit, mid-rise',
-      'Clean look',
-      'Stretchable',
-      '5 pocket',
-      'Regular length'
-    ],
-    richSpecifications: [
-      { label: 'Distress', value: 'Clean Look' },
-      { label: 'Waist Rise', value: 'Mid-Rise' },
-      { label: 'Fade', value: 'Heavy Fade' },
-      { label: 'Shade', value: 'Medium' },
-      { label: 'Fit', value: 'Straight Fit' },
-      { label: 'Length', value: 'Regular' },
-      { label: 'Waistband', value: 'With belt loops' },
-      { label: 'Stretch', value: 'Stretchable' }
-    ],
-    priceDetails: {
-      mrp: 3399,
-      discount: 49,
-      sellingPrice: 1733
-    },
-    bestOffers: [
-      { title: '7.5% Assured Cashback', description: '7.5% Instant Discount on Flipkart Axis Bank & SBI Credit Cards.' },
-      { title: 'EMI Options Available', description: 'EMI starting from Rs.81/month' }
-    ]
+    sku: 'GS-M-JN-001',
+    fabric: '98% Cotton, 2% Elastane',
+    materialAndCare: ['Machine Wash cold', 'Do not bleach'],
+    specifications: ['Slim Fit', 'Mid-Rise', '5-Pocket Design']
   },
-  // --- MEN (40 Items) ---
-  ...Array.from({ length: 40 }, (_, i): Product => {
-    const subcats = [
-      'Topwear', 'Bottomwear', 'Jeans', 'Casual Shirts', 'Formal Shirts', 'T-shirts', 'Outerwear', 'Knitwear', 'Activewear', 'Accessories',
-      'Topwear', 'Bottomwear', 'Jeans', 'Casual Shirts', 'Formal Shirts', 'T-shirts', 'Outerwear', 'Knitwear', 'Activewear', 'Accessories',
-      'Topwear', 'Bottomwear', 'Jeans', 'Casual Shirts', 'Formal Shirts', 'T-shirts', 'Outerwear', 'Knitwear', 'Activewear', 'Accessories',
-      'Topwear', 'Bottomwear', 'Jeans', 'Casual Shirts', 'Formal Shirts', 'T-shirts', 'Outerwear', 'Knitwear', 'Activewear', 'Accessories'
-    ];
-    const names = [
-      'Heritage Denim Trucker', 'Slim-Fit Chinos', 'Distressed Indigo Jeans', 'Checked Flannel Shirt', 'Oxford Button-Down', 'Graphic Street Tee', 'Quilted Puffer Jacket', 'Merino Wool Cardigan', 'Performance Joggers', 'Leather Flight Bag',
-      'Linen Utility Overshirt', 'Corduroy Trousers', 'Dark Wash Selvedge', 'Micro-Print Casual Shirt', 'Slim Formal Shirt', 'Oversized Cotton Tee', 'Technical Windbreaker', 'Cable Knit Jumper', 'Compression Tights', 'Classic Wayfarer',
-      'Minimalist Hoodie', 'Pleated Dress Pants', 'White Slim-Fit Jeans', 'Safari Canvas Shirt', 'Egyptian Cotton Formal', 'Vintage Washed Tee', 'Leather Biker Jacket', 'Cashmere Crewneck', 'Racerback Active Tank', 'Braided Suede Belt',
-      'Denim Shacket', 'Relaxed Fit Cargos', 'Black Tapered Jeans', 'Grandad Collar Shirt', 'Textured Tuxedo Shirt', 'Heavyweight Pocket Tee', 'Wool Blend Overcoat', 'Half-Zip Pullover', 'Sweat-Wick Shorts', 'Luxury Chronograph'
-    ];
-    return {
-      id: `men-${i}`,
-      name: names[i] || `Men Elite Item ${i}`,
-      category: 'Men' as const,
-      subcategory: subcats[i] || 'Topwear',
-      price: 1500 + Math.floor(Math.random() * 8000),
-      originalPrice: 2000 + Math.floor(Math.random() * 10000),
-      description: 'A masterpiece of contemporary menswear, designed for longevity and effortless sophistication.',
-      images: [
-        [
-          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=1000&auto=format&fit=crop',
-          'https://images.unsplash.com/photo-1591047134402-3143c683884e?q=80&w=1000&auto=format&fit=crop'
-        ],
-        [
-          'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=1000&auto=format&fit=crop',
-          'https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=1000&auto=format&fit=crop'
-        ],
-        [
-          'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=1000&auto=format&fit=crop'
-        ]
-      ][i % 3],
-      sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-      colors: ['Charcoal', 'Naval Blue', 'Sand', 'Burgundy', 'Black'],
-      rating: 4.2 + (Math.random() * 0.8),
-      reviewsCount: Math.floor(Math.random() * 3000),
-      stock: { S: 10, M: 20, L: 20, XL: 10 },
-      isTrending: i % 4 === 0,
-      isBestSeller: i % 5 === 0,
-      isNewArrival: i % 3 === 0,
-      fabric: 'Premium Heritage Blend',
-      specifications: ['Internal storage pockets', 'Reinforced seams', 'Signature branding']
-    };
-  }),
+  {
+    id: 'men-kurta-1',
+    name: 'Embroidered Cotton Kurta',
+    brand: 'Manyavar',
+    category: 'Men',
+    subcategory: 'Kurta',
+    price: 3999,
+    originalPrice: 5999,
+    description: 'Elegant white cotton kurta with intricate embroidery on the neck and cuffs.',
+    images: ['https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&q=80&w=1200'],
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['White'],
+    rating: 4.8,
+    reviewsCount: 320,
+    stock: { 'S': 10, 'M': 15, 'L': 10, 'XL': 5 },
+    isNewArrival: true,
+    sku: 'GS-M-KR-001',
+    fabric: '100% Cotton',
+    materialAndCare: ['Hand Wash recommended', 'Dry Clean Only'],
+    specifications: ['Mandarin Collar', 'Long Sleeves', 'Side Slits']
+  },
+  {
+    id: 'men-shirt-1',
+    name: 'Premium White Formal Shirt',
+    brand: 'Van Heusen',
+    category: 'Men',
+    subcategory: 'Shirts',
+    price: 1899,
+    originalPrice: 2999,
+    description: 'Crisp white formal shirt made from high-quality Egyptian cotton.',
+    images: ['https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1200'],
+    sizes: ['38', '40', '42', '44'],
+    colors: ['White'],
+    rating: 4.6,
+    reviewsCount: 1200,
+    stock: { '38': 30, '40': 40, '42': 35, '44': 20 },
+    isBestSeller: true,
+    sku: 'GS-M-SH-001',
+    fabric: '100% Egyptian Cotton',
+    materialAndCare: ['Warm Machine Wash', 'Iron while damp'],
+    specifications: ['Regular Fit', 'Classic Collar', 'Single Cuff']
+  },
+  {
+    id: 'men-panjabi-1',
+    name: 'Royal Silk Panjabi',
+    brand: 'Fabindia',
+    category: 'Men',
+    subcategory: 'Panjabi',
+    price: 5499,
+    originalPrice: 7999,
+    description: 'A luxurious silk panjabi with subtle self-patterns, ideal for weddings and festivals.',
+    images: ['https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&q=80&w=1200'],
+    sizes: ['M', 'L', 'XL', 'XXL'],
+    colors: ['Maroon'],
+    rating: 4.9,
+    reviewsCount: 150,
+    stock: { 'M': 8, 'L': 12, 'XL': 10, 'XXL': 5 },
+    isTrending: true,
+    sku: 'GS-M-PJ-001',
+    fabric: 'Pure Silk',
+    materialAndCare: ['Dry Clean Only'],
+    specifications: ['Hidden Placket', 'Premium Lining', 'Handmade Buttons']
+  },
+  {
+    id: 'men-tshirt-1',
+    name: 'Classic Black Crew Neck T-Shirt',
+    brand: 'GS Essentials',
+    category: 'Men',
+    subcategory: 'T-shirts',
+    price: 799,
+    originalPrice: 1299,
+    description: 'Essential everyday black t-shirt made from breathable organic cotton.',
+    images: ['https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=1200'],
+    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+    colors: ['Black'],
+    rating: 4.4,
+    reviewsCount: 2500,
+    stock: { 'S': 50, 'M': 100, 'L': 100 },
+    isBestSeller: true,
+    sku: 'GS-M-TS-001',
+    fabric: '100% Organic Cotton',
+    materialAndCare: ['Machine Wash cold', 'Tumble dry low'],
+    specifications: ['Regular Fit', 'Soft Hand Feel']
+  },
+  {
+    id: 'men-blazer-1',
+    name: 'Classic Navy Velvet Blazer',
+    brand: 'Raymond',
+    category: 'Men',
+    subcategory: 'Outerwear',
+    price: 7999,
+    originalPrice: 10999,
+    description: 'A sophisticated navy velvet blazer for evening galas and ceremonies.',
+    images: ['https://images.unsplash.com/photo-1516251193007-45ef944ab0c6?auto=format&fit=crop&q=80&w=1200'],
+    sizes: ['38', '40', '42', '44'],
+    colors: ['Navy Blue'],
+    rating: 4.7,
+    reviewsCount: 45,
+    stock: { '40': 5, '42': 10 },
+    sku: 'GS-M-BZ-001',
+    fabric: 'Premium Velvet',
+    materialAndCare: ['Dry Clean Only'],
+    specifications: ['Peak Lapel', 'Slim Fit', 'Satin Lining']
+  },
+  {
+    id: 'men-chinos-1',
+    name: 'Slim Fit Khaki Chinos',
+    brand: 'Zara',
+    category: 'Men',
+    subcategory: 'Bottomwear',
+    price: 2299,
+    originalPrice: 3499,
+    description: 'Versatile khaki chinos crafted from breathable cotton twill.',
+    images: ['https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&q=80&w=1200'],
+    sizes: ['30', '32', '34', '36'],
+    colors: ['Khaki'],
+    rating: 4.5,
+    reviewsCount: 432,
+    stock: { '32': 20, '34': 15 },
+    sku: 'GS-M-CH-001',
+    fabric: '98% Cotton, 2% Elastane',
+    materialAndCare: ['Machine Wash Cold', 'Tumble Dry Low'],
+    specifications: ['Slim Fit', 'Flat Front', 'Side Slant Pockets']
+  },
 
-  // --- WOMEN (40 Items) ---
-  ...Array.from({ length: 40 }, (_, i): Product => {
-    const subcats = [
-      'Tops', 'Bottoms', 'Jeans', 'Dresses', 'Saree', 'Casual Shirts', 'Outerwear', 'Knitwear', 'Activewear', 'Accessories',
-      'Tops', 'Bottoms', 'Jeans', 'Dresses', 'Saree', 'Casual Shirts', 'Outerwear', 'Knitwear', 'Activewear', 'Accessories',
-      'Tops', 'Bottoms', 'Jeans', 'Dresses', 'Saree', 'Casual Shirts', 'Outerwear', 'Knitwear', 'Activewear', 'Accessories',
-      'Tops', 'Bottoms', 'Jeans', 'Dresses', 'Saree', 'Casual Shirts', 'Outerwear', 'Knitwear', 'Activewear', 'Accessories'
-    ];
-    const names = [
-      'Silk Camisole', 'High-Rise Trousers', 'Flare Blue Jeans', 'Velvet Evening Gown', 'Handwoven Banarasi Saree', 'Linen Blend Oversize Shirt', 'Classic Trench Coat', 'Cashmere Shawl Collar', 'Sculpt Active Leggings', 'Quilted Gold-Chain Bag',
-      'Chiffon Blouse', 'Pleated Midi Skirt', 'Straight Leg Denim', 'Floral Wrap Dress', 'Silk Kanjeevaram Saree', 'Checked Picnic Shirt', 'Wool Blend Pea Coat', 'Knitted Turtleneck', 'Seamless Sports Bra', 'Pointed Suede Heels',
-      'Peplum Lace Top', 'Wide Leg Culottes', 'White Skinny Jeans', 'Satin Slip Dress', 'Embroidered Chiffon Saree', 'Denim Boyfriend Shirt', 'Faux Fur Glam Coat', 'Waffle Knit Cardigan', 'High-Impact Crop Top', 'Pearl Statement Necklace',
-      'Bell-Sleeve Top', 'Cargo Utility Skirt', 'Ripped Mom Jeans', 'Maxi Tiered Dress', 'Linen Handloom Saree', 'Pinstripe Work Shirt', 'Leather Moto Jacket', 'Ribbed Sweater Set', 'Yoga Flow Jumpsuit', 'Crystal Evening Clutch'
-    ];
-    return {
-      id: `women-${i}`,
-      name: names[i] || `Women Luxe Item ${i}`,
-      category: 'Women' as const,
-      subcategory: subcats[i] || 'Tops',
-      price: 2000 + Math.floor(Math.random() * 12000),
-      originalPrice: 3000 + Math.floor(Math.random() * 15000),
-      description: 'An embodiment of grace and modern femininity. Each piece is curated to tell a unique story of elegance.',
-      images: [
-        [
-          'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=1000&auto=format&fit=crop',
-          'https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=1000&auto=format&fit=crop'
-        ],
-        [
-          'https://images.unsplash.com/photo-1612336307429-8a898d10e223?q=80&w=1000&auto=format&fit=crop',
-          'https://images.unsplash.com/photo-1551163943-3f6a855d1153?q=80&w=1000&auto=format&fit=crop'
-        ],
-        [
-          'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=1000&auto=format&fit=crop'
-        ]
-      ][i % 3],
-      sizes: ['XS', 'S', 'M', 'L', 'XL'],
-      colors: ['Champagne', 'Emerald', 'Ruby', 'Midnight', 'Ivory'],
-      rating: 4.4 + (Math.random() * 0.6),
-      reviewsCount: Math.floor(Math.random() * 2500),
-      stock: { S: 15, M: 25, L: 15 },
-      isTrending: i % 3 === 0,
-      isBestSeller: i % 4 === 0,
-      isNewArrival: i % 2 === 0,
-      fabric: 'Luxury Textile Mix',
-      specifications: ['Artisan crafted', 'Sustainable materials', 'Precision tailoring']
-    };
-  }),
+  // --- WOMEN ---
+  {
+    id: 'women-saree-1',
+    name: 'Handwoven Banarasi Silk Saree',
+    brand: 'GS Heritage',
+    category: 'Women',
+    subcategory: 'Saree',
+    price: 12999,
+    originalPrice: 18999,
+    description: 'A timeless Banarasi silk saree with gold zari work. A true masterpiece of craftsmanship.',
+    images: ['https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=1200'],
+    sizes: ['Onesize'],
+    colors: ['Red & Gold'],
+    rating: 5.0,
+    reviewsCount: 45,
+    stock: { 'Onesize': 5 },
+    isTrending: true,
+    sku: 'GS-W-SR-001',
+    fabric: 'Pure Silk',
+    materialAndCare: ['Dry Clean Only', 'Store in a muslin cloth'],
+    specifications: ['Gold Zari Border', '5.5 Meters Length']
+  },
+  {
+    id: 'women-dress-1',
+    name: 'Satin Slip Evening Dress',
+    brand: 'H&M',
+    category: 'Women',
+    subcategory: 'Dresses',
+    price: 2999,
+    originalPrice: 4499,
+    description: 'Sleek and minimalist satin slip dress in a deep emerald green.',
+    images: ['https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&q=80&w=1200'],
+    sizes: ['XS', 'S', 'M', 'L'],
+    colors: ['Emerald Green'],
+    rating: 4.7,
+    reviewsCount: 210,
+    stock: { 'S': 10, 'M': 10 },
+    isTrending: true,
+    sku: 'GS-W-DR-001',
+    fabric: 'Satin Polyester',
+    materialAndCare: ['Hand Wash cold', 'Steam iron only'],
+    specifications: ['Bodycon Fit', 'Adjustable Straps']
+  },
+  {
+    id: 'women-kurti-1',
+    name: 'Daily Wear Cotton Kurti',
+    brand: 'BIBA',
+    category: 'Women',
+    subcategory: 'Kurtas',
+    price: 1299,
+    originalPrice: 1999,
+    description: 'Comfortable cotton kurti with block print patterns, perfect for office or casual wear.',
+    images: ['https://images.unsplash.com/photo-1612336307429-8a898d10e223?auto=format&fit=crop&q=80&w=1200'],
+    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+    colors: ['Indigo'],
+    rating: 4.5,
+    reviewsCount: 1800,
+    stock: { 'M': 30, 'L': 25 },
+    isBestSeller: true,
+    sku: 'GS-W-KR-001',
+    fabric: '100% Cotton',
+    materialAndCare: ['Machine Wash cold', 'Wash separately'],
+    specifications: ['Straight Fit', '3/4th Sleeves']
+  },
+  {
+    id: 'women-top-1',
+    name: 'Floral Print Chiffon Top',
+    brand: 'Zara',
+    category: 'Women',
+    subcategory: 'Tops',
+    price: 1499,
+    originalPrice: 2499,
+    description: 'Light and airy chiffon top with a beautiful floral print and bell sleeves.',
+    images: ['https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&q=80&w=1200'],
+    sizes: ['XS', 'S', 'M', 'L'],
+    colors: ['Pastel Pink'],
+    rating: 4.3,
+    reviewsCount: 600,
+    stock: { 'S': 20, 'M': 15 },
+    isNewArrival: true,
+    sku: 'GS-W-TP-001',
+    fabric: 'Chiffon',
+    materialAndCare: ['Cold Machine Wash', 'Cool Iron'],
+    specifications: ['Relaxed Fit', 'V-Neckline']
+  },
+  {
+    id: 'women-anarkali-1',
+    name: 'Floral Printed Silk Anarkali',
+    brand: 'W',
+    category: 'Women',
+    subcategory: 'Kurtas',
+    price: 4999,
+    originalPrice: 7999,
+    description: 'A graceful floor-lengthsilk anarkali with delicate floral prints.',
+    images: ['https://images.unsplash.com/photo-1598501022229-39773bc25e8c?auto=format&fit=crop&q=80&w=1200'],
+    sizes: ['M', 'L', 'XL'],
+    colors: ['Sage Green'],
+    rating: 4.8,
+    reviewsCount: 156,
+    stock: { 'M': 10, 'L': 8 },
+    sku: 'GS-W-AK-101',
+    fabric: 'Artificial Silk',
+    materialAndCare: ['Dry Clean Only'],
+    specifications: ['Flared Hem', 'Round Neck', 'Zari Work']
+  },
+  {
+    id: 'women-jeans-1',
+    name: 'High-Rise Skinny Fit Jeans',
+    brand: 'Levis',
+    category: 'Women',
+    subcategory: 'Jeans',
+    price: 3499,
+    originalPrice: 4999,
+    description: 'Classic high-rise skinny jeans in a versatile medium wash.',
+    images: ['https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&q=80&w=1200'],
+    sizes: ['26', '28', '30', '32'],
+    colors: ['Medium Wash Blue'],
+    rating: 4.4,
+    reviewsCount: 742,
+    stock: { '28': 15, '30': 20 },
+    sku: 'GS-W-JN-001',
+    fabric: '99% Cotton, 1% Elastane',
+    materialAndCare: ['Machine Wash Cold', 'Do Not Bleach'],
+    specifications: ['High-Rise', 'Skinny Fit', 'Stretchable']
+  },
 
-  // --- KIDS (40 Items) ---
-  ...Array.from({ length: 40 }, (_, i): Product => {
-    const subcats = [
-      'Topwear', 'Bottomwear', 'Tops', 'Jeans', 'Dresses', 'Sets', 'Outerwear', 'Activewear', 'Accessories', 'Footwear',
-      'Topwear', 'Bottomwear', 'Tops', 'Jeans', 'Dresses', 'Sets', 'Outerwear', 'Activewear', 'Accessories', 'Footwear',
-      'Topwear', 'Bottomwear', 'Tops', 'Jeans', 'Dresses', 'Sets', 'Outerwear', 'Activewear', 'Accessories', 'Footwear',
-      'Topwear', 'Bottomwear', 'Tops', 'Jeans', 'Dresses', 'Sets', 'Outerwear', 'Activewear', 'Accessories', 'Footwear'
-    ];
-    const names = [
-      'Organic Cotton Hoodie', 'Soft Fleece Joggers', 'Graphic Animal Tee', 'Comfy Stretch Jeans', 'Floral Party Frock', 'Denim Dungaree Set', 'Waterproof Rain Mac', 'Sports Training Jersey', 'Beanie & Scarf Set', 'Light-up Sneakers',
-      'Plaid Button-Down', 'Corduroy Trousers', 'Ruffled Collar Top', 'Tapered Denim Pants', 'Tiered Sun Dress', 'Tracksuit Twin Set', 'Padded Winter Parka', 'Gymnastics Leotard', 'Superhero Cape Pack', 'Canvas High-Tops',
-      'Breton Stripe Tee', 'Cargo Play Shorts', 'Cartoon Motif Top', 'Skater Fit Jeans', 'Polka Dot Gown', 'Pyjama Party Set', 'Varsity Letterman Jacket', 'Swim Rash Guard', 'Character Backpack', 'Leather School Shoes',
-      'Henley Knit Top', 'Chino Shorts', 'Butterfly Wing Top', 'Acid Wash Jeans', 'Tulle Princess Dress', 'Summer Holiday Set', 'Light Denim Jacket', 'Active Mesh Shorts', 'Sun Hat & Goggles', 'Velcro Sport Sandals'
-    ];
-    return {
-      id: `kids-${i}`,
-      name: names[i] || `Kids Play Item ${i}`,
-      category: 'Kids' as const,
-      subcategory: subcats[i] || 'Topwear',
-      price: 800 + Math.floor(Math.random() * 4000),
-      originalPrice: 1200 + Math.floor(Math.random() * 5000),
-      description: 'Designed for the next generation of curators. Durable, soft, and ready for every adventure.',
-      images: [
-        [
-          'https://images.unsplash.com/photo-1519238263530-99bbe197c90b?q=80&w=1000&auto=format&fit=crop',
-          'https://images.unsplash.com/photo-1519457431-7551af2d81f1?q=80&w=1000&auto=format&fit=crop'
-        ],
-        [
-          'https://images.unsplash.com/photo-1514090704330-a387f7976865?q=80&w=1000&auto=format&fit=crop',
-          'https://images.unsplash.com/photo-1560506840-ec1820027f31?q=80&w=1000&auto=format&fit=crop'
-        ],
-        [
-          'https://images.unsplash.com/photo-1533512930330-4ac257c86793?q=80&w=1000&auto=format&fit=crop'
-        ]
-      ][i % 3],
-      sizes: ['2Y', '4Y', '6Y', '8Y', '10Y'],
-      colors: ['Sunshine Yellow', 'Mint', 'Bubblegum', 'Sky', 'Navy'],
-      rating: 4.5 + (Math.random() * 0.5),
-      reviewsCount: Math.floor(Math.random() * 800),
-      stock: { '4Y': 15, '6Y': 15 },
-      isTrending: i % 4 === 0,
-      isBestSeller: i % 6 === 0,
-      isNewArrival: i % 3 === 0,
-      fabric: '100% Cotton Comfort',
-      specifications: ['Machine washable', 'Tear-resistant', 'Hypoallergenic']
-    };
-  })
+  // --- KIDS ---
+  {
+    id: 'kids-frock-1',
+    name: 'Pink Tulle Party Frock',
+    brand: 'Little Muffet',
+    category: 'Kids',
+    subcategory: 'Dresses',
+    price: 2499,
+    originalPrice: 3999,
+    description: 'A beautiful layered tulle frock with a satin bow, perfect for birthdays.',
+    images: ['https://images.unsplash.com/photo-1533512930330-4ac257c86793?auto=format&fit=crop&q=80&w=1200'],
+    sizes: ['2Y', '4Y', '6Y', '8Y'],
+    colors: ['Princess Pink'],
+    rating: 4.9,
+    reviewsCount: 120,
+    stock: { '4Y': 15, '6Y': 10 },
+    isTrending: true,
+    sku: 'GS-K-DR-001',
+    fabric: 'Net and Satin',
+    materialAndCare: ['Hand Wash only', 'Steam iron layers'],
+    specifications: ['Flare Fit', 'Cotton Lining']
+  },
+  {
+    id: 'kids-tshirt-1',
+    name: 'Animal Graphic Polo T-Shirt',
+    brand: 'U.S. Polo Assn.',
+    category: 'Kids',
+    subcategory: 'T-shirts',
+    price: 999,
+    originalPrice: 1499,
+    description: 'Durable cotton polo with a fun graphic for everyday play.',
+    images: ['https://images.unsplash.com/photo-1519457431-7551af2d81f1?auto=format&fit=crop&q=80&w=1200'],
+    sizes: ['2Y', '4Y', '6Y', '8Y'],
+    colors: ['Ochre Yellow'],
+    rating: 4.6,
+    reviewsCount: 450,
+    stock: { '4Y': 15, '6Y': 10 },
+    isBestSeller: true,
+    sku: 'GS-K-TS-001',
+    fabric: '100% Cotton',
+    materialAndCare: ['Machine Wash warm', 'Tumble dry low'],
+    specifications: ['Regular Fit', 'Ribbed Collar']
+  },
+  {
+    id: 'kids-kurta-set-1',
+    name: 'Traditional Cotton Kurta Set',
+    brand: 'Fabindia Kids',
+    category: 'Kids',
+    subcategory: 'Sets',
+    price: 1899,
+    originalPrice: 2499,
+    description: 'A soft and breathable cotton kurta set for boys, perfect for festive occasions.',
+    images: ['https://images.unsplash.com/photo-1610484826967-09c5720778c7?auto=format&fit=crop&q=80&w=1200'],
+    sizes: ['2Y', '4Y', '6Y', '8Y'],
+    colors: ['Turquoise'],
+    rating: 4.8,
+    reviewsCount: 89,
+    stock: { '4Y': 10, '6Y': 10 },
+    isNewArrival: true,
+    sku: 'GS-K-KS-001',
+    fabric: '100% Cotton',
+    materialAndCare: ['Hand Wash Cold', 'Line Dry'],
+    specifications: ['Comfort Fit', 'Elasticated Waist Pajama']
+  }
 ];
 
 export const OPEN_POSITIONS = [

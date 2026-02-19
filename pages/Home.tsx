@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MOCK_PRODUCTS, LAUNCH_PROMOS, HOME_CONFIG } from '../constants';
 import ProductCard from '../components/ProductCard';
-import { useApp } from '../App';
+import { useAppSelector } from '../store';
 import { BannerConfig, SpotlightConfig, GridConfig, BrandsConfig } from '../types';
 
 const Home: React.FC = () => {
-  const { user } = useApp();
+  const user = useAppSelector((state) => state.auth.user);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const handleCopy = (code: string) => {
@@ -41,7 +41,7 @@ const Home: React.FC = () => {
                 {config.subtitle}
               </span>
             </div>
-            
+
             <h1 className="text-6xl md:text-8xl lg:text-9xl font-serif font-bold tracking-tighter leading-[0.85] animate-slide-up whitespace-pre-line">
               {config.title}
             </h1>

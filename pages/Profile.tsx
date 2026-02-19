@@ -1,7 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useApp } from '../App';
+import { useAppDispatch, useAppSelector } from '../store';
+import { setUser } from '../store/authSlice';
+import { placeOrder, cancelOrder } from '../store/cartSlice';
 import { useToast } from '../components/Toast';
 import { MOCK_PRODUCTS } from '../constants';
 import ProductCard from '../components/ProductCard';
@@ -9,7 +11,17 @@ import { supabase } from '../services/supabase';
 import { Address } from '../types';
 
 const Profile: React.FC = () => {
-  const { user, wishlist, logout, products, orders, placeOrder, cancelOrder } = useApp();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+  const wishlist = useAppSelector((state) => state.cart.wishlist);
+  const catalog = useAppSelector((state) => state.products.items);
+  const orders = useAppSelector((state) => state.cart.orders);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    dispatch(setUser(null));
+    navigate('/auth');
+  };
   const { showToast } = useToast();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -69,7 +81,6 @@ const Profile: React.FC = () => {
 
   if (!user) return null;
 
-  const catalog = products.length > 0 ? products : MOCK_PRODUCTS;
   const wishlistProducts = catalog.filter(p => wishlist.includes(p.id));
 
   const userName = user.user_metadata?.full_name || user.email.split('@')[0];
@@ -115,8 +126,8 @@ const Profile: React.FC = () => {
       status: 'Delivered' as const,
       trackingSteps: order.trackingSteps.map(step => ({ ...step, isCompleted: true, date: step.date || new Date().toLocaleString() }))
     };
-    // placeOrder is already destructured from useApp() at the top
-    placeOrder(updatedOrder);
+    // dispatch(placeOrder)
+    dispatch(placeOrder(updatedOrder));
     showToast("Order status updated to Delivered", "success");
   };
 
@@ -233,7 +244,7 @@ const Profile: React.FC = () => {
         )}
         <div className="cursor-pointer">
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="mt-6 md:mt-0 px-6 py-3 text-base font-bold uppercase tracking-widest underline hover:text-red-500 transition-colors"
           >
             Logout
@@ -711,7 +722,7 @@ const Profile: React.FC = () => {
                 <button
                   onClick={() => {
                     if (selectedOrderId) {
-                      cancelOrder(selectedOrderId, cancelReason);
+                      dispatch(cancelOrder({ orderId: selectedOrderId, reason: cancelReason }));
                       showToast("Order Cancelled Successfully", "success");
                       setIsCancelModalOpen(false);
                       setCancelReason('');

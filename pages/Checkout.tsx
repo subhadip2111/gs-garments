@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useApp } from '../App';
+import { useAppDispatch, useAppSelector } from '../store';
+import { placeOrder } from '../store/cartSlice';
 import { useToast } from '../components/Toast';
 import { MOCK_PRODUCTS, MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
 import { Order, CartItem } from '../types';
 
 const Checkout: React.FC = () => {
-  const { cart, user, placeOrder, appliedCouponId, comboDiscount } = useApp();
+  const dispatch = useAppDispatch();
+  const cart = useAppSelector((state) => state.cart.cart);
+  const user = useAppSelector((state) => state.auth.user);
+  const appliedCouponId = useAppSelector((state) => state.cart.appliedCouponId);
+  const comboDiscount = useAppSelector((state) => state.cart.comboDiscount);
   const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -14,8 +19,38 @@ const Checkout: React.FC = () => {
   const [step, setStep] = useState(1);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [mobile, setMobile] = useState(user?.user_metadata?.mobile || '');
-  const [mobileError, setMobileError] = useState('');
+
+  // Shipment States
+  const [shippingDetails, setShippingDetails] = useState({
+    firstName: user?.user_metadata?.full_name?.split(' ')[0] || '',
+    lastName: user?.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+    mobile: user?.user_metadata?.mobile || '',
+    addressLine1: '', // Flat/House/Building
+    addressLine2: '', // Village/Moore
+    city: '',
+    pincode: ''
+  });
+
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  // Pre-populate if user has saved addresses
+  React.useEffect(() => {
+    if (user?.user_metadata?.addresses?.length > 0) {
+      const defaultAddr = user.user_metadata.addresses.find((addr: any) => addr.isDefault) || user.user_metadata.addresses[0];
+      if (defaultAddr) {
+        setShippingDetails(prev => ({
+          ...prev,
+          firstName: defaultAddr.fullName.split(' ')[0] || prev.firstName,
+          lastName: defaultAddr.fullName.split(' ').slice(1).join(' ') || prev.lastName,
+          mobile: defaultAddr.mobile || prev.mobile,
+          addressLine1: defaultAddr.street || '',
+          addressLine2: defaultAddr.village || '',
+          city: defaultAddr.city || '',
+          pincode: defaultAddr.pincode || ''
+        }));
+      }
+    }
+  }, [user]);
 
   if (!buyNowItem && cart.length === 0) {
     navigate('/shop');
@@ -49,20 +84,38 @@ const Checkout: React.FC = () => {
 
   const finalTotal = subtotal + shipping - comboDiscount - couponDiscount;
 
-  const validateMobile = (num: string) => {
-    if (!num) return 'Mobile number is required for order updates.';
-    if (!/^[6-9]\d{9}$/.test(num)) return 'Please enter a valid 10-digit Indian number.';
-    return '';
+  const validateShipment = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!shippingDetails.firstName.trim()) newErrors.firstName = 'First name is required.';
+    if (!shippingDetails.lastName.trim()) newErrors.lastName = 'Last name is required.';
+
+    if (!shippingDetails.mobile) {
+      newErrors.mobile = 'Mobile number is required.';
+    } else if (!/^[6-9]\d{9}$/.test(shippingDetails.mobile)) {
+      newErrors.mobile = 'Enter a valid 10-digit number.';
+    }
+
+    if (!shippingDetails.addressLine1.trim()) newErrors.addressLine1 = 'Address is required.';
+    if (!shippingDetails.city.trim()) newErrors.city = 'City/Locality is required.';
+
+    if (!shippingDetails.pincode) {
+      newErrors.pincode = 'Pincode is required.';
+    } else if (!/^\d{6}$/.test(shippingDetails.pincode)) {
+      newErrors.pincode = 'Enter a valid 6-digit pincode.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleProceedToPayment = () => {
-    const error = validateMobile(mobile);
-    if (error) {
-      setMobileError(error);
-      return;
+    if (validateShipment()) {
+      setStep(2);
+      window.scrollTo(0, 0);
+    } else {
+      showToast("Please fill all required shipping details correctly.", "error");
     }
-    setMobileError('');
-    setStep(2);
   };
 
   const handlePlaceOrder = () => {
@@ -81,6 +134,15 @@ const Checkout: React.FC = () => {
       type: buyNowItem ? 'buy-now' : 'cart',
       appliedCoupon: appliedCouponId || undefined,
       discountAmount: comboDiscount + couponDiscount,
+      shippingAddress: {
+        fullName: `${shippingDetails.firstName} ${shippingDetails.lastName}`,
+        mobile: shippingDetails.mobile,
+        street: shippingDetails.addressLine1,
+        village: shippingDetails.addressLine2,
+        city: shippingDetails.city,
+        pincode: shippingDetails.pincode,
+        country: 'India'
+      },
       deliveryDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
       trackingSteps: [
         { status: 'Order Accepted', description: 'Your order has been received and is being processed.', date: new Date().toLocaleString(), isCompleted: true },
@@ -92,7 +154,7 @@ const Checkout: React.FC = () => {
     };
 
     setTimeout(() => {
-      placeOrder(newOrder); // Persist to Redux
+      dispatch(placeOrder(newOrder)); // Persist to Redux
       setLoading(false);
       showToast("Order Placed Successfully", "success");
       navigate('/profile?tab=orders');
@@ -127,11 +189,25 @@ const Checkout: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest mb-2">First Name</label>
-                  <input type="text" className="w-full border border-gray-200 p-3 text-sm focus:border-black outline-none" placeholder="Aditi" />
+                  <input
+                    type="text"
+                    value={shippingDetails.firstName}
+                    onChange={(e) => setShippingDetails({ ...shippingDetails, firstName: e.target.value })}
+                    className={`w-full border ${errors.firstName ? 'border-red-500 bg-red-50/20' : 'border-gray-200'} p-3 text-sm focus:border-black outline-none transition-all`}
+                    placeholder="Aditi"
+                  />
+                  {errors.firstName && <p className="text-[10px] text-red-500 mt-1 font-bold uppercase tracking-widest">{errors.firstName}</p>}
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest mb-2">Last Name</label>
-                  <input type="text" className="w-full border border-gray-200 p-3 text-sm focus:border-black outline-none" placeholder="Sharma" />
+                  <input
+                    type="text"
+                    value={shippingDetails.lastName}
+                    onChange={(e) => setShippingDetails({ ...shippingDetails, lastName: e.target.value })}
+                    className={`w-full border ${errors.lastName ? 'border-red-500 bg-red-50/20' : 'border-gray-200'} p-3 text-sm focus:border-black outline-none transition-all`}
+                    placeholder="Sharma"
+                  />
+                  {errors.lastName && <p className="text-[10px] text-red-500 mt-1 font-bold uppercase tracking-widest">{errors.lastName}</p>}
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[10px] font-bold uppercase tracking-widest mb-2">Mobile Number (India)</label>
@@ -139,40 +215,61 @@ const Checkout: React.FC = () => {
                     <span className="absolute left-3 top-3 text-gray-400 text-sm font-medium">+91</span>
                     <input
                       type="tel"
-                      value={mobile}
+                      value={shippingDetails.mobile}
                       onChange={(e) => {
                         const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                        setMobile(val);
-                        if (mobileError) setMobileError(validateMobile(val));
+                        setShippingDetails({ ...shippingDetails, mobile: val });
                       }}
-                      className={`w-full border ${mobileError ? 'border-red-500 bg-red-50/20' : 'border-gray-200'} pl-12 p-3 text-sm focus:border-black outline-none transition-all`}
+                      className={`w-full border ${errors.mobile ? 'border-red-500 bg-red-50/20' : 'border-gray-200'} pl-12 p-3 text-sm focus:border-black outline-none transition-all`}
                       placeholder="9876543210"
                     />
                   </div>
-                  {mobileError && <p className="text-[10px] text-red-500 mt-1 font-bold uppercase tracking-widest">{mobileError}</p>}
+                  {errors.mobile && <p className="text-[10px] text-red-500 mt-1 font-bold uppercase tracking-widest">{errors.mobile}</p>}
                 </div>
                 <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-[10px] font-bold uppercase tracking-widest mb-2">Flat / House No. / Building</label>
-                    <input type="text" className="w-full border border-gray-200 p-3 text-sm focus:border-black outline-none" placeholder="B-102, Green Meadows" />
+                    <input
+                      type="text"
+                      value={shippingDetails.addressLine1}
+                      onChange={(e) => setShippingDetails({ ...shippingDetails, addressLine1: e.target.value })}
+                      className={`w-full border ${errors.addressLine1 ? 'border-red-500 bg-red-50/20' : 'border-gray-200'} p-3 text-sm focus:border-black outline-none transition-all`}
+                      placeholder="B-102, Green Meadows"
+                    />
+                    {errors.addressLine1 && <p className="text-[10px] text-red-500 mt-1 font-bold uppercase tracking-widest">{errors.addressLine1}</p>}
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold uppercase tracking-widest mb-2">Village / Moore</label>
-                    <input type="text" className="w-full border border-gray-200 p-3 text-sm focus:border-black outline-none" placeholder="Asoda" />
+                    <input
+                      type="text"
+                      value={shippingDetails.addressLine2}
+                      onChange={(e) => setShippingDetails({ ...shippingDetails, addressLine2: e.target.value })}
+                      className="w-full border border-gray-200 p-3 text-sm focus:border-black outline-none"
+                      placeholder="Asoda (Optional)"
+                    />
                   </div>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest mb-2">Locality / City</label>
-                  <input type="text" className="w-full border border-gray-200 p-3 text-sm focus:border-black outline-none" placeholder="Bandra West, Mumbai" />
+                  <input
+                    type="text"
+                    value={shippingDetails.city}
+                    onChange={(e) => setShippingDetails({ ...shippingDetails, city: e.target.value })}
+                    className={`w-full border ${errors.city ? 'border-red-500 bg-red-50/20' : 'border-gray-200'} p-3 text-sm focus:border-black outline-none transition-all`}
+                    placeholder="Bandra West, Mumbai"
+                  />
+                  {errors.city && <p className="text-[10px] text-red-500 mt-1 font-bold uppercase tracking-widest">{errors.city}</p>}
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest mb-2">Pincode</label>
                   <input
                     type="text"
-                    onChange={(e) => e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6)}
-                    className="w-full border border-gray-200 p-3 text-sm focus:border-black outline-none"
+                    value={shippingDetails.pincode}
+                    onChange={(e) => setShippingDetails({ ...shippingDetails, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                    className={`w-full border ${errors.pincode ? 'border-red-500 bg-red-50/20' : 'border-gray-200'} p-3 text-sm focus:border-black outline-none transition-all`}
                     placeholder="400050"
                   />
+                  {errors.pincode && <p className="text-[10px] text-red-500 mt-1 font-bold uppercase tracking-widest">{errors.pincode}</p>}
                 </div>
               </div>
               <button

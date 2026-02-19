@@ -2,14 +2,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Product } from '../types';
-import { useApp } from '../App';
+import { useAppDispatch, useAppSelector } from '../store';
+import { toggleWishlist } from '../store/cartSlice';
 
 interface ProductCardProps {
   product: Product;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { wishlist, toggleWishlist, user } = useApp();
+  const dispatch = useAppDispatch();
+  const wishlist = useAppSelector((state) => state.cart.wishlist);
+  const user = useAppSelector((state) => state.auth.user);
   const navigate = useNavigate();
 
   const isWishlisted = wishlist.includes(product.id);
@@ -30,7 +33,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       navigate('/auth', { state: { from: `/shop` } });
       return;
     }
-    toggleWishlist(product.id);
+    dispatch(toggleWishlist(product.id));
   };
 
   return (

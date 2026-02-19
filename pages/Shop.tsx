@@ -4,11 +4,12 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { CATEGORIES, NAV_ITEMS_STRUCTURE, NavStructure } from '../constants';
 import ProductCard from '../components/ProductCard';
 import ProductSkeleton from '../components/ProductSkeleton';
-import { useApp } from '../App';
+import { useAppSelector } from '../store';
 import { Product } from '../types';
 
 const Shop: React.FC = () => {
-  const { products, isLoadingProducts } = useApp();
+  const products = useAppSelector((state) => state.products.items);
+  const isLoadingProducts = useAppSelector((state) => state.products.isLoading);
   const [searchParams, setSearchParams] = useSearchParams();
   const [openSections, setOpenSections] = useState<string[]>(['category']);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);

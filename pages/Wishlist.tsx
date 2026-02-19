@@ -1,14 +1,15 @@
 
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useApp } from '../App';
+import { useAppDispatch, useAppSelector } from '../store';
+import { toggleWishlist, addToCart } from '../store/cartSlice';
 import { MOCK_PRODUCTS } from '../constants';
 
 const Wishlist: React.FC = () => {
-    const { wishlist, toggleWishlist, addToCart, products } = useApp();
+    const dispatch = useAppDispatch();
+    const wishlist = useAppSelector((state) => state.cart.wishlist);
+    const catalog = useAppSelector((state) => state.products.items);
     const navigate = useNavigate();
-
-    const catalog = (products && products.length > 0) ? products : MOCK_PRODUCTS;
     const wishlistProducts = catalog.filter(p => wishlist.includes(p.id));
 
     const handleMoveToCart = (productId: string) => {
@@ -17,8 +18,8 @@ const Wishlist: React.FC = () => {
             // Default to first available size and color
             const defaultSize = product.sizes[0] || 'One Size';
             const defaultColor = product.colors[0] || 'Default';
-            addToCart(product.id, defaultSize, defaultColor, 1);
-            toggleWishlist(product.id);
+            dispatch(addToCart({ productId: product.id, size: defaultSize, color: defaultColor, quantity: 1 }));
+            dispatch(toggleWishlist(product.id));
         }
     };
 
@@ -55,7 +56,7 @@ const Wishlist: React.FC = () => {
                                 alt={product.name}
                             />
                             <button
-                                onClick={() => toggleWishlist(product.id)}
+                                onClick={() => dispatch(toggleWishlist(product.id))}
                                 className="absolute top-4 right-4 w-10 h-10 bg-white/95 rounded-full flex items-center justify-center text-red-500 shadow-lg hover:scale-110 active:scale-90 transition-all z-10"
                                 title="Remove from wishlist"
                             >

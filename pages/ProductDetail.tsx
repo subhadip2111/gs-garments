@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { MOCK_PRODUCTS, LAUNCH_PROMOS, MOCK_REVIEWS, MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
-import { useApp } from '../App';
+import { useAppDispatch, useAppSelector } from '../store';
+import { addToCart, toggleWishlist } from '../store/cartSlice';
+import { setSharedProduct } from '../store/uiSlice';
 import ProductCard from '../components/ProductCard';
 import ProductSkeleton from '../components/ProductSkeleton';
 import ProductDetailSkeleton from '../components/ProductDetailSkeleton';
@@ -83,7 +85,10 @@ export const SmartOfferWidget: React.FC<{ currentTotal: number }> = ({ currentTo
 const ProductDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart, toggleWishlist, wishlist, setSharedProduct, user, isLoadingProducts } = useApp();
+  const dispatch = useAppDispatch();
+  const wishlist = useAppSelector((state) => state.cart.wishlist);
+  const user = useAppSelector((state) => state.auth.user);
+  const isLoadingProducts = useAppSelector((state) => state.products.isLoading);
 
   const product = MOCK_PRODUCTS.find(p => p.id === id);
   const [selectedSize, setSelectedSize] = useState('');
@@ -316,7 +321,7 @@ const ProductDetail: React.FC = () => {
                   </div>
 
                   <div className="absolute top-6 right-6">
-                    <button onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }} className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-lg hover:scale-110 transition-all"><i className={`${isWishlisted ? 'fa-solid text-red-500' : 'fa-regular'} fa-heart text-xl`}></i></button>
+                    <button onClick={(e) => { e.stopPropagation(); dispatch(toggleWishlist(product.id)); }} className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-lg hover:scale-110 transition-all"><i className={`${isWishlisted ? 'fa-solid text-red-500' : 'fa-regular'} fa-heart text-xl`}></i></button>
                   </div>
                 </>
               )}
@@ -493,7 +498,7 @@ const ProductDetail: React.FC = () => {
 
             <div className="space-y-3 pb-10">
               <div className="flex flex-col sm:flex-row gap-2">
-                <button onClick={() => addToCart(product.id, selectedSize, selectedColor, quantity)} className="flex-grow bg-white text-black border border-black py-4 text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-gray-50 transition-all">Add to Bag</button>
+                <button onClick={() => dispatch(addToCart({ productId: product.id, size: selectedSize, color: selectedColor, quantity }))} className="flex-grow bg-white text-black border border-black py-4 text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-gray-50 transition-all">Add to Bag</button>
                 <button onClick={handleBuyNow} className="flex-grow bg-black text-white py-4 text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-zinc-800 transition-all shadow-xl">Buy Now</button>
               </div>
             </div>

@@ -101,6 +101,15 @@ export interface Order {
   deliveryDate: string;
   appliedCoupon?: string;
   discountAmount?: number;
+  shippingAddress?: {
+    fullName: string;
+    mobile: string;
+    street: string;
+    village?: string;
+    city: string;
+    pincode: string;
+    country: string;
+  };
 }
 
 export type AuthMode = 'login' | 'signup' | 'forgot-password';

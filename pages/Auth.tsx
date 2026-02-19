@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { AuthMode } from '../types';
-import { useApp } from '../App';
+import { useAppSelector } from '../store';
 import { SocialIcon } from 'react-social-icons'
 
 const Auth: React.FC = () => {
@@ -18,7 +18,7 @@ const Auth: React.FC = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useApp();
+  const user = useAppSelector((state) => state.auth.user);
 
   // Redirection target after login
   const from = location.state?.from?.pathname || '/profile';
