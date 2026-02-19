@@ -37,10 +37,11 @@ const Home: React.FC = () => {
                   {config.badge}
                 </div>
               )}
-              <span className="inline-block text-[10px] font-bold uppercase tracking-[0.5em] mb-4 animate-slide-up">
+              <span className="inline-block text-[10px] font-bold uppercase tracking-[0.5em] mb-4 animate-slide-up whitespace-pre-line">
                 {config.subtitle}
               </span>
             </div>
+            
             <h1 className="text-6xl md:text-8xl lg:text-9xl font-serif font-bold tracking-tighter leading-[0.85] animate-slide-up whitespace-pre-line">
               {config.title}
             </h1>
@@ -159,11 +160,26 @@ const Home: React.FC = () => {
 
   const renderBrands = (config: BrandsConfig, index: number) => {
     return (
-      <section key={index} className="py-40 bg-white">
-        <div className="max-w-[1600px] mx-auto px-6 sm:px-12">
-          <header className="mb-24 text-center space-y-6">
-            <span className="text-vogue-500 text-[10px] font-bold uppercase tracking-[0.6em]">{config.subtitle}</span>
-            <h2 className="text-6xl md:text-7xl font-serif font-bold tracking-tight uppercase tracking-tight">{config.title}</h2>
+      <section key={index} className="py-40 bg-zinc-50/50 border-y border-zinc-100 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-white/50 to-transparent pointer-events-none" />
+        <div className="max-w-[1600px] mx-auto px-6 sm:px-12 relative z-10">
+          <header className="mb-24 text-center flex flex-col items-center">
+            <div className="mb-10 inline-flex items-center gap-3 px-6 py-2 bg-black text-white rounded-full shadow-lg shadow-black/10 animate-in zoom-in-50 duration-700">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[8px] font-black uppercase tracking-[0.4em]">Exclusive Premium Store</span>
+            </div>
+
+            <h2 className="text-5xl md:text-5xl font-serif font-black tracking-tighter uppercase leading-none mb-4 text-zinc-900">
+              {config.title}
+            </h2>
+
+            <div className="flex items-center justify-center gap-8 w-full max-w-2xl opacity-40">
+              <div className="h-[1px] flex-grow bg-zinc-400" />
+              <span className="text-[11px] font-bold uppercase tracking-[0.6em] whitespace-nowrap text-zinc-600 italic font-serif">
+                The Pillars of Excellence
+              </span>
+              <div className="h-[1px] flex-grow bg-zinc-400" />
+            </div>
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -193,15 +209,17 @@ const Home: React.FC = () => {
 
   return (
     <div className="animate-in fade-in duration-1000 overflow-hidden">
-      {HOME_CONFIG.sections.map((section, index) => {
-        switch (section.type) {
-          case 'banner': return renderBanner(section as BannerConfig, index);
-          case 'spotlight': return renderSpotlight(section as SpotlightConfig, index);
-          case 'grid': return renderGrid(section as GridConfig, index);
-          case 'brands': return renderBrands(section as BrandsConfig, index);
-          default: return null;
-        }
-      })}
+      <div className="space-y-12 bg-white">
+        {HOME_CONFIG.sections?.map((section, index) => {
+          switch (section.type) {
+            case 'banner': return renderBanner(section as BannerConfig, index);
+            case 'spotlight': return renderSpotlight(section as SpotlightConfig, index);
+            case 'grid': return renderGrid(section as GridConfig, index);
+            case 'brands': return renderBrands(section as BrandsConfig, index);
+            default: return null;
+          }
+        })}
+      </div>
 
       {/* Static Sections */}
       {/* Flagship Store Section */}

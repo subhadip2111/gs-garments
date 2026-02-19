@@ -386,7 +386,7 @@ export const HOME_CONFIG: HomeConfig = {
       type: 'banner',
       imageUrl: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2400&auto=format&fit=crop',
       title: 'Refined \n Essentials.',
-      subtitle: 'Established 2012 — The Global Collective',
+      subtitle: 'Our New Brand Exclusive Premium Store \n Established 2012 — The Global Collective',
       description: 'A curated house of iconic labels. From high-performance activewear to timeless tailored linen.',
       ctaText: 'Shop The Collection',
       ctaLink: '/shop',
@@ -398,7 +398,7 @@ export const HOME_CONFIG: HomeConfig = {
       type: 'banner',
       imageUrl: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=2400&auto=format&fit=crop',
       title: 'The Modern \n Curator.',
-      subtitle: 'Spring Summer 2026 Collection',
+      subtitle: 'Our New Brand Exclusive Premium Store \n Spring Summer 2026 Collection',
       ctaText: 'Explore Lookbook',
       ctaLink: '/shop?tag=SS26',
       badge: 'New Season'
