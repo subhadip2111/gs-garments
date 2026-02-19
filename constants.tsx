@@ -1,7 +1,74 @@
 
-import { Product, Review, HomeConfig } from './types';
+import { Product, Review, HomeConfig, Coupon, ComboOffer } from './types';
+
+export const MOCK_COUPONS: Coupon[] = [
+  { id: 'c1', code: 'HI-FASHION', discountType: 'percentage', discountValue: 10, minPurchase: 1000, description: '10% OFF on orders above ₹1000' },
+  { id: 'c2', code: 'GS-FIRST', discountType: 'fixed', discountValue: 200, minPurchase: 1999, description: 'Flat ₹200 OFF on orders above ₹1999' },
+  { id: 'c3', code: 'LUXE-GS', discountType: 'percentage', discountValue: 15, minPurchase: 4999, description: '15% OFF on luxury collection above ₹4999' }
+];
+
+export const MOCK_COMBO_OFFERS: ComboOffer[] = [
+  { id: 'combo1', threshold: 2000, discount: 200, label: 'Style Pioneer Reward', description: 'Get ₹200 OFF on orders above ₹2000' },
+  { id: 'combo2', threshold: 3500, discount: 450, label: 'Heritage Elite Reward', description: 'Get ₹450 OFF on orders above ₹3500' },
+  { id: 'combo3', threshold: 5000, discount: 750, label: 'Global Sovereign Reward', description: 'Get ₹750 OFF on orders above ₹5000' }
+];
 
 export const CATEGORIES = ['Men', 'Women', 'Kids', 'Accessories'] as const;
+
+export interface NavStructure {
+  name: string;
+  id: string;
+  href: string;
+  subcategories: {
+    name: string;
+    items: string[];
+  }[];
+}
+
+export const NAV_ITEMS_STRUCTURE: NavStructure[] = [
+  {
+    name: 'Men',
+    id: 'Men',
+    href: '/shop?category=Men',
+    subcategories: [
+      { name: 'Topwear', items: ['T-shirts', 'Casual Shirts', 'Formal Shirts', 'Sweatshirts', 'Jackets'] },
+      { name: 'Bottomwear', items: ['Jeans', 'Casual Trousers', 'Formal Trousers', 'Shorts', 'Track Pants'] },
+      { name: 'Footwear', items: ['Casual Shoes', 'Sports Shoes', 'Formal Shoes', 'Sneakers', 'Sandals'] },
+      { name: 'Accessories', items: ['Belts', 'Watches', 'Wallets', 'Sunglasses', 'Bags'] }
+    ]
+  },
+  {
+    name: 'Women',
+    id: 'Women',
+    href: '/shop?category=Women',
+    subcategories: [
+      { name: 'Indian & Fusion Wear', items: ['Kurtas & Suits', 'Sarees', 'Ethnic Wear', 'Leggings & Salwars', 'Skirts'] },
+      { name: 'Western Wear', items: ['Dresses', 'Tops', 'Tshirts', 'Jeans', 'Trousers & Capris'] },
+      { name: 'Footwear', items: ['Flats', 'Heels', 'Casual Shoes', 'Sports Shoes', 'Boots'] },
+      { name: 'Lingerie & Sleepwear', items: ['Bra', 'Briefs', 'Sleepwear', 'Shapewear', 'Camisoles'] }
+    ]
+  },
+  {
+    name: 'Kids',
+    id: 'Kids',
+    href: '/shop?category=Kids',
+    subcategories: [
+      { name: 'Boys Clothing', items: ['T-Shirts', 'Shirts', 'Shorts', 'Jeans', 'Trousers'] },
+      { name: 'Girls Clothing', items: ['Dresses', 'Tops', 'Tshirts', 'Clothing Sets', 'Lehenga Choli'] },
+      { name: 'Infants', items: ['Bodysuits', 'Clothing Sets', 'Tshirts & Tops', 'Dresses', 'Sleepwear'] },
+      { name: 'Kids Footwear', items: ['Casual Shoes', 'Flipflops', 'Sports Shoes', 'Flats', 'Sandals'] }
+    ]
+  },
+  {
+    name: 'Essentials',
+    id: 'Accessories',
+    href: '/shop?category=Accessories',
+    subcategories: [
+      { name: 'Grooming', items: ['Fragrances', 'Hair Care', 'Skin Care', 'Beard Care', 'Bath & Body'] },
+      { name: 'Gadgets', items: ['Smart Wearables', 'Headphones', 'Speakers', 'Power Banks', 'Mobile Accessories'] }
+    ]
+  }
+];
 
 export const LAUNCH_PROMOS = [
   { id: 'p1', code: 'GSLAUNCH25', discount: '25% OFF', description: 'On your first order from the Heritage Collection' },
@@ -41,6 +108,65 @@ export const MOCK_REVIEWS: Review[] = [
 ];
 
 export const MOCK_PRODUCTS: Product[] = [
+  {
+    id: 'levis-505-straight',
+    name: 'Men 505 Straight Fit Heavy Fade Stretchable Jeans',
+    brand: 'Levis',
+    category: 'Men',
+    subcategory: 'Jeans',
+    price: 1733,
+    originalPrice: 3399,
+    description: 'Medium shade, heavy fade blue jeans. Straight fit, mid-rise. Clean look. Stretchable. 5 pocket. Regular length.',
+    images: [
+      'https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1591047134402-3143c683884e?auto=format&fit=crop&q=80&w=1200'
+    ],
+    sizes: ['28', '30', '32', '34', '36', '38', '40', '42'],
+    colors: ['Medium Blue'],
+    rating: 4.1,
+    reviewsCount: 121,
+    stock: { '28': 10, '30': 15, '32': 20, '34': 3, '36': 10, '38': 1, '40': 5, '42': 0 },
+    isTrending: true,
+    sku: '35552268',
+    fabric: '83% Cotton, 16% Polyester, 1% Elastane',
+    sizeAndFit: [
+      'Fit: Straight Fit',
+      'Stretchable',
+      "The model (height 6') is wearing a size 32"
+    ],
+    materialAndCare: [
+      '83% Cotton, 16% Polyester, 1% Elastane',
+      'Machine Wash'
+    ],
+    specifications: [
+      'Medium shade, heavy fade blue jeans',
+      'Straight fit, mid-rise',
+      'Clean look',
+      'Stretchable',
+      '5 pocket',
+      'Regular length'
+    ],
+    richSpecifications: [
+      { label: 'Distress', value: 'Clean Look' },
+      { label: 'Waist Rise', value: 'Mid-Rise' },
+      { label: 'Fade', value: 'Heavy Fade' },
+      { label: 'Shade', value: 'Medium' },
+      { label: 'Fit', value: 'Straight Fit' },
+      { label: 'Length', value: 'Regular' },
+      { label: 'Waistband', value: 'With belt loops' },
+      { label: 'Stretch', value: 'Stretchable' }
+    ],
+    priceDetails: {
+      mrp: 3399,
+      discount: 49,
+      sellingPrice: 1733
+    },
+    bestOffers: [
+      { title: '7.5% Assured Cashback', description: '7.5% Instant Discount on Flipkart Axis Bank & SBI Credit Cards.' },
+      { title: 'EMI Options Available', description: 'EMI starting from Rs.81/month' }
+    ]
+  },
   // --- MEN (40 Items) ---
   ...Array.from({ length: 40 }, (_, i): Product => {
     const subcats = [

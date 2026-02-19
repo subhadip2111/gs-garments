@@ -8,7 +8,7 @@ import { supabase } from '../services/supabase';
 import { Address } from '../types';
 
 const Profile: React.FC = () => {
-  const { user, wishlist, logout, products } = useApp();
+  const { user, wishlist, logout, products, orders, placeOrder } = useApp();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'orders');
@@ -81,6 +81,19 @@ const Profile: React.FC = () => {
     } finally {
       setUpdatingMobile(false);
     }
+  };
+
+  const markAsDelivered = (orderId: string) => {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+
+    const updatedOrder = {
+      ...order,
+      status: 'Delivered' as const,
+      trackingSteps: order.trackingSteps.map(step => ({ ...step, isCompleted: true, date: step.date || new Date().toLocaleString() }))
+    };
+    // placeOrder is already destructured from useApp() at the top
+    placeOrder(updatedOrder);
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -221,16 +234,141 @@ const Profile: React.FC = () => {
               <span>{tab.label}</span>
             </button>
           ))}
+          <div className="mt-12 p-8 bg-zinc-50 rounded-2xl border border-zinc-100 hidden md:block">
+            <h5 className="text-[10px] font-black uppercase tracking-widest text-vogue-600 mb-4">Platform Feedback</h5>
+            <p className="text-[9px] text-zinc-500 mb-6 font-medium italic">"The curation is exceptional. GS has redefined my wardrobe narrative."</p>
+            <button
+              onClick={() => {
+                const text = "Highly impressed with the curated collection at GS Garments. The attention to detail and premium service is unmatched! #GSGarments #LuxuryFashion";
+                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+              }}
+              className="w-full py-3 bg-white border border-zinc-200 text-[8px] font-black uppercase tracking-widest hover:border-black transition-all"
+            >
+              Share Your Experience
+            </button>
+          </div>
         </nav>
 
         <div className="flex-grow">
           {activeTab === 'orders' && (
             <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="py-20 text-center border-2 border-dashed border-gray-100 rounded-sm">
-                <i className="fa-solid fa-clock-rotate-left text-4xl text-gray-200 mb-4"></i>
-                <p className="text-gray-400 text-sm font-light uppercase tracking-widest">No previous history found</p>
-                <button onClick={() => navigate('/shop')} className="mt-6 text-[10px] font-bold uppercase tracking-widest underline decoration-2 underline-offset-4 hover:text-black">Return to Store</button>
-              </div>
+              {orders.length > 0 ? (
+                <div className="space-y-8">
+                  {orders.map(order => (
+                    <div key={order.id} className="bg-white border border-zinc-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                      <div className="p-6 bg-zinc-50/50 border-b border-zinc-100 flex flex-wrap justify-between items-center gap-4">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Order Identity</p>
+                          <p className="text-sm font-black tracking-tight">{order.id}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Placed On</p>
+                          <p className="text-sm font-bold">{order.date}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Total Amount</p>
+                          <p className="text-sm font-black">₹{order.total.toLocaleString('en-IN')}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {order.status !== 'Delivered' && (
+                            <button
+                              onClick={() => markAsDelivered(order.id)}
+                              className="px-3 py-1 bg-white border border-black text-[8px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all shadow-sm"
+                            >
+                              Confirm Delivery
+                            </button>
+                          )}
+                          <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-[0.2em] ${order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' : 'bg-black text-white'}`}>
+                            {order.status}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                          <div className="space-y-6">
+                            {order.items.map((item, idx) => {
+                              const product = catalog.find(p => p.id === item.productId);
+                              return (
+                                <div key={idx} className="flex gap-4 group">
+                                  <div className="w-20 aspect-[3/4] bg-zinc-100 rounded-lg overflow-hidden flex-shrink-0">
+                                    <img src={product?.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={product?.name} />
+                                  </div>
+                                  <div className="flex-grow space-y-1">
+                                    <h4 className="text-sm font-black tracking-tight group-hover:text-vogue-600 transition-colors uppercase">{product?.name}</h4>
+                                    <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Dimension: {item.selectedSize} | Qty: {item.quantity}</p>
+                                    <p className="text-xs font-serif font-bold mt-2">₹{(item.priceAtPurchase || product?.price || 0).toLocaleString('en-IN')}</p>
+
+                                    {order.status === 'Delivered' && (
+                                      <div className="flex gap-4 mt-4">
+                                        <button onClick={() => navigate(`/product/${item.productId}`)} className="text-[9px] font-black uppercase tracking-widest underline underline-offset-4 hover:text-black">Write Review</button>
+                                        <button onClick={() => {
+                                          const text = `I just received my ${product?.name} from GS Garments! The quality is amazing. #GSGarments #Fashion`;
+                                          const url = window.location.origin + `#/product/${item.productId}`;
+                                          window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+                                        }} className="text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-sky-500 flex items-center gap-1">
+                                          <i className="fa-brands fa-twitter"></i> Share Experience
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          <div className="bg-zinc-50/30 p-8 rounded-2xl">
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] mb-8 text-black flex items-center gap-3">
+                              Tracking Progress
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            </h4>
+                            <div className="space-y-8 relative">
+                              <div className="absolute left-1.5 top-2 bottom-2 w-[1px] bg-zinc-200"></div>
+                              {order.trackingSteps.map((step, idx) => (
+                                <div key={idx} className="relative pl-8 group">
+                                  <div className={`absolute left-0 top-1 w-3 h-3 rounded-full border-2 bg-white transition-all duration-500 ${step.isCompleted ? 'bg-black border-black scale-110' : 'border-zinc-200 group-hover:border-zinc-400'}`}></div>
+                                  <div className="space-y-1">
+                                    <p className={`text-[10px] font-black uppercase tracking-widest ${step.isCompleted ? 'text-black' : 'text-zinc-400'}`}>{step.status}</p>
+                                    <p className="text-[9px] text-zinc-500 leading-relaxed font-medium">{step.description}</p>
+                                    {step.date && <p className="text-[8px] text-zinc-400 font-bold uppercase mt-1 italic">{step.date}</p>}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="mt-10 pt-8 border-t border-zinc-100">
+                              <div className="flex justify-between items-center mb-4">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Estimated Arrival</span>
+                                <span className="text-sm font-black tracking-tighter">{order.deliveryDate}</span>
+                              </div>
+                              <p className="text-[9px] text-zinc-400 leading-relaxed italic">
+                                {order.type === 'cart'
+                                  ? "Note: This is a collective shipment. All items in your curated bag will be delivered together."
+                                  : "Note: This is a fast-track single shipment with priority fulfillment."
+                                }
+                              </p>
+                              <div className="mt-8">
+                                <button className="w-full py-4 border-2 border-black text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all rounded-full shadow-lg">
+                                  Contact Concierge
+                                </button>
+                                <button className="w-full mt-3 py-4 text-[9px] font-bold uppercase tracking-widest text-zinc-400 hover:text-black">
+                                  Download Invoice (PDF)
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-20 text-center border-2 border-dashed border-gray-100 rounded-sm">
+                  <i className="fa-solid fa-clock-rotate-left text-4xl text-gray-200 mb-4"></i>
+                  <p className="text-gray-400 text-sm font-light uppercase tracking-widest">No previous history found</p>
+                  <button onClick={() => navigate('/shop')} className="mt-6 text-[10px] font-bold uppercase tracking-widest underline decoration-2 underline-offset-4 hover:text-black">Return to Store</button>
+                </div>
+              )}
             </div>
           )}
 

@@ -46,13 +46,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
 
-        {/* Wishlist Button - Minimalist */}
-        <button
-          onClick={handleWishlistToggle}
-          className="absolute top-4 right-4 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        >
-          <i className={`${isWishlisted ? 'fa-solid text-red-500' : 'fa-regular text-black'} fa-heart text-[10px]`}></i>
-        </button>
+        {/* Action Buttons - Myntra Style */}
+        <div className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <button
+            onClick={handleWishlistToggle}
+            className={`w-8 h-8 flex items-center justify-center rounded-full backdrop-blur-sm shadow-sm transition-all ${isWishlisted ? 'bg-white text-red-500' : 'bg-white/80 text-black hover:bg-white'}`}
+          >
+            <i className={`${isWishlisted ? 'fa-solid' : 'fa-regular'} fa-heart text-[10px]`}></i>
+          </button>
+        </div>
 
         {/* Simple Badges */}
         <div className="absolute top-4 left-4 flex flex-col gap-1.5 z-10">

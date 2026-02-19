@@ -10,8 +10,9 @@ import {
   removeFromCart,
   updateCartQuantity,
   toggleWishlist,
-  toggleComparison,
-  clearComparison
+  placeOrder,
+  clearCart,
+  recalculateDiscounts
 } from './store/cartSlice';
 import {
   setQuickViewProduct,
@@ -53,7 +54,7 @@ export const useApp = () => {
 
   const cart = useSelector((state: RootState) => state.cart.cart);
   const wishlist = useSelector((state: RootState) => state.cart.wishlist);
-  const comparisonList = useSelector((state: RootState) => state.cart.comparisonList);
+  const orders = useSelector((state: RootState) => state.cart.orders);
   const user = useSelector((state: RootState) => state.auth.user);
   const products = useSelector((state: RootState) => state.products.items);
   const isLoadingProducts = useSelector((state: RootState) => state.products.isLoading);
@@ -62,21 +63,34 @@ export const useApp = () => {
   const isStyleAssistantOpen = useSelector((state: RootState) => state.ui.isStyleAssistantOpen);
   const userStyleProfile = useSelector((state: RootState) => state.ui.userStyleProfile);
   const userLocation = useSelector((state: RootState) => state.ui.userLocation);
+  const appliedCouponId = useSelector((state: RootState) => state.cart.appliedCouponId);
+  const comboDiscount = useSelector((state: RootState) => state.cart.comboDiscount);
 
   return {
-    cart, wishlist, comparisonList, user, products, isLoadingProducts, quickViewProduct, sharedProduct,
+    cart, wishlist, orders, user, products, isLoadingProducts, quickViewProduct, sharedProduct,
     isStyleAssistantOpen, userStyleProfile, userLocation,
 
     // Actions
-    addToCart: (productId: string, size: string, color: string, quantity: number) =>
-      dispatch(addToCart({ productId, size, color, quantity })),
-    removeFromCart: (productId: string, size: string, color: string) =>
-      dispatch(removeFromCart({ productId, size, color })),
-    updateCartQuantity: (productId: string, size: string, color: string, delta: number) =>
-      dispatch(updateCartQuantity({ productId, size, color, delta })),
+    addToCart: (productId: string, size: string, color: string, quantity: number) => {
+      dispatch(addToCart({ productId, size, color, quantity }));
+      dispatch(recalculateDiscounts());
+    },
+    removeFromCart: (productId: string, size: string, color: string) => {
+      dispatch(removeFromCart({ productId, size, color }));
+      dispatch(recalculateDiscounts());
+    },
+    updateCartQuantity: (productId: string, size: string, color: string, delta: number) => {
+      dispatch(updateCartQuantity({ productId, size, color, delta }));
+      dispatch(recalculateDiscounts());
+    },
     toggleWishlist: (productId: string) => dispatch(toggleWishlist(productId)),
-    toggleComparison: (productId: string) => dispatch(toggleComparison(productId)),
-    clearComparison: () => dispatch(clearComparison()),
+    placeOrder: (order: any) => dispatch(placeOrder(order)),
+    clearCart: () => {
+      dispatch(clearCart());
+      dispatch(recalculateDiscounts());
+    },
+    appliedCouponId,
+    comboDiscount,
     setQuickViewProduct: (product: Product | null) => dispatch(setQuickViewProduct(product)),
     setSharedProduct: (product: Product | null) => dispatch(setSharedProduct(product)),
     setIsStyleAssistantOpen: (isOpen: boolean) => dispatch(setIsStyleAssistantOpen(isOpen)),

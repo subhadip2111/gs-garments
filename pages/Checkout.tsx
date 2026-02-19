@@ -1,27 +1,51 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../App';
-import { MOCK_PRODUCTS } from '../constants';
+import { MOCK_PRODUCTS, MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
+import { Order, CartItem } from '../types';
 
 const Checkout: React.FC = () => {
-  const { cart, user } = useApp();
+  const { cart, user, placeOrder, appliedCouponId, comboDiscount } = useApp();
   const navigate = useNavigate();
+  const location = useLocation();
+  const buyNowItem = location.state?.buyNowItem as CartItem | undefined;
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [mobile, setMobile] = useState(user?.user_metadata?.mobile || '');
   const [mobileError, setMobileError] = useState('');
 
-  if (cart.length === 0) {
+  if (!buyNowItem && cart.length === 0) {
     navigate('/shop');
     return null;
   }
 
-  const subtotal = cart.reduce((acc, item) => {
+  const itemsToPurchase = buyNowItem ? [buyNowItem] : cart;
+
+  const subtotal = itemsToPurchase.reduce((acc, item) => {
     const product = MOCK_PRODUCTS.find(p => p.id === item.productId);
     return acc + (product?.price || 0) * item.quantity;
   }, 0);
-  const total = subtotal + (subtotal > 5000 ? 0 : 150);
+
+  const totalMrp = itemsToPurchase.reduce((acc, item) => {
+    const product = MOCK_PRODUCTS.find(p => p.id === item.productId);
+    return acc + (product?.originalPrice || product?.price || 0) * item.quantity;
+  }, 0);
+
+  const bagDiscount = totalMrp - subtotal;
+  const shipping = subtotal > 5000 ? 0 : 150;
+
+  const coupon = MOCK_COUPONS.find(c => c.id === appliedCouponId);
+  let couponDiscount = 0;
+  if (coupon) {
+    if (coupon.discountType === 'percentage') {
+      couponDiscount = Math.round((subtotal - comboDiscount) * coupon.discountValue / 100);
+    } else {
+      couponDiscount = coupon.discountValue;
+    }
+  }
+
+  const finalTotal = subtotal + shipping - comboDiscount - couponDiscount;
 
   const validateMobile = (num: string) => {
     if (!num) return 'Mobile number is required for order updates.';
@@ -41,10 +65,34 @@ const Checkout: React.FC = () => {
 
   const handlePlaceOrder = () => {
     setLoading(true);
+
+    // Create new order object
+    const newOrder: Order = {
+      id: `ORD-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+      date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+      items: itemsToPurchase.map(item => ({
+        ...item,
+        priceAtPurchase: MOCK_PRODUCTS.find(p => p.id === item.productId)?.price || 0
+      })),
+      total: finalTotal,
+      status: 'Processing',
+      type: buyNowItem ? 'buy-now' : 'cart',
+      appliedCoupon: appliedCouponId || undefined,
+      discountAmount: comboDiscount + couponDiscount,
+      deliveryDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+      trackingSteps: [
+        { status: 'Order Accepted', description: 'Your order has been received and is being processed.', date: new Date().toLocaleString(), isCompleted: true },
+        { status: 'Packed', description: 'Item has been quality checked and packed.', date: '', isCompleted: false },
+        { status: 'Shipped', description: 'Parcel has been handed over to our courier partner.', date: '', isCompleted: false },
+        { status: 'Out for Delivery', description: 'Our delivery executive is on the way to your location.', date: '', isCompleted: false },
+        { status: 'Delivered', description: 'Parcel successfully delivered.', date: '', isCompleted: false },
+      ]
+    };
+
     setTimeout(() => {
+      placeOrder(newOrder); // Persist to Redux
       setLoading(false);
-      alert(`Order placed successfully! Tracking details sent to ${mobile} via SMS.`);
-      navigate('/profile');
+      navigate('/profile?tab=orders');
     }, 2000);
   };
 
@@ -125,38 +173,32 @@ const Checkout: React.FC = () => {
             <div className="space-y-8 animate-in fade-in duration-500">
               <h2 className="text-2xl font-serif font-bold tracking-tight">Payment Method</h2>
               <div className="space-y-4">
-                <label className="flex items-center p-4 border border-black cursor-pointer bg-gray-50">
+                <label className="flex items-center p-6 border-2 border-black cursor-pointer bg-zinc-50 rounded-xl shadow-sm">
                   <input type="radio" name="payment" defaultChecked className="w-4 h-4 accent-black mr-4" />
                   <div className="flex-grow flex justify-between items-center">
-                    <span className="text-sm font-bold uppercase tracking-widest">UPI / QR Scan</span>
-                    <div className="flex space-x-2 text-xl opacity-60">
-                      <i className="fa-solid fa-qrcode"></i>
+                    <div>
+                      <span className="text-sm font-bold uppercase tracking-widest block">Cash on Delivery</span>
+                      <span className="text-[10px] text-zinc-400 font-medium mt-1 block uppercase tracking-tighter">Pay securely when your package arrives</span>
                     </div>
-                  </div>
-                </label>
-                <label className="flex items-center p-4 border border-gray-200 cursor-pointer hover:border-black transition-colors">
-                  <input type="radio" name="payment" className="w-4 h-4 accent-black mr-4" />
-                  <div className="flex-grow flex justify-between items-center">
-                    <span className="text-sm font-bold uppercase tracking-widest">Credit / Debit Card</span>
-                    <div className="flex space-x-2 text-xl opacity-60">
-                      <i className="fa-brands fa-cc-visa"></i>
-                      <i className="fa-brands fa-cc-mastercard"></i>
+                    <div className="flex space-x-2 text-2xl opacity-40">
+                      <i className="fa-solid fa-hand-holding-dollar"></i>
                     </div>
-                  </div>
-                </label>
-                <label className="flex items-center p-4 border border-gray-200 cursor-pointer hover:border-black transition-colors">
-                  <input type="radio" name="payment" className="w-4 h-4 accent-black mr-4" />
-                  <div className="flex-grow flex justify-between items-center">
-                    <span className="text-sm font-bold uppercase tracking-widest">Cash on Delivery</span>
                   </div>
                 </label>
               </div>
 
-              <div className="flex space-x-4 pt-6">
-                <button onClick={() => setStep(1)} className="text-xs font-bold uppercase tracking-widest underline">Back</button>
+              <div className="p-4 bg-zinc-100/50 rounded-lg flex gap-3 items-start">
+                <i className="fa-solid fa-circle-info text-zinc-400 mt-1 text-xs"></i>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold leading-relaxed">
+                  Note: Digital payment methods are currently disabled for maintenance. We only accept Cash on Delivery at this time.
+                </p>
+              </div>
+
+              <div className="flex space-x-6 pt-6">
+                <button onClick={() => setStep(1)} className="text-xs font-bold uppercase tracking-widest underline underline-offset-4 hover:text-zinc-600 transition-colors">Back</button>
                 <button
                   onClick={() => setStep(3)}
-                  className="bg-black text-white px-12 py-4 text-xs font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors"
+                  className="bg-black text-white px-16 py-5 text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 transition-all shadow-xl rounded-full"
                 >
                   Review Order
                 </button>
@@ -204,16 +246,54 @@ const Checkout: React.FC = () => {
             </div>
             <div className="space-y-4 pt-6 border-t border-gray-100">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Subtotal</span>
-                <span>₹{subtotal.toLocaleString('en-IN')}</span>
+                <span className="text-gray-500 font-medium">Total MRP</span>
+                <span className="font-bold text-zinc-400 line-through">₹{totalMrp.toLocaleString('en-IN')}</span>
               </div>
+
+              {bagDiscount > 0 && (
+                <div className="flex justify-between text-sm text-emerald-600 font-bold">
+                  <span>Bag Discount</span>
+                  <span>- ₹{bagDiscount.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+
+              {comboDiscount > 0 && (
+                <div className="flex justify-between text-sm text-orange-600 font-bold">
+                  <span>Combo Discount</span>
+                  <span>-₹{comboDiscount.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+
+              {coupon && (
+                <div className="flex justify-between text-sm text-orange-600 font-bold">
+                  <span>Coupon Discount</span>
+                  <span>-₹{couponDiscount.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Shipping</span>
-                <span>{subtotal > 5000 ? 'Free' : '₹150.00'}</span>
+                <span className="text-gray-500 font-medium">Shipping</span>
+                <span>{shipping === 0 ? 'Free' : `₹${shipping}`}</span>
               </div>
-              <div className="flex justify-between text-lg font-bold pt-4">
-                <span>Total</span>
-                <span>₹{total.toLocaleString('en-IN')}</span>
+
+              {(comboDiscount + couponDiscount) > 0 && (
+                <div className="mt-6 py-4 px-4 bg-zinc-950 rounded-2xl border border-zinc-800 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-2 opacity-10">
+                    <i className="fa-solid fa-gift text-2xl text-orange-400"></i>
+                  </div>
+                  <p className="text-[9px] font-black text-orange-500 uppercase tracking-widest mb-1 leading-none">Checkout Reward</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xl font-black tracking-tighter text-white">₹{(comboDiscount + couponDiscount).toLocaleString('en-IN')} OFF</span>
+                    <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Applied</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-between items-center pt-6 mt-4 border-t border-gray-100">
+                <span className="text-xs font-black uppercase tracking-widest">Total</span>
+                <div className="text-right">
+                  <span className="text-2xl font-black tracking-tighter text-zinc-900">₹{finalTotal.toLocaleString('en-IN')}</span>
+                </div>
               </div>
             </div>
           </div>

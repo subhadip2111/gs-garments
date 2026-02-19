@@ -1,17 +1,21 @@
-
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { CartItem } from '../types';
+import { CartItem, Order } from '../types';
+import { MOCK_COUPONS, MOCK_COMBO_OFFERS, MOCK_PRODUCTS } from '../constants';
 
 interface CartState {
   cart: CartItem[];
   wishlist: string[];
-  comparisonList: string[];
+  orders: Order[];
+  appliedCouponId: string | null;
+  comboDiscount: number;
 }
 
 const initialState: CartState = {
   cart: [],
   wishlist: [],
-  comparisonList: [],
+  orders: [],
+  appliedCouponId: null,
+  comboDiscount: 0
 };
 
 const cartSlice = createSlice({
@@ -52,28 +56,70 @@ const cartSlice = createSlice({
         state.wishlist.push(productId);
       }
     },
-    toggleComparison: (state, action: PayloadAction<string>) => {
-      const productId = action.payload;
-      if (state.comparisonList.includes(productId)) {
-        state.comparisonList = state.comparisonList.filter(id => id !== productId);
-      } else {
-        if (state.comparisonList.length < 4) {
-          state.comparisonList.push(productId);
-        }
-      }
+    clearCart: (state) => {
+      state.cart = [];
     },
-    clearComparison: (state) => {
-      state.comparisonList = [];
+    placeOrder: (state, action: PayloadAction<Order>) => {
+      // If order ID exists, update it, otherwise unshift
+      const index = state.orders.findIndex(o => o.id === action.payload.id);
+      if (index > -1) {
+        state.orders[index] = action.payload;
+      } else {
+        state.orders.unshift(action.payload);
+      }
+      state.cart = [];
+      state.appliedCouponId = null;
+      state.comboDiscount = 0;
+    },
+    recalculateDiscounts: (state) => {
+      // 1. Calculate Base Total (Selling Price)
+      const baseTotal = state.cart.reduce((acc, item) => {
+        const product = MOCK_PRODUCTS.find(p => p.id === item.productId);
+        return acc + (product ? product.price * item.quantity : 0);
+      }, 0);
+
+      // 2. Combo Offers (Threshold based)
+      let bestCombo = 0;
+      MOCK_COMBO_OFFERS.forEach(offer => {
+        if (baseTotal >= offer.threshold) {
+          bestCombo = Math.max(bestCombo, offer.discount);
+        }
+      });
+      state.comboDiscount = bestCombo;
+
+      // 3. Auto-Coupon (Best fit)
+      const totalAfterCombo = baseTotal - bestCombo;
+      let bestCouponId = null;
+      let maxDiscount = 0;
+
+      MOCK_COUPONS.forEach(coupon => {
+        if (totalAfterCombo >= coupon.minPurchase) {
+          let currentDiscount = 0;
+          if (coupon.discountType === 'percentage') {
+            currentDiscount = (totalAfterCombo * coupon.discountValue) / 100;
+          } else {
+            currentDiscount = coupon.discountValue;
+          }
+
+          if (currentDiscount > maxDiscount) {
+            maxDiscount = currentDiscount;
+            bestCouponId = coupon.id;
+          }
+        }
+      });
+
+      state.appliedCouponId = bestCouponId;
     }
   },
 });
 
-export const { 
-  addToCart, 
-  removeFromCart, 
-  updateCartQuantity, 
-  toggleWishlist, 
-  toggleComparison,
-  clearComparison
+export const {
+  addToCart,
+  removeFromCart,
+  updateCartQuantity,
+  toggleWishlist,
+  placeOrder,
+  clearCart,
+  recalculateDiscounts
 } = cartSlice.actions;
 export default cartSlice.reducer;

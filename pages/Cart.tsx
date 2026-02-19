@@ -2,10 +2,11 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../App';
-import { MOCK_PRODUCTS } from '../constants';
+import { MOCK_PRODUCTS, MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
+import { SmartOfferWidget } from './ProductDetail';
 
 const Cart: React.FC = () => {
-  const { cart, removeFromCart, updateCartQuantity } = useApp();
+  const { cart, removeFromCart, updateCartQuantity, appliedCouponId, comboDiscount } = useApp();
   const navigate = useNavigate();
 
   const cartDetails = cart.map(item => {
@@ -14,17 +15,26 @@ const Cart: React.FC = () => {
   });
 
   const subtotal = cartDetails.reduce((acc, item) => acc + (item.product?.price || 0) * item.quantity, 0);
-  
-  // Calculate total savings from discounts
-  const totalSavings = cartDetails.reduce((acc, item) => {
-    if (item.product?.originalPrice) {
-      return acc + (item.product.originalPrice - item.product.price) * item.quantity;
-    }
-    return acc;
+
+  const totalMrp = cartDetails.reduce((acc, item) => {
+    return acc + (item.product?.originalPrice || item.product?.price || 0) * item.quantity;
   }, 0);
 
+  const bagDiscount = totalMrp - subtotal;
+
   const shipping = subtotal > 5000 ? 0 : 150;
-  const total = subtotal + shipping;
+
+  const coupon = MOCK_COUPONS.find(c => c.id === appliedCouponId);
+  let couponDiscount = 0;
+  if (coupon) {
+    if (coupon.discountType === 'percentage') {
+      couponDiscount = Math.round((subtotal - comboDiscount) * coupon.discountValue / 100);
+    } else {
+      couponDiscount = coupon.discountValue;
+    }
+  }
+
+  const finalTotal = subtotal + shipping - comboDiscount - couponDiscount;
 
   if (cart.length === 0) {
     return (
@@ -52,7 +62,7 @@ const Cart: React.FC = () => {
                 <div>
                   <div className="flex justify-between items-start">
                     <h3 className="text-lg font-medium">{item.product?.name}</h3>
-                    <button 
+                    <button
                       onClick={() => removeFromCart(item.productId, item.selectedSize, item.selectedColor)}
                       className="text-gray-400 hover:text-red-500 transition-colors"
                     >
@@ -60,11 +70,11 @@ const Cart: React.FC = () => {
                     </button>
                   </div>
                   <p className="text-sm text-gray-500 mt-1">{item.product?.category} • {item.product?.subcategory}</p>
-                  
+
                   {item.product?.originalPrice && (
                     <div className="mt-2 flex items-center gap-3">
-                       <span className="text-[9px] font-black bg-red-600 text-white px-2 py-0.5 uppercase tracking-widest">Offer Applied</span>
-                       <span className="text-xs text-gray-300 line-through italic">₹{item.product.originalPrice.toLocaleString('en-IN')}</span>
+                      <span className="text-[9px] font-black bg-red-600 text-white px-2 py-0.5 uppercase tracking-widest">Offer Applied</span>
+                      <span className="text-xs text-gray-300 line-through italic">₹{item.product.originalPrice.toLocaleString('en-IN')}</span>
                     </div>
                   )}
 
@@ -75,14 +85,14 @@ const Cart: React.FC = () => {
                 </div>
                 <div className="flex justify-between items-end mt-4">
                   <div className="flex items-center border border-gray-200">
-                    <button 
+                    <button
                       onClick={() => updateCartQuantity(item.productId, item.selectedSize, item.selectedColor, -1)}
                       className="px-3 py-1 hover:bg-gray-50 transition-colors text-xs font-bold"
                     >
                       -
                     </button>
                     <span className="px-4 py-1 text-xs font-bold">{item.quantity}</span>
-                    <button 
+                    <button
                       onClick={() => updateCartQuantity(item.productId, item.selectedSize, item.selectedColor, 1)}
                       className="px-3 py-1 hover:bg-gray-50 transition-colors text-xs font-bold"
                     >
@@ -92,9 +102,9 @@ const Cart: React.FC = () => {
                   <div className="text-right">
                     <p className="text-lg font-bold">₹{((item.product?.price || 0) * item.quantity).toLocaleString('en-IN')}</p>
                     {item.product?.originalPrice && (
-                       <p className="text-[9px] font-bold text-red-600 uppercase tracking-widest">
-                         Saved ₹{((item.product.originalPrice - item.product.price) * item.quantity).toLocaleString('en-IN')}
-                       </p>
+                      <p className="text-[9px] font-bold text-red-600 uppercase tracking-widest">
+                        Saved ₹{((item.product.originalPrice - item.product.price) * item.quantity).toLocaleString('en-IN')}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -107,39 +117,83 @@ const Cart: React.FC = () => {
         <div className="lg:w-1/3">
           <div className="bg-gray-50 p-8 sticky top-24 border border-gray-100">
             <h2 className="text-xs font-bold uppercase tracking-widest mb-6">Order Summary</h2>
+            <div className="mb-6">
+              <SmartOfferWidget currentTotal={subtotal} />
+            </div>
+
             <div className="space-y-4 mb-6 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-500">Subtotal</span>
-                <span className="font-semibold text-gray-400 italic">₹{(subtotal + totalSavings).toLocaleString('en-IN')}</span>
+                <span className="text-gray-500 font-medium">Total MRP</span>
+                <span className="font-bold text-zinc-400 line-through">₹{totalMrp.toLocaleString('en-IN')}</span>
               </div>
-              
-              {totalSavings > 0 && (
-                <div className="flex justify-between text-red-600 font-bold">
-                  <span>Offer Discount</span>
-                  <span>- ₹{totalSavings.toLocaleString('en-IN')}</span>
+
+              {bagDiscount > 0 && (
+                <div className="flex justify-between text-emerald-600 font-bold">
+                  <span>Bag Discount</span>
+                  <span>- ₹{bagDiscount.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+
+              {comboDiscount > 0 && (
+                <div className="flex justify-between text-orange-600 font-bold">
+                  <span>Combo Offer Reward</span>
+                  <span>- ₹{comboDiscount.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+
+              {coupon && (
+                <div className="flex justify-between text-orange-600 font-bold">
+                  <span>Coupon ({coupon.code})</span>
+                  <span>- ₹{couponDiscount.toLocaleString('en-IN')}</span>
                 </div>
               )}
 
               <div className="flex justify-between">
-                <span className="text-gray-500">Shipping</span>
+                <span className="text-gray-500 font-medium">Shipping</span>
                 <span className="font-semibold">{shipping === 0 ? 'FREE' : `₹${shipping}`}</span>
               </div>
 
-              {totalSavings > 0 && (
-                <div className="py-3 px-4 bg-red-50 border border-red-100 rounded-sm">
-                   <p className="text-[10px] font-black text-red-600 uppercase tracking-widest flex items-center gap-2">
-                     <i className="fa-solid fa-sparkles"></i>
-                     Total Bag Savings: ₹{totalSavings.toLocaleString('en-IN')}
-                   </p>
+              {bagDiscount + comboDiscount + couponDiscount > 0 && (
+                <div className="py-4 px-4 bg-orange-50 border border-orange-100 rounded-xl shadow-sm relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-2 opacity-5 transform rotate-12 group-hover:scale-110 transition-transform">
+                    <i className="fa-solid fa-fire text-3xl text-orange-600"></i>
+                  </div>
+                  <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest flex items-center gap-2 mb-1">
+                    <i className="fa-solid fa-sparkles animate-pulse"></i>
+                    Total Bag Savings
+                  </p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-black tracking-tighter text-zinc-900">₹{(bagDiscount + comboDiscount + couponDiscount).toLocaleString('en-IN')}</span>
+                    <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest">Congratulations!</span>
+                  </div>
                 </div>
               )}
 
-              <div className="border-t border-gray-200 pt-4 flex justify-between text-xl font-black tracking-tighter">
-                <span>Total</span>
-                <span>₹{total.toLocaleString('en-IN')}</span>
+              {bagDiscount + comboDiscount + couponDiscount > 0 && (
+                <div className="py-4 px-4 bg-orange-50 border border-orange-100 rounded-xl shadow-sm relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-2 opacity-5 transform rotate-12 group-hover:scale-110 transition-transform">
+                    <i className="fa-solid fa-fire text-3xl text-orange-600"></i>
+                  </div>
+                  <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest flex items-center gap-2 mb-1">
+                    <i className="fa-solid fa-sparkles animate-pulse"></i>
+                    Your Fashion Savings
+                  </p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-black tracking-tighter text-zinc-900">₹{(bagDiscount + comboDiscount + couponDiscount).toLocaleString('en-IN')}</span>
+                    <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest">Saved so far</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="border-t border-gray-200 pt-5 flex justify-between items-center">
+                <span className="text-xs font-black uppercase tracking-widest">Total Amount</span>
+                <div className="text-right">
+                  <span className="text-2xl font-black tracking-tighter">₹{finalTotal.toLocaleString('en-IN')}</span>
+                  <p className="text-[8px] font-bold text-emerald-500 uppercase tracking-widest">Inc. of all taxes</p>
+                </div>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => navigate('/checkout')}
               className="w-full bg-black text-white py-5 text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-zinc-800 transition-all mb-4 shadow-xl"
             >
