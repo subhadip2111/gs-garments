@@ -1,0 +1,8 @@
+{
+  "name": "GS - Premium Fashion Collective",
+  "description": "GS (Global Style) - A curated fashion e-commerce platform featuring leading brands like Pepe Jeans, Jockey, Turtle, and more. Experience AI-driven styling and high-end garment shopping.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
