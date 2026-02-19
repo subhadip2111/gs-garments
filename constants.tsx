@@ -327,22 +327,6 @@ export const HOME_CONFIG: HomeConfig = {
       badge: 'Launch Special: Free Shipping'
     },
     {
-      type: 'spotlight',
-      title: 'The Indigo Heritage \n Launch Event',
-      subtitle: 'Limited Time Curation',
-      description: 'Celebrate the launch of our updated Heritage Collection. For the next 48 hours, enjoy exclusive access to archive releases and commemorative pricing.',
-      imageUrl: 'https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=1200&auto=format&fit=crop',
-      promoId: 'p1',
-      brandName: 'PEPE'
-    },
-    {
-      type: 'ai-concierge',
-      title: 'Meet Your \n Personal Stylist.',
-      subtitle: 'Intelligent Curation',
-      description: '"Bespoke fashion guidance for the soul. Our concierge uses heritage data and real-time trends to refine your narrative."',
-      imageUrl: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=1200&auto=format&fit=crop'
-    },
-    {
       type: 'banner',
       imageUrl: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=2400&auto=format&fit=crop',
       title: 'The Modern \n Curator.',

@@ -5,7 +5,6 @@ import { useApp } from '../App';
 import ProductCard from '../components/ProductCard';
 import ProductSkeleton from '../components/ProductSkeleton';
 import ProductDetailSkeleton from '../components/ProductDetailSkeleton';
-import { getRelatedPairings } from '../services/gemini';
 import { Product, Review } from '../types';
 import Product360View from '../components/Product360View';
 
@@ -84,7 +83,7 @@ export const SmartOfferWidget: React.FC<{ currentTotal: number }> = ({ currentTo
 const ProductDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart, toggleWishlist, wishlist, setSharedProduct, setIsStyleAssistantOpen, userStyleProfile, user, isLoadingProducts } = useApp();
+  const { addToCart, toggleWishlist, wishlist, setSharedProduct, user, isLoadingProducts } = useApp();
 
   const product = MOCK_PRODUCTS.find(p => p.id === id);
   const [selectedSize, setSelectedSize] = useState('');
@@ -102,10 +101,8 @@ const ProductDetail: React.FC = () => {
   const [newReview, setNewReview] = useState({ rating: 5, comment: '', images: [] as string[] });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // AI Recommendations State
-  const [aiCuratedPairings, setAiCuratedPairings] = useState<Product[]>([]);
-  const [stylingReason, setStylingReason] = useState<string>('');
-  const [loadingPairings, setLoadingPairings] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [loadingRelated, setLoadingRelated] = useState(false);
 
   // Dynamic Delivery Logic
   const estimatedDeliveryDate = useMemo(() => {
@@ -122,22 +119,15 @@ const ProductDetail: React.FC = () => {
       setQuantity(1);
       setIs360Active(false);
 
-      // Trigger AI Pairings
-      fetchAiPairings(product);
+      // Trigger Related Products
+      fetchRelatedProducts(product);
     }
   }, [product, id]);
 
-  const fetchAiPairings = async (currentProd: Product) => {
-    setLoadingPairings(true);
-    const result = await getRelatedPairings(currentProd, MOCK_PRODUCTS, userStyleProfile);
-    if (result && result.recommendedIds) {
-      const recommended = MOCK_PRODUCTS.filter(p => result.recommendedIds.includes(p.id));
-      setAiCuratedPairings(recommended);
-      setStylingReason(result.stylingReason);
-    } else {
-      setAiCuratedPairings(MOCK_PRODUCTS.filter(p => p.id !== currentProd.id).slice(0, 4));
-    }
-    setLoadingPairings(false);
+  const fetchRelatedProducts = (currentProd: Product) => {
+    setLoadingRelated(true);
+    setRelatedProducts(MOCK_PRODUCTS.filter(p => p.id !== currentProd.id).slice(0, 4));
+    setLoadingRelated(false);
   };
 
   const handleHelpful = (reviewId: string) => {
@@ -195,11 +185,6 @@ const ProductDetail: React.FC = () => {
       </div>
     );
   }
-
-  const handleConsultStylist = () => {
-    setSharedProduct(product);
-    setIsStyleAssistantOpen(true);
-  };
 
   const handleBuyNow = () => {
     if (!selectedSize) {
@@ -604,20 +589,17 @@ const ProductDetail: React.FC = () => {
         </div>
       </section>
 
-      {/* AI-Powered Curated Pairings Section */}
+      {/* Related Products Section */}
       <section className="mt-12 pt-20 border-t border-gray-100">
         <div className="mb-12">
           <div className="flex items-center gap-4 mb-3">
-            <span className="text-vogue-500 text-[10px] font-bold uppercase tracking-[0.5em]">GS Intelligence</span>
+            <span className="text-vogue-500 text-[10px] font-bold uppercase tracking-[0.5em]">You May Also Like</span>
             <div className="h-px flex-grow bg-gray-100"></div>
           </div>
-          <h2 className="text-4xl font-serif font-bold tracking-tight mb-4">Curated Pairings</h2>
-          {stylingReason && !loadingPairings && (
-            <p className="text-sm text-gray-500 font-light italic border-l-2 border-vogue-500 pl-4 max-w-2xl animate-fade-in">"{stylingReason}"</p>
-          )}
+          <h2 className="text-4xl font-serif font-bold tracking-tight mb-4">Complete The Look</h2>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {loadingPairings ? [...Array(4)].map((_, i) => <ProductSkeleton key={i} />) : aiCuratedPairings.map(p => <ProductCard key={p.id} product={p} />)}
+          {loadingRelated ? [...Array(4)].map((_, i) => <ProductSkeleton key={i} />) : relatedProducts.map(p => <ProductCard key={p.id} product={p} />)}
         </div>
       </section>
     </div>

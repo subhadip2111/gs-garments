@@ -2,16 +2,37 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../App';
+import { useToast } from '../components/Toast';
 import { MOCK_PRODUCTS } from '../constants';
 import ProductCard from '../components/ProductCard';
 import { supabase } from '../services/supabase';
 import { Address } from '../types';
 
 const Profile: React.FC = () => {
-  const { user, wishlist, logout, products, orders, placeOrder } = useApp();
+  const { user, wishlist, logout, products, orders, placeOrder, cancelOrder } = useApp();
+  const { showToast } = useToast();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'orders');
+
+  // Platform Feedback State
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [platformRating, setPlatformRating] = useState(0);
+  const [platformFeedbackText, setPlatformFeedbackText] = useState('');
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+  // Cancellation State
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
+  const CANCEL_REASONS = [
+    "Changed my mind",
+    "Found a better price elsewhere",
+    "Ordered by mistake",
+    "Delivery time is too long",
+    "Need to change shipping address"
+  ];
 
   // Form State
   const [updating, setUpdating] = useState(false);
@@ -27,10 +48,12 @@ const Profile: React.FC = () => {
   const [addressForm, setAddressForm] = useState<Omit<Address, 'id'>>({
     label: '',
     fullName: '',
+    mobile: '',
+    village: '',
     street: '',
     city: '',
-    zip: '',
-    country: '',
+    pincode: '',
+    country: 'India',
     isDefault: false
   });
 
@@ -94,6 +117,7 @@ const Profile: React.FC = () => {
     };
     // placeOrder is already destructured from useApp() at the top
     placeOrder(updatedOrder);
+    showToast("Order status updated to Delivered", "success");
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -158,7 +182,7 @@ const Profile: React.FC = () => {
     await persistAddresses(newAddresses);
     setIsAddressModalOpen(false);
     setEditingAddress(null);
-    setAddressForm({ label: '', fullName: '', street: '', city: '', zip: '', country: '', isDefault: false });
+    setAddressForm({ label: '', fullName: '', mobile: '', village: '', street: '', city: '', pincode: '', country: 'India', isDefault: false });
   };
 
   const handleDeleteAddress = async (id: string) => {
@@ -234,17 +258,17 @@ const Profile: React.FC = () => {
               <span>{tab.label}</span>
             </button>
           ))}
-          <div className="mt-12 p-8 bg-zinc-50 rounded-2xl border border-zinc-100 hidden md:block">
-            <h5 className="text-[10px] font-black uppercase tracking-widest text-vogue-600 mb-4">Platform Feedback</h5>
-            <p className="text-[9px] text-zinc-500 mb-6 font-medium italic">"The curation is exceptional. GS has redefined my wardrobe narrative."</p>
+          <div className="mt-12 p-8 bg-zinc-900 rounded-2xl border border-zinc-800 hidden md:block relative overflow-hidden group">
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-zinc-800/50 rounded-full blur-3xl group-hover:bg-vogue-500/20 transition-all duration-700"></div>
+            <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 mb-4 relative z-10 transition-colors group-hover:text-vogue-400">Platform Feedback</h5>
+            <p className="text-[11px] text-zinc-400 mb-8 font-serif leading-relaxed relative z-10">
+              Your voice shapes the GS Garments narrative. Share your thoughts on our curated experience.
+            </p>
             <button
-              onClick={() => {
-                const text = "Highly impressed with the curated collection at GS Garments. The attention to detail and premium service is unmatched! #GSGarments #LuxuryFashion";
-                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
-              }}
-              className="w-full py-3 bg-white border border-zinc-200 text-[8px] font-black uppercase tracking-widest hover:border-black transition-all"
+              onClick={() => setIsFeedbackModalOpen(true)}
+              className="w-full py-4 bg-white text-black text-[9px] font-black uppercase tracking-[0.2em] hover:bg-vogue-500 hover:text-white transition-all rounded-full shadow-2xl active:scale-95 relative z-10"
             >
-              Share Your Experience
+              Rate Our Platform
             </button>
           </div>
         </nav>
@@ -270,15 +294,25 @@ const Profile: React.FC = () => {
                           <p className="text-sm font-black">₹{order.total.toLocaleString('en-IN')}</p>
                         </div>
                         <div className="flex items-center gap-3">
-                          {order.status !== 'Delivered' && (
-                            <button
-                              onClick={() => markAsDelivered(order.id)}
-                              className="px-3 py-1 bg-white border border-black text-[8px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all shadow-sm"
-                            >
-                              Confirm Delivery
-                            </button>
+                          {order.status !== 'Delivered' && order.status !== 'Cancelled' && (
+                            <>
+                              {order.status !== 'Out for Delivery' && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedOrderId(order.id);
+                                    setIsCancelModalOpen(true);
+                                  }}
+                                  className="px-3 py-1 bg-white border border-red-200 text-red-500 text-[8px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white hover:border-red-500 transition-all shadow-sm"
+                                >
+                                  Cancel Order
+                                </button>
+                              )}
+                            </>
                           )}
-                          <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-[0.2em] ${order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' : 'bg-black text-white'}`}>
+                          <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-[0.2em] ${order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
+                            order.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                              'bg-black text-white'
+                            }`}>
                             {order.status}
                           </span>
                         </div>
@@ -403,7 +437,7 @@ const Profile: React.FC = () => {
                 <button
                   onClick={() => {
                     setEditingAddress(null);
-                    setAddressForm({ label: '', fullName: '', street: '', city: '', zip: '', country: '', isDefault: false });
+                    setAddressForm({ label: '', fullName: '', mobile: '', village: '', street: '', city: '', pincode: '', country: 'India', isDefault: false });
                     setIsAddressModalOpen(true);
                   }}
                   className="bg-black text-white px-6 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 transition-all shadow-lg active:scale-95"
@@ -430,10 +464,11 @@ const Profile: React.FC = () => {
                       <div className="font-serif">
                         <p className="text-xl font-bold text-zinc-900">{addr.fullName}</p>
                         <p className="text-zinc-500 text-sm mt-2 leading-relaxed">
-                          {addr.street}<br />
-                          {addr.city}, {addr.zip}<br />
+                          {addr.street}{addr.village ? `, ${addr.village}` : ''}<br />
+                          {addr.city}, {addr.pincode}<br />
                           {addr.country}
                         </p>
+                        <p className="text-[10px] font-bold text-zinc-400 mt-2 uppercase tracking-widest">Mobile: {addr.mobile}</p>
                       </div>
                     </div>
 
@@ -500,8 +535,9 @@ const Profile: React.FC = () => {
                           placeholder="9876543210"
                           value={mobile}
                           onChange={(e) => {
-                            setMobile(e.target.value);
-                            setMobileError(validateMobile(e.target.value));
+                            const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                            setMobile(val);
+                            setMobileError(validateMobile(val));
                           }}
                           className={`w-full border-b ${mobileError ? 'border-red-500 bg-red-50/20' : 'border-gray-200'} focus:border-black outline-none py-3 text-sm transition-all`}
                         />
@@ -562,25 +598,37 @@ const Profile: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Full Name</label>
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Mobile Number</label>
                   <input
                     required
-                    type="text"
-                    value={addressForm.fullName}
-                    onChange={e => setAddressForm({ ...addressForm, fullName: e.target.value })}
+                    type="tel"
+                    value={addressForm.mobile}
+                    onChange={e => setAddressForm({ ...addressForm, mobile: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                     className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
+                    placeholder="10-digit number"
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Street Address</label>
-                <input
-                  required
-                  type="text"
-                  value={addressForm.street}
-                  onChange={e => setAddressForm({ ...addressForm, street: e.target.value })}
-                  className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
-                />
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Street Address</label>
+                  <input
+                    required
+                    type="text"
+                    value={addressForm.street}
+                    onChange={e => setAddressForm({ ...addressForm, street: e.target.value })}
+                    className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Village / Moore</label>
+                  <input
+                    type="text"
+                    value={addressForm.village}
+                    onChange={e => setAddressForm({ ...addressForm, village: e.target.value })}
+                    className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-3 gap-6">
                 <div>
@@ -594,12 +642,12 @@ const Profile: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">ZIP Code</label>
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Pincode</label>
                   <input
                     required
                     type="text"
-                    value={addressForm.zip}
-                    onChange={e => setAddressForm({ ...addressForm, zip: e.target.value })}
+                    value={addressForm.pincode}
+                    onChange={e => setAddressForm({ ...addressForm, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
                     className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
                   />
                 </div>
@@ -631,6 +679,139 @@ const Profile: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Cancellation Reason Modal */}
+      {isCancelModalOpen && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-300"
+            onClick={() => setIsCancelModalOpen(false)}
+          ></div>
+          <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-zinc-100">
+            <div className="p-8 text-center">
+              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i className="fa-solid fa-circle-exclamation text-red-500 text-xl"></i>
+              </div>
+              <h3 className="text-xl font-serif font-bold mb-2">Cancel Your Order</h3>
+              <p className="text-xs text-zinc-500 mb-8 uppercase tracking-widest font-bold">
+                Tell us why you're cancelling
+              </p>
+
+              <textarea
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Reason for cancellation (optional)"
+                className="w-full h-32 p-4 bg-zinc-50 border border-zinc-100 rounded-2xl mb-6 text-sm focus:border-black outline-none transition-all resize-none font-medium"
+              ></textarea>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    if (selectedOrderId) {
+                      cancelOrder(selectedOrderId, cancelReason);
+                      showToast("Order Cancelled Successfully", "success");
+                      setIsCancelModalOpen(false);
+                      setCancelReason('');
+                      setSelectedOrderId(null);
+                    }
+                  }}
+                  className="w-full bg-red-600 text-white py-4 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-red-700 transition-all rounded-full shadow-lg hvr-grow"
+                >
+                  Confirm Cancellation
+                </button>
+                <button
+                  onClick={() => setIsCancelModalOpen(false)}
+                  className="w-full py-4 text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-black transition-colors"
+                >
+                  Changed My Mind
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Platform Feedback Modal */}
+      {isFeedbackModalOpen && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-zinc-950/90 backdrop-blur-xl animate-in fade-in duration-500"
+            onClick={() => {
+              setIsFeedbackModalOpen(false);
+              setFeedbackSubmitted(false);
+            }}
+          ></div>
+          <div className="relative w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
+            {!feedbackSubmitted ? (
+              <div className="p-12 text-center">
+                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-vogue-500 via-zinc-900 to-vogue-500"></div>
+                <h3 className="text-3xl font-serif font-bold mb-3 tracking-tight">The GS Experience</h3>
+                <p className="text-[10px] text-zinc-400 mb-10 font-black uppercase tracking-[0.3em]">Rate your platform journey</p>
+
+                <div className="flex justify-center gap-4 mb-10">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onMouseEnter={() => setPlatformRating(star)}
+                      onClick={() => setPlatformRating(star)}
+                      className="transition-all duration-300 hover:scale-125"
+                    >
+                      <i className={`fa-star text-3xl ${star <= platformRating ? 'fa-solid text-zinc-900' : 'fa-regular text-zinc-200'}`}></i>
+                    </button>
+                  ))}
+                </div>
+
+                <textarea
+                  value={platformFeedbackText}
+                  onChange={(e) => setPlatformFeedbackText(e.target.value)}
+                  placeholder="Tell us about your curation experience..."
+                  className="w-full h-40 p-6 bg-zinc-50 border border-zinc-100 rounded-3xl mb-8 text-sm focus:ring-2 focus:ring-zinc-900 focus:bg-white outline-none transition-all resize-none font-medium text-zinc-700"
+                ></textarea>
+
+                <div className="flex flex-col gap-4">
+                  <button
+                    disabled={platformRating === 0}
+                    onClick={() => {
+                      setFeedbackSubmitted(true);
+                      showToast("Feedback Received - Thank You", "success");
+                    }}
+                    className="w-full bg-zinc-900 text-white py-5 text-[10px] font-black uppercase tracking-[0.3em] hover:bg-vogue-600 transition-all rounded-full shadow-2xl disabled:opacity-20 disabled:grayscale"
+                  >
+                    Submit My Review
+                  </button>
+                  <button
+                    onClick={() => setIsFeedbackModalOpen(false)}
+                    className="text-[9px] font-black uppercase tracking-widest text-zinc-300 hover:text-zinc-500 transition-colors"
+                  >
+                    Maybe Later
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-16 text-center animate-in zoom-in-90 duration-500">
+                <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-8">
+                  <i className="fa-solid fa-check text-3xl text-emerald-500"></i>
+                </div>
+                <h3 className="text-3xl font-serif font-bold mb-4">Gratitude Sent</h3>
+                <p className="text-sm text-zinc-500 mb-10 leading-relaxed max-w-xs mx-auto">
+                  Your insights are the foundation of our evolution. Thank you for being part of the collective.
+                </p>
+                <button
+                  onClick={() => {
+                    setIsFeedbackModalOpen(false);
+                    setFeedbackSubmitted(false);
+                    setPlatformRating(0);
+                    setPlatformFeedbackText('');
+                  }}
+                  className="px-12 py-4 bg-zinc-900 text-white text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-black transition-all shadow-xl"
+                >
+                  Continue Journey
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

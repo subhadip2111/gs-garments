@@ -1,16 +1,18 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../App';
+import { useToast } from '../components/Toast';
 import { MOCK_PRODUCTS, MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
 import { Order, CartItem } from '../types';
 
 const Checkout: React.FC = () => {
   const { cart, user, placeOrder, appliedCouponId, comboDiscount } = useApp();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const buyNowItem = location.state?.buyNowItem as CartItem | undefined;
   const [step, setStep] = useState(1);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [mobile, setMobile] = useState(user?.user_metadata?.mobile || '');
   const [mobileError, setMobileError] = useState('');
@@ -92,6 +94,7 @@ const Checkout: React.FC = () => {
     setTimeout(() => {
       placeOrder(newOrder); // Persist to Redux
       setLoading(false);
+      showToast("Order Placed Successfully", "success");
       navigate('/profile?tab=orders');
     }, 2000);
   };
@@ -100,7 +103,7 @@ const Checkout: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex flex-col lg:flex-row gap-16">
         <div className="lg:w-2/3">
-          {/* Progress Section... */}
+          {/* Progress Section */}
           <div className="flex items-center space-x-4 mb-12 overflow-x-auto">
             <div className={`flex items-center space-x-2 whitespace-nowrap ${step >= 1 ? 'text-black font-bold' : 'text-gray-400'}`}>
               <span className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${step >= 1 ? 'border-black bg-black text-white' : 'border-gray-200'}`}>1</span>
@@ -138,26 +141,38 @@ const Checkout: React.FC = () => {
                       type="tel"
                       value={mobile}
                       onChange={(e) => {
-                        setMobile(e.target.value);
-                        if (mobileError) setMobileError(validateMobile(e.target.value));
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setMobile(val);
+                        if (mobileError) setMobileError(validateMobile(val));
                       }}
-                      className={`w-full border ${mobileError ? 'border-red-500 bg-red-50/30' : 'border-gray-200'} pl-12 p-3 text-sm focus:border-black outline-none transition-all`}
+                      className={`w-full border ${mobileError ? 'border-red-500 bg-red-50/20' : 'border-gray-200'} pl-12 p-3 text-sm focus:border-black outline-none transition-all`}
                       placeholder="9876543210"
                     />
                   </div>
                   {mobileError && <p className="text-[10px] text-red-500 mt-1 font-bold uppercase tracking-widest">{mobileError}</p>}
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-2">Flat / House No. / Building</label>
-                  <input type="text" className="w-full border border-gray-200 p-3 text-sm focus:border-black outline-none" placeholder="B-102, Green Meadows" />
+                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest mb-2">Flat / House No. / Building</label>
+                    <input type="text" className="w-full border border-gray-200 p-3 text-sm focus:border-black outline-none" placeholder="B-102, Green Meadows" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest mb-2">Village / Moore</label>
+                    <input type="text" className="w-full border border-gray-200 p-3 text-sm focus:border-black outline-none" placeholder="Asoda" />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest mb-2">Locality / City</label>
                   <input type="text" className="w-full border border-gray-200 p-3 text-sm focus:border-black outline-none" placeholder="Bandra West, Mumbai" />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-2">Pin Code</label>
-                  <input type="text" className="w-full border border-gray-200 p-3 text-sm focus:border-black outline-none" placeholder="400050" />
+                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-2">Pincode</label>
+                  <input
+                    type="text"
+                    onChange={(e) => e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6)}
+                    className="w-full border border-gray-200 p-3 text-sm focus:border-black outline-none"
+                    placeholder="400050"
+                  />
                 </div>
               </div>
               <button
@@ -218,7 +233,7 @@ const Checkout: React.FC = () => {
                   <button onClick={() => setStep(2)} className="text-xs font-bold uppercase tracking-widest underline">Back</button>
                   <button
                     disabled={loading}
-                    onClick={handlePlaceOrder}
+                    onClick={() => setShowConfirmModal(true)}
                     className="flex-grow bg-black text-white py-4 text-xs font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors disabled:opacity-50"
                   >
                     {loading ? 'Processing...' : 'Place Order'}
@@ -234,7 +249,7 @@ const Checkout: React.FC = () => {
           <div className="bg-white border border-gray-100 p-8 sticky top-24">
             <h3 className="text-xs font-bold uppercase tracking-widest mb-6 border-b border-gray-100 pb-4">Bag Summary</h3>
             <div className="space-y-4 mb-8">
-              {cart.map(item => {
+              {itemsToPurchase.map(item => {
                 const product = MOCK_PRODUCTS.find(p => p.id === item.productId);
                 return (
                   <div key={`${item.productId}-${item.selectedSize}`} className="flex justify-between text-sm">
@@ -244,6 +259,7 @@ const Checkout: React.FC = () => {
                 );
               })}
             </div>
+
             <div className="space-y-4 pt-6 border-t border-gray-100">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500 font-medium">Total MRP</span>
@@ -293,12 +309,49 @@ const Checkout: React.FC = () => {
                 <span className="text-xs font-black uppercase tracking-widest">Total</span>
                 <div className="text-right">
                   <span className="text-2xl font-black tracking-tighter text-zinc-900">₹{finalTotal.toLocaleString('en-IN')}</span>
+                  <p className="text-[8px] text-zinc-400 uppercase tracking-widest mt-1">Inc. of all taxes</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowConfirmModal(false)}></div>
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="p-8 text-center">
+              <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl">
+                <i className="fa-solid fa-shopping-bag text-zinc-400"></i>
+              </div>
+              <h3 className="text-xl font-serif font-bold mb-2">Confirm Your Order</h3>
+              <p className="text-sm text-zinc-500 mb-8">
+                Are you sure you want to place this order for <span className="font-bold text-black">₹{finalTotal.toLocaleString('en-IN')}</span>?
+              </p>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    handlePlaceOrder();
+                  }}
+                  disabled={loading}
+                  className="w-full bg-black text-white py-4 text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 transition-all rounded-full"
+                >
+                  {loading ? 'Processing...' : 'Yes, Confirm Order'}
+                </button>
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className="w-full py-4 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-black transition-colors"
+                >
+                  No, Go Back
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

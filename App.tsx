@@ -11,18 +11,17 @@ import {
   updateCartQuantity,
   toggleWishlist,
   placeOrder,
+  cancelOrder,
   clearCart,
   recalculateDiscounts
 } from './store/cartSlice';
 import {
   setQuickViewProduct,
   setSharedProduct,
-  setIsStyleAssistantOpen,
-  setUserStyleProfile,
   setUserLocation
 } from './store/uiSlice';
 
-import { Product, StyleProfile } from './types';
+import { Product } from './types';
 import { supabase } from './services/supabase';
 import { MOCK_PRODUCTS } from './constants';
 
@@ -38,7 +37,6 @@ import Profile from './pages/Profile';
 import Wishlist from './pages/Wishlist';
 import Checkout from './pages/Checkout';
 import QuickViewModal from './components/QuickViewModal';
-import StyleAssistant from './components/StyleAssistant';
 import OurStory from './pages/OurStory';
 import Careers from './pages/Careers';
 import Sustainability from './pages/Sustainability';
@@ -47,6 +45,7 @@ import Contact from './pages/Contact';
 import Shipping from './pages/Shipping';
 import Returns from './pages/Returns';
 import TrackOrder from './pages/TrackOrder';
+import { ToastProvider } from './components/Toast';
 
 // --- Redux-Backed Hook ---
 export const useApp = () => {
@@ -60,15 +59,13 @@ export const useApp = () => {
   const isLoadingProducts = useSelector((state: RootState) => state.products.isLoading);
   const quickViewProduct = useSelector((state: RootState) => state.ui.quickViewProduct);
   const sharedProduct = useSelector((state: RootState) => state.ui.sharedProduct);
-  const isStyleAssistantOpen = useSelector((state: RootState) => state.ui.isStyleAssistantOpen);
-  const userStyleProfile = useSelector((state: RootState) => state.ui.userStyleProfile);
   const userLocation = useSelector((state: RootState) => state.ui.userLocation);
   const appliedCouponId = useSelector((state: RootState) => state.cart.appliedCouponId);
   const comboDiscount = useSelector((state: RootState) => state.cart.comboDiscount);
 
   return {
     cart, wishlist, orders, user, products, isLoadingProducts, quickViewProduct, sharedProduct,
-    isStyleAssistantOpen, userStyleProfile, userLocation,
+    userLocation,
 
     // Actions
     addToCart: (productId: string, size: string, color: string, quantity: number) => {
@@ -85,6 +82,7 @@ export const useApp = () => {
     },
     toggleWishlist: (productId: string) => dispatch(toggleWishlist(productId)),
     placeOrder: (order: any) => dispatch(placeOrder(order)),
+    cancelOrder: (orderId: string, reason?: string) => dispatch(cancelOrder({ orderId, reason })),
     clearCart: () => {
       dispatch(clearCart());
       dispatch(recalculateDiscounts());
@@ -93,8 +91,6 @@ export const useApp = () => {
     comboDiscount,
     setQuickViewProduct: (product: Product | null) => dispatch(setQuickViewProduct(product)),
     setSharedProduct: (product: Product | null) => dispatch(setSharedProduct(product)),
-    setIsStyleAssistantOpen: (isOpen: boolean) => dispatch(setIsStyleAssistantOpen(isOpen)),
-    setUserStyleProfile: (profile: StyleProfile) => dispatch(setUserStyleProfile(profile)),
     logout: async () => {
       await supabase.auth.signOut();
       dispatch(setUser(null));
@@ -121,19 +117,12 @@ function AppContent() {
       if (!error && data?.session) {
         const user = data.session.user;
         dispatch(setUser(user));
-        // Hydrate style profile from saved metadata
-        if (user.user_metadata?.style_profile) {
-          dispatch(setUserStyleProfile(user.user_metadata.style_profile));
-        }
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user ?? null;
       dispatch(setUser(user));
-      if (user?.user_metadata?.style_profile) {
-        dispatch(setUserStyleProfile(user.user_metadata.style_profile));
-      }
     });
 
     const fetchProducts = async () => {
@@ -202,7 +191,6 @@ function AppContent() {
         </main>
         <Footer />
         <QuickViewModal />
-        <StyleAssistant />
       </div>
     </Router>
   );
@@ -219,7 +207,9 @@ function ScrollToTop() {
 export default function App() {
   return (
     <Provider store={store}>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </Provider>
   );
 }

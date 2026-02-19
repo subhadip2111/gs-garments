@@ -6,7 +6,6 @@ import ProductCard from '../components/ProductCard';
 import ProductSkeleton from '../components/ProductSkeleton';
 import { useApp } from '../App';
 import { Product } from '../types';
-import ComparisonModal from '../components/ComparisonModal';
 
 const Shop: React.FC = () => {
   const { products, isLoadingProducts } = useApp();

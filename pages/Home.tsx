@@ -4,10 +4,10 @@ import { Link } from 'react-router-dom';
 import { MOCK_PRODUCTS, LAUNCH_PROMOS, HOME_CONFIG } from '../constants';
 import ProductCard from '../components/ProductCard';
 import { useApp } from '../App';
-import { BannerConfig, SpotlightConfig, AISectionConfig, GridConfig, BrandsConfig } from '../types';
+import { BannerConfig, SpotlightConfig, GridConfig, BrandsConfig } from '../types';
 
 const Home: React.FC = () => {
-  const { setIsStyleAssistantOpen, userStyleProfile } = useApp();
+  const { user } = useApp();
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const handleCopy = (code: string) => {
@@ -126,52 +126,6 @@ const Home: React.FC = () => {
     );
   };
 
-  const renderAISection = (config: AISectionConfig, index: number) => {
-    return (
-      <section key={index} className="py-40 bg-zinc-950 text-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col lg:flex-row items-center gap-24">
-          <div className="lg:w-1/2 space-y-12">
-            <div className="space-y-6">
-              <span className="text-vogue-500 text-[10px] font-bold uppercase tracking-[0.6em]">{config.subtitle}</span>
-              <h2 className="text-6xl md:text-7xl font-serif font-bold tracking-tight leading-[0.9] whitespace-pre-line">{config.title}</h2>
-            </div>
-            <p className="text-xl text-white/40 font-light leading-relaxed max-w-md italic font-serif leading-relaxed">
-              {config.description.replace('{userStyleProfile.aesthetic}', userStyleProfile.aesthetic)}
-            </p>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setIsStyleAssistantOpen(true)}
-                className="group flex items-center gap-8 bg-white text-black px-12 py-6 text-[10px] font-bold uppercase tracking-[0.4em] hover:bg-vogue-500 hover:text-white transition-all shadow-2xl"
-              >
-                <span>Consult Concierge</span>
-                <i className="fa-solid fa-wand-magic-sparkles group-hover:rotate-12 transition-transform"></i>
-              </button>
-              <div className="hidden sm:block text-[9px] font-bold uppercase tracking-[0.2em] text-white/30">
-                Tailored to: {userStyleProfile.aesthetic}
-              </div>
-            </div>
-          </div>
-          <div className="lg:w-1/2 relative group">
-            <div className="aspect-[4/3] bg-white/5 p-12 overflow-hidden relative">
-              <img
-                src={config.imageUrl}
-                className="w-full h-full object-cover grayscale opacity-60 group-hover:opacity-100 group-hover:scale-105 transition-all duration-1000"
-                alt="Digital Styling"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent"></div>
-              <div className="absolute bottom-12 left-12 right-12 p-8 bg-white/10 backdrop-blur-md border border-white/10">
-                <p className="text-[9px] font-bold uppercase tracking-[0.4em] text-vogue-500 mb-2">Live Status</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-xs font-light tracking-widest uppercase">Concierge is currently online</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  };
 
   const renderGrid = (config: GridConfig, index: number) => {
     let products = MOCK_PRODUCTS;
@@ -186,7 +140,7 @@ const Home: React.FC = () => {
           <header className="flex flex-col md:flex-row justify-between items-end mb-24 gap-8">
             <div className="space-y-4">
               <h2 className="text-5xl md:text-6xl font-serif font-bold tracking-tight whitespace-pre-line">{config.title}</h2>
-              <p className="text-vogue-500 text-[10px] font-bold uppercase tracking-[0.5em]">{config.subtitle.replace('{userStyleProfile.aesthetic}', userStyleProfile.aesthetic)}</p>
+              <p className="text-vogue-500 text-[10px] font-bold uppercase tracking-[0.5em]">{config.subtitle}</p>
             </div>
             <Link to={config.viewAllLink} className="text-[10px] font-bold uppercase tracking-[0.4em] border-b-2 border-black pb-3 hover:text-vogue-500 hover:border-vogue-500 transition-all">
               Discover Full Archive
@@ -243,7 +197,6 @@ const Home: React.FC = () => {
         switch (section.type) {
           case 'banner': return renderBanner(section as BannerConfig, index);
           case 'spotlight': return renderSpotlight(section as SpotlightConfig, index);
-          case 'ai-concierge': return renderAISection(section as AISectionConfig, index);
           case 'grid': return renderGrid(section as GridConfig, index);
           case 'brands': return renderBrands(section as BrandsConfig, index);
           default: return null;
@@ -351,7 +304,7 @@ const Home: React.FC = () => {
             <div className="space-y-4">
               <h4 className="text-[11px] font-bold uppercase tracking-[0.4em]">Personal Styling</h4>
               <p className="text-sm text-vogue-500 font-light leading-relaxed italic font-serif max-w-[280px] mx-auto">
-                "Expert guidance powered by GS Intelligence, tailored to your aesthetic."
+                "Expert guidance tailored to your unique aesthetic."
               </p>
             </div>
           </div>

@@ -71,6 +71,10 @@ const cartSlice = createSlice({
       state.appliedCouponId = null;
       state.comboDiscount = 0;
     },
+    cancelOrder: (state, action: PayloadAction<{ orderId: string; reason?: string }>) => {
+      const { orderId } = action.payload;
+      state.orders = state.orders.filter(o => o.id !== orderId);
+    },
     recalculateDiscounts: (state) => {
       // 1. Calculate Base Total (Selling Price)
       const baseTotal = state.cart.reduce((acc, item) => {
@@ -119,6 +123,7 @@ export const {
   updateCartQuantity,
   toggleWishlist,
   placeOrder,
+  cancelOrder,
   clearCart,
   recalculateDiscounts
 } = cartSlice.actions;

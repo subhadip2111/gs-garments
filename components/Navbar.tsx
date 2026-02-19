@@ -5,7 +5,7 @@ import { useApp } from '../App';
 import { LAUNCH_PROMOS, NAV_ITEMS_STRUCTURE } from '../constants';
 
 const Navbar: React.FC = () => {
-  const { cart, wishlist, user, setIsStyleAssistantOpen } = useApp();
+  const { cart, wishlist, user } = useApp();
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
@@ -98,14 +98,6 @@ const Navbar: React.FC = () => {
               </div>
 
               <div className="flex items-center space-x-6">
-                <button
-                  onClick={() => setIsStyleAssistantOpen(true)}
-                  className="hover:text-vogue-600 transition-colors flex flex-col items-center gap-1"
-                  title="Style Concierge"
-                >
-                  <i className="fa-solid fa-wand-magic-sparkles text-lg"></i>
-                  <span className="text-[10px] font-bold uppercase tracking-tighter">Studio</span>
-                </button>
 
                 <Link to="/profile" onClick={(e) => handleProtectedNavigation(e, '/profile')} className="hover:text-vogue-600 transition-colors flex flex-col items-center gap-1 relative">
                   <i className="fa-regular fa-user text-lg"></i>

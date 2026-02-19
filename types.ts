@@ -27,19 +27,6 @@ export interface Product {
   bestOffers?: { title: string; description: string }[];
 }
 
-export interface Message {
-  role: 'ai' | 'user';
-  text: string;
-  attachedProduct?: Product;
-  type?: 'text' | 'styling-tip' | 'weather-alert';
-}
-
-export interface StyleProfile {
-  aesthetic: string;
-  preferredColors: string[];
-  sizePreference: 'Slim' | 'Regular' | 'Oversized';
-}
-
 export interface Review {
   id: string;
   userId: string;
@@ -66,16 +53,17 @@ export interface User {
   avatar?: string;
   addresses: Address[];
   orders: Order[];
-  styleProfile?: StyleProfile;
 }
 
 export interface Address {
   id: string;
   label: string;
   fullName: string;
+  mobile: string;
+  village?: string;
   street: string;
   city: string;
-  zip: string;
+  pincode: string;
   country: string;
   isDefault: boolean;
 }
@@ -102,7 +90,7 @@ export interface Order {
   date: string;
   items: CartItem[];
   total: number;
-  status: 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+  status: 'Processing' | 'Packed' | 'Shipped' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
   type: 'cart' | 'buy-now';
   trackingSteps: {
     status: string;
@@ -162,15 +150,7 @@ export interface BrandsConfig {
   }[];
 }
 
-export interface AISectionConfig {
-  type: 'ai-concierge';
-  title: string;
-  subtitle: string;
-  description: string;
-  imageUrl: string;
-}
-
-export type HomeSection = BannerConfig | SpotlightConfig | GridConfig | BrandsConfig | AISectionConfig;
+export type HomeSection = BannerConfig | SpotlightConfig | GridConfig | BrandsConfig;
 
 export interface HomeConfig {
   sections: HomeSection[];

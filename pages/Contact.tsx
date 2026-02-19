@@ -1,18 +1,7 @@
 
 import React, { useState } from 'react';
-import { getFashionAdvice } from '../services/gemini';
-
 const Contact: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiResponse, setAiResponse] = useState<string | null>(null);
-
-  const handleAiConcierge = async (topic: string) => {
-    setAiLoading(true);
-    const response = await getFashionAdvice(`Act as the GS Customer Concierge. Help the user with: ${topic}. Be professional, luxury-oriented, and concise.`);
-    setAiResponse(response);
-    setAiLoading(false);
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,37 +20,6 @@ const Contact: React.FC = () => {
               Whether you require sizing guidance or have inquiries regarding a brand partner, our specialized concierge is available to assist you.
             </p>
           </header>
-
-          {/* AI Concierge Quick Help */}
-          <div className="bg-zinc-950 p-10 text-white rounded-sm shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
-            <div className="relative z-10 space-y-6">
-              <div className="flex items-center gap-4">
-                <i className="fa-solid fa-wand-magic-sparkles text-vogue-500"></i>
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.3em]">AI Concierge Beta</h3>
-              </div>
-              <p className="text-xs text-white/50 leading-relaxed font-light">Need instant answers about our styles or policies? Ask our intelligent assistant.</p>
-              
-              <div className="flex flex-wrap gap-2">
-                {['Returns Policy', 'Sizing Help', 'Brand Authenticity'].map(topic => (
-                  <button 
-                    key={topic}
-                    onClick={() => handleAiConcierge(topic)}
-                    className="text-[9px] font-bold uppercase tracking-widest border border-white/10 px-4 py-2 hover:bg-white hover:text-black transition-all"
-                  >
-                    {topic}
-                  </button>
-                ))}
-              </div>
-
-              {aiLoading && <div className="text-xs text-white/50 animate-pulse italic">Connecting with Concierge...</div>}
-              {aiResponse && (
-                <div className="p-4 bg-white/5 border-l-2 border-vogue-500 text-sm italic font-serif text-white/90 animate-slide-up">
-                  "{aiResponse}"
-                </div>
-              )}
-            </div>
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-10">
             <div>
@@ -94,7 +52,7 @@ const Contact: React.FC = () => {
                       <option>Other</option>
                     </select>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="group relative">
                       <label className="block text-[10px] font-bold uppercase tracking-widest text-vogue-500 mb-2 transition-all group-focus-within:text-black">Full Name</label>
