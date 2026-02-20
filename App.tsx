@@ -1,9 +1,9 @@
 
 import React, { useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
-import { store, RootState, AppDispatch, useAppDispatch, useAppSelector } from './store';
-import { setUser } from './store/authSlice';
+import { store, RootState, AppDispatch, useAppDispatch, useAppSelector, persistor } from './store';
+import { setCurrentUser, setToken, setUser } from './store/authSlice';
 import { setProducts, setLoadingProducts } from './store/productSlice';
 import {
   addToCart,
@@ -46,7 +46,8 @@ import Shipping from './pages/Shipping';
 import Returns from './pages/Returns';
 import TrackOrder from './pages/TrackOrder';
 import { ToastProvider } from './components/Toast';
-
+import { getProfileDetails, saveSocialLoginUserData } from './api/auth/authApi';
+import { PersistGate } from "redux-persist/integration/react";
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const user = useAppSelector((state) => state.auth.user);
   const location = useLocation();
@@ -60,18 +61,76 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 function AppContent() {
   const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+  const accessToken = useAppSelector((state) => state.auth.accessToken);
+
 
   useEffect(() => {
+    const fetchLatestProfile = async () => {
+      if (accessToken) {
+        try {
+          const response = await getProfileDetails(accessToken);
+          const latestUser = response.user || response.data || response;
+          dispatch(setCurrentUser(latestUser));
+        } catch (error) {
+          console.error("Failed to fetch latest profile:", error);
+        }
+      }
+    };
+    fetchLatestProfile();
+  }, [accessToken, dispatch]);
+
+
+
+
+
+
+  useEffect(() => {
+    // Initial session load
     supabase.auth.getSession().then(({ data, error }) => {
       if (!error && data?.session) {
-        const user = data.session.user;
-        dispatch(setUser(user));
+        const supabaseUser = data.session.user;
+        console.log("supabaseUser", supabaseUser)
+        // Check if we already have detailed user data for this ID
+        // if (!user || user.id !== supabaseUser.id) {
+        //   dispatch(setCurrentUser(latestUser));
+        // }
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const user = session?.user ?? null;
-      dispatch(setUser(user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const supabaseUser = session?.user ?? null;
+
+      // Only sync with backend if we don't already have an accessToken (prevents overwrite on refresh)
+      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && !accessToken) {
+        const saveUserdataAndgetToken = async () => {
+          try {
+            const response = await saveSocialLoginUserData({
+              email: supabaseUser?.email,
+              fullName: supabaseUser?.user_metadata?.full_name,
+              avatar: supabaseUser?.user_metadata?.avatar_url,
+              role: "user",
+              socialId: supabaseUser?.id,
+            });
+
+            const tokens = {
+              accessToken: response.accessToken,
+              refreshToken: response.refreshToken
+            };
+            dispatch(setToken(tokens));
+            dispatch(setCurrentUser(response.user));
+          } catch (error) {
+            console.log("Error syncing user data:", error);
+          }
+        };
+
+        if (supabaseUser) {
+          saveUserdataAndgetToken();
+        }
+      } else if (event === 'SIGNED_OUT') {
+        dispatch(setUser(null));
+        dispatch(setToken(null));
+      }
     });
 
     const fetchProducts = async () => {
@@ -93,7 +152,7 @@ function AppContent() {
 
     fetchProducts();
     return () => subscription?.unsubscribe?.();
-  }, [dispatch]);
+  }, [dispatch]); // Removed user from dependency array to avoid loops
 
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -157,7 +216,9 @@ export default function App() {
   return (
     <Provider store={store}>
       <ToastProvider>
-        <AppContent />
+        <PersistGate loading={null} persistor={persistor}>
+          <AppContent />
+        </PersistGate>
       </ToastProvider>
     </Provider>
   );

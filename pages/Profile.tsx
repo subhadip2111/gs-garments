@@ -2,25 +2,30 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store';
-import { setUser } from '../store/authSlice';
+import { logout, setCurrentUser, setUser } from '../store/authSlice';
 import { placeOrder, cancelOrder } from '../store/cartSlice';
 import { useToast } from '../components/Toast';
 import { MOCK_PRODUCTS } from '../constants';
 import ProductCard from '../components/ProductCard';
 import { supabase } from '../services/supabase';
 import { Address } from '../types';
+import { updateProfileDetails } from '@/api/auth/authApi';
 
 const Profile: React.FC = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
+  const accessToken = useAppSelector((state) => state.auth.accessToken);
   const wishlist = useAppSelector((state) => state.cart.wishlist);
   const catalog = useAppSelector((state) => state.products.items);
   const orders = useAppSelector((state) => state.cart.orders);
+  console.log("user", user)
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    dispatch(setUser(null));
-    navigate('/auth');
+    dispatch(logout(null));
+    // need to add a toast message for logout
+    showToast("Logout successfully", "success");
+    navigate('/shop');
   };
   const { showToast } = useToast();
   const [searchParams] = useSearchParams();
@@ -73,9 +78,9 @@ const Profile: React.FC = () => {
     if (!user) {
       navigate('/auth');
     } else {
-      setFullName(user.user_metadata?.full_name || '');
-      setMobile(user.user_metadata?.mobile || '');
-      setAddresses(user.user_metadata?.addresses || []);
+      setFullName(user?.fullName || '');
+      setMobile(user?.mobile || '');
+      setAddresses(user?.addresses || []);
     }
   }, [user, navigate]);
 
@@ -83,9 +88,9 @@ const Profile: React.FC = () => {
 
   const wishlistProducts = catalog.filter(p => wishlist.includes(p.id));
 
-  const userName = user.user_metadata?.full_name || user.email.split('@')[0];
+  const userName = user?.fullName || user.email.split('@')[0];
   const userAvatar =
-    user.user_metadata?.avatar_url ||
+    user?.avatar_url ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=f9f9f9&color=ff0000`;
 
   const validateMobile = (num: string) => {
@@ -94,6 +99,8 @@ const Profile: React.FC = () => {
     }
     return "";
   };
+
+
 
   const handleUpdateMobile = async () => {
     const error = validateMobile(mobile);
@@ -104,12 +111,14 @@ const Profile: React.FC = () => {
 
     setUpdatingMobile(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        data: { mobile: mobile }
-      });
-      if (error) throw error;
-      alert("Mobile number updated successfully.");
+      const upodateUserResponse = await updateProfileDetails({
+        id: user.id,
+        mobile: mobile
+      }, accessToken)
       setMobileError("");
+      const updatedUser = upodateUserResponse.user || upodateUserResponse.data || upodateUserResponse;
+      dispatch(setCurrentUser(updatedUser));
+      showToast("Mobile number updated successfully.", "success");
     } catch (err: any) {
       alert("Error updating mobile: " + err.message);
     } finally {
@@ -137,14 +146,13 @@ const Profile: React.FC = () => {
     setUpdating(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        data: {
-          full_name: fullName
-        }
-      });
-
-      if (error) throw error;
-      alert("Profile updated successfully.");
+      const upodateUserResponse = await updateProfileDetails({
+        id: user.id,
+        fullName: fullName,
+      }, accessToken)
+      const updatedUser = upodateUserResponse.user || upodateUserResponse.data || upodateUserResponse;
+      dispatch(setCurrentUser(updatedUser));
+      showToast("Profile updated successfully.", "success");
     } catch (err: any) {
       alert("Error updating profile: " + err.message);
     } finally {
@@ -227,12 +235,12 @@ const Profile: React.FC = () => {
             <p className="text-gray-500 font-light">{user.email}</p>
           </div>
         </div>
-        {!user.user_metadata?.mobile && (
+        {!user?.mobile && (
           <div className="mt-6 md:mt-0 flex items-center p-4 bg-red-50 border-l-4 border-red-500 rounded-r shadow-sm animate-pulse">
             <i className="fa-solid fa-circle-exclamation text-red-500 mr-3"></i>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-red-900">Mobile Number Required</p>
-              <p className="text-[9px] text-red-700 mt-0.5">Please add your Indian mobile number in settings to place orders.</p>
+              <p className="text-[9px] text-red-700 mt-0.5">Please add your  mobile number in settings to place orders.</p>
             </div>
             <button
               onClick={() => setActiveTab('settings')}
