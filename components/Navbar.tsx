@@ -174,7 +174,7 @@ const Navbar: React.FC = () => {
                   <div>
                     <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-4">Trending Now</h3>
                     <div className="flex flex-wrap gap-2">
-                      {['Pepe Jeans', 'Loman', 'Sustainable', 'Essentials', 'New Arrivals'].map((tag) => (
+                      {['GS Heritage', 'Banarasi Silk', 'Designer Blouse', 'Festival Edition', 'New Arrivals'].map((tag) => (
                         <button
                           key={tag}
                           onClick={() => {
@@ -193,7 +193,7 @@ const Navbar: React.FC = () => {
                     <div>
                       <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-4">Categories</h3>
                       <div className="space-y-3">
-                        {['Men', 'Women', 'Kids', 'Accessories'].map((cat) => (
+                        {['Sarees', 'Blouses', 'Ethnic Wear', 'Luxe Collection'].map((cat) => (
                           <Link
                             key={cat}
                             to={`/shop?category=${cat}`}

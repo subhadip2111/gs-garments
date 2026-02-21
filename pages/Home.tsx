@@ -21,12 +21,11 @@ const Home: React.FC = () => {
     return (
       <section key={index} className={`relative ${isFirst ? 'h-[95vh]' : 'h-[70vh]'} overflow-hidden flex items-center`}>
         <div className="absolute inset-0 z-0">
-          <img
-            src={config.imageUrl}
-            alt={config.title}
-            className="w-full h-full object-cover scale-105 animate-slow-zoom"
+          <div
+            className="w-full h-full bg-center bg-cover"
+            style={{ backgroundImage: `url(${config.imageUrl})` }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-12 w-full text-white">
@@ -229,19 +228,19 @@ const Home: React.FC = () => {
             <div className="lg:w-1/2 space-y-10">
               <div className="space-y-6">
                 <span className="text-vogue-500 text-[10px] font-bold uppercase tracking-[0.6em]">Physical Destinations</span>
-                <h2 className="text-6xl md:text-7xl font-serif font-bold tracking-tight leading-[0.9]">Experience the <br /> Collective.</h2>
+                <h2 className="text-6xl md:text-7xl font-serif font-bold tracking-tight leading-[0.9]">Experience the <br /> Heritage.</h2>
               </div>
               <p className="text-xl text-vogue-500 font-light leading-relaxed max-w-md font-serif italic">
-                Our flagship destination in Bengaluru offers exclusive brand capsules, bespoke tailoring, and an in-house coffee lounge.
+                Our flagship boutique in Joteghanashyam offers exclusive handloom sarees, bespoke blouse tailoring, and personalized draping sessions.
               </p>
               <div className="grid grid-cols-2 gap-10 pt-4">
                 <div>
                   <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] mb-3">Address</h4>
-                  <p className="text-sm font-serif italic text-gray-800 leading-relaxed">No. 42, Lavelle Road, <br /> Bengaluru, KA 560001</p>
+                  <p className="text-sm font-serif italic text-gray-800 leading-relaxed">Chowrangi more, Joteghanashyam <br /> West Bengal 721153</p>
                 </div>
                 <div>
                   <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] mb-3">Hours</h4>
-                  <p className="text-sm font-serif italic text-gray-800">Mon - Sun: <br /> 11:00 AM - 9:00 PM</p>
+                  <p className="text-sm font-serif italic text-gray-800">Mon - Sat: <br /> 10:00 AM - 8:00 PM</p>
                 </div>
               </div>
               <button className="bg-black text-white px-12 py-6 text-[10px] font-bold uppercase tracking-[0.4em] hover:bg-zinc-800 transition-all flex items-center gap-4 active:scale-95 shadow-xl">
@@ -272,12 +271,12 @@ const Home: React.FC = () => {
           </header>
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {[
-              "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600&auto=format&fit=crop",
-              "https://images.unsplash.com/photo-1539109132314-3475d24c2475?q=80&w=600&auto=format&fit=crop",
-              "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=600&auto=format&fit=crop",
-              "https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=600&auto=format&fit=crop",
-              "https://images.unsplash.com/photo-1475184478106-90bc0921c330?q=80&w=600&auto=format&fit=crop"
+            {["https://images.pexels.com/photos/15181108/pexels-photo-15181108.jpeg",
+              "https://images.pexels.com/photos/9418783/pexels-photo-9418783.jpeg",
+              "https://images.pexels.com/photos/9419006/pexels-photo-9419006.jpeg",
+              "https://images.pexels.com/photos/29049398/pexels-photo-29049398.jpeg",
+              "https://images.pexels.com/photos/20319222/pexels-photo-20319222.jpeg",
+              "https://images.pexels.com/photos/28428034/pexels-photo-28428034.jpeg"
             ].map((img, i) => (
               <div key={i} className="group relative aspect-[4/5] overflow-hidden bg-gray-100 shadow-sm hover:shadow-2xl transition-all duration-700">
                 <img src={img} className="w-full h-full object-cover transition-all duration-[2000ms] group-hover:scale-110 grayscale-[0.5] group-hover:grayscale-0" alt={`Social Feed ${i}`} />
@@ -317,9 +316,11 @@ const Home: React.FC = () => {
           </div>
           <div className="space-y-8 group">
             <div className="w-24 h-24 bg-vogue-50 flex items-center justify-center mx-auto rounded-full group-hover:bg-black group-hover:text-white transition-all duration-700">
-              <i className="fa-solid fa-sparkles text-2xl"></i>
+              <i className="fa-solid fa-award text-2xl"></i>
+
             </div>
             <div className="space-y-4">
+
               <h4 className="text-[11px] font-bold uppercase tracking-[0.4em]">Personal Styling</h4>
               <p className="text-sm text-vogue-500 font-light leading-relaxed italic font-serif max-w-[280px] mx-auto">
                 "Expert guidance tailored to your unique aesthetic."

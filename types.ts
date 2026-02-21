@@ -2,7 +2,7 @@
 export interface Product {
   id: string;
   name: string;
-  category: 'Men' | 'Women' | 'Kids' | 'Accessories';
+  category: 'Sarees' | 'Blouses' | 'Ethnic Wear' | 'Luxe Collection';
   subcategory: string;
   price: number;
   originalPrice?: number;
