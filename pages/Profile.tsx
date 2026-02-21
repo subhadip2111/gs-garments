@@ -108,17 +108,19 @@ const Profile: React.FC = () => {
       setMobileError(error);
       return;
     }
+    setUpdating(true);
 
     setUpdatingMobile(true);
     try {
       const upodateUserResponse = await updateProfileDetails({
         id: user.id,
-        mobile: mobile
+        mobile: mobile,
+        fullName: fullName,
       }, accessToken)
       setMobileError("");
       const updatedUser = upodateUserResponse.user || upodateUserResponse.data || upodateUserResponse;
       dispatch(setCurrentUser(updatedUser));
-      showToast("Mobile number updated successfully.", "success");
+      showToast("Profile details updated successfully", "success");
     } catch (err: any) {
       alert("Error updating mobile: " + err.message);
     } finally {

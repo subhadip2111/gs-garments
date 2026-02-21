@@ -118,7 +118,7 @@ function AppContent() {
               refreshToken: response.refreshToken
             };
             dispatch(setToken(tokens));
-            dispatch(setCurrentUser(response.user));
+            // dispatch(setCurrentUser(response.user));
           } catch (error) {
             console.log("Error syncing user data:", error);
           }
