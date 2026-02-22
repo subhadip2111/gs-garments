@@ -117,7 +117,7 @@ const Shop: React.FC = () => {
   };
 
   const FilterSection = ({ title, id, isActive, children }: { title: string, id: string, isActive?: boolean, children?: React.ReactNode }) => (
-    <div className="border-b border-zinc-100 py-6 last:border-0 group/section">
+    <div className="border-b border-zinc-100 py-4 last:border-0 group/section">
       <button
         onClick={() => toggleSection(id)}
         className="w-full flex justify-between items-center group/btn"
@@ -139,10 +139,10 @@ const Shop: React.FC = () => {
   );
 
   const SidebarContent = () => (
-    <div className="space-y-2">
-      <div className="pb-10 mb-2 border-b border-zinc-100">
-        <h3 className="text-[10px] font-black tracking-[0.4em] text-zinc-300 uppercase mb-2">Refine Collection</h3>
-        <p className="text-[24px] font-serif font-bold italic text-black tracking-tight">{filteredProducts.length} <span className="text-zinc-300 text-[14px] not-italic font-sans uppercase tracking-[0.2em] ml-2 font-black">Pieces</span></p>
+    <div className="space-y-1">
+      <div className="pb-6 mb-2 border-b border-zinc-100">
+        <h3 className="text-[9px] font-black tracking-[0.4em] text-zinc-300 uppercase mb-2">Refine Collection</h3>
+        <p className="text-[20px] font-serif font-bold italic text-black tracking-tight">{filteredProducts.length} <span className="text-zinc-300 text-[12px] not-italic font-sans uppercase tracking-[0.2em] ml-2 font-black">Pieces</span></p>
       </div>
 
       <FilterSection title="Categories" id="category" isActive={activeCategory !== 'All'}>
@@ -340,30 +340,30 @@ const Shop: React.FC = () => {
       </div>
 
       {/* Modern Mobile Bottom Menu */}
-      <div className="fixed lg:hidden bottom-8 left-1/2 -translate-x-1/2 w-[90%] bg-zinc-950/90 backdrop-blur-2xl rounded-[3rem] z-[60] flex items-center h-20 shadow-2xl border border-white/10 px-4 group">
+      <div className="fixed lg:hidden bottom-6 left-1/2 -translate-x-1/2 w-[92%] bg-zinc-950/95 backdrop-blur-3xl rounded-[2.5rem] z-[60] flex items-center h-16 shadow-2xl border border-white/5 px-2 group">
         <button
           onClick={() => setIsMobileSortOpen(true)}
-          className="flex-1 h-full flex items-center justify-center gap-4 text-white hover:bg-white/5 rounded-l-[3rem] transition-all"
+          className="flex-1 h-full flex items-center justify-center gap-3 text-white hover:bg-white/5 rounded-l-[2.5rem] transition-all"
         >
-          <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-            <i className="fa-solid fa-sort text-xs"></i>
+          <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
+            <i className="fa-solid fa-sort text-[10px]"></i>
           </div>
-          <span className="text-[11px] font-black uppercase tracking-[0.2em]">Sort</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.1em]">Sort</span>
         </button>
-        <div className="w-[1px] h-8 bg-white/10"></div>
+        <div className="w-[1px] h-6 bg-white/5"></div>
         <button
           onClick={() => setIsMobileFiltersOpen(true)}
-          className="flex-1 h-full flex items-center justify-center gap-4 text-white hover:bg-white/5 rounded-r-[3rem] transition-all group/fbtn"
+          className="flex-1 h-full flex items-center justify-center gap-3 text-white hover:bg-white/5 rounded-r-[2.5rem] transition-all group/fbtn"
         >
-          <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center relative overflow-hidden">
-            <i className="fa-solid fa-filter text-xs"></i>
+          <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center relative overflow-hidden">
+            <i className="fa-solid fa-filter text-[10px]"></i>
             {(activeCategory !== 'All' || activeBrand !== 'All' || activePriceMax < 15000 || activeSubcategory !== 'All') && (
               <div className="absolute inset-0 bg-zinc-500/20 animate-pulse"></div>
             )}
           </div>
-          <span className="text-[11px] font-black uppercase tracking-[0.2em]">Refine</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.1em]">Refine</span>
           {(activeCategory !== 'All' || activeBrand !== 'All' || activePriceMax < 15000 || activeSubcategory !== 'All') && (
-            <div className="w-2 h-2 bg-black rounded-full shadow-[0_0_10px_rgba(0,0,0,0.3)]"></div>
+            <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
           )}
         </button>
       </div>
@@ -371,34 +371,34 @@ const Shop: React.FC = () => {
       {/* Premium Mobile Filter Drawer */}
       {isMobileFiltersOpen && (
         <div className="fixed inset-0 z-[100] bg-zinc-950/20 backdrop-blur-sm animate-in fade-in duration-500 flex justify-end">
-          <div className="w-full max-w-lg bg-white h-full animate-in slide-in-from-right duration-700 shadow-2xl flex flex-col pt-12">
-            <div className="flex items-center justify-between px-10 py-8 border-b border-zinc-100">
-              <div className="space-y-1">
-                <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-300">Archive refinery</h2>
-                <div className="text-3xl font-serif font-black italic">Settings.</div>
+          <div className="w-full max-w-lg bg-white h-full animate-in slide-in-from-right duration-700 shadow-2xl flex flex-col pt-4">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
+              <div className="space-y-0.5">
+                <h2 className="text-[9px] font-black uppercase tracking-[0.4em] text-zinc-300">Archives</h2>
+                <div className="text-2xl font-serif font-black italic">Refinery.</div>
               </div>
               <button
                 onClick={() => setIsMobileFiltersOpen(false)}
-                className="w-14 h-14 flex items-center justify-center rounded-full hover:bg-zinc-50 transition-colors border border-zinc-100"
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-50 transition-colors border border-zinc-100"
               >
-                <i className="fa-solid fa-xmark text-lg"></i>
+                <i className="fa-solid fa-xmark text-sm"></i>
               </button>
             </div>
 
-            <div className="flex-grow overflow-y-auto px-10 py-10 no-scrollbar">
+            <div className="flex-grow overflow-y-auto px-6 py-6 no-scrollbar">
               <SidebarContent />
             </div>
 
-            <div className="p-10 border-t border-zinc-100 bg-white/80 backdrop-blur-xl flex gap-6">
+            <div className="p-6 border-t border-zinc-100 bg-white/80 backdrop-blur-xl flex gap-3">
               <button
                 onClick={() => { clearAllFilters(); setIsMobileFiltersOpen(false); }}
-                className="flex-1 py-7 text-[10px] font-black uppercase tracking-[0.5em] text-zinc-400 hover:text-black transition-all"
+                className="flex-1 py-4 text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 hover:text-black transition-all"
               >
                 Reset
               </button>
               <button
                 onClick={() => setIsMobileFiltersOpen(false)}
-                className="flex-[2] py-7 px-10 text-[10px] font-black uppercase tracking-[0.5em] bg-black text-white rounded-full shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] hover:bg-zinc-800 transition-all active:scale-95"
+                className="flex-[2] py-4 px-6 text-[10px] font-black uppercase tracking-[0.4em] bg-black text-white rounded-full shadow-lg hover:bg-zinc-800 transition-all active:scale-95"
               >
                 Apply
               </button>
@@ -411,15 +411,15 @@ const Shop: React.FC = () => {
       {isMobileSortOpen && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center">
           <div className="absolute inset-0 bg-zinc-950/40 backdrop-blur-md animate-in fade-in duration-500" onClick={() => setIsMobileSortOpen(false)}></div>
-          <div className="relative w-full bg-white rounded-t-[4rem] animate-in slide-in-from-bottom duration-700 p-12 shadow-2xl border-t border-white/20">
-            <div className="w-16 h-1.5 bg-zinc-100 rounded-full mx-auto mb-12"></div>
-            <div className="space-y-4">
-              <div className="mb-8">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-300 mb-2">Display Mode</h3>
-                <div className="text-4xl font-serif font-black italic">Sort Pieces.</div>
+          <div className="relative w-full bg-white rounded-t-[3rem] animate-in slide-in-from-bottom duration-700 p-8 shadow-2xl border-t border-white/20">
+            <div className="w-12 h-1 bg-zinc-100 rounded-full mx-auto mb-8"></div>
+            <div className="space-y-3">
+              <div className="mb-6">
+                <h3 className="text-[9px] font-black uppercase tracking-[0.4em] text-zinc-300 mb-2">Display</h3>
+                <div className="text-3xl font-serif font-black italic">Sort Pieces.</div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-3">
                 {[
                   { id: 'newest', label: "What's New", icon: 'fa-sparkles' },
                   { id: 'popular', label: "Aesthetic Preference", icon: 'fa-heart' },
@@ -429,15 +429,15 @@ const Shop: React.FC = () => {
                   <button
                     key={opt.id}
                     onClick={() => { updateParams('sort', opt.id); setIsMobileSortOpen(false); }}
-                    className={`w-full flex items-center justify-between p-8 rounded-[2rem] transition-all group ${activeSort === opt.id ? 'bg-black text-white shadow-2xl' : 'bg-zinc-50 text-zinc-900 hover:bg-zinc-100'}`}
+                    className={`w-full flex items-center justify-between p-6 rounded-[2rem] transition-all group ${activeSort === opt.id ? 'bg-black text-white shadow-xl' : 'bg-zinc-50 text-zinc-900 hover:bg-zinc-100'}`}
                   >
-                    <div className="flex items-center gap-6">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${activeSort === opt.id ? 'bg-white/10' : 'bg-white group-hover:scale-110'}`}>
-                        <i className={`fa-solid ${opt.icon} text-lg`}></i>
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${activeSort === opt.id ? 'bg-white/10' : 'bg-white group-hover:scale-110'}`}>
+                        <i className={`fa-solid ${opt.icon} text-base`}></i>
                       </div>
-                      <span className="text-[14px] font-bold uppercase tracking-tight">{opt.label}</span>
+                      <span className="text-[12px] font-bold uppercase tracking-tight">{opt.label}</span>
                     </div>
-                    {activeSort === opt.id && <i className="fa-solid fa-circle-check text-xl text-vogue-500"></i>}
+                    {activeSort === opt.id && <i className="fa-solid fa-circle-check text-lg text-white"></i>}
                   </button>
                 ))}
               </div>
