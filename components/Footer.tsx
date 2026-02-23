@@ -103,7 +103,7 @@ const Footer: React.FC = () => {
         {/* Bottom Bar */}
         <div className="border-t border-gray-200 pt-10 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex flex-col md:flex-row items-center gap-4 md:gap-10">
-            <p className="text-[9px] text-gray-400 uppercase tracking-widest">&copy; {new Date().getFullYear()} GS GLOBAL STYLE COLLECTIVE. BENGALURU, INDIA.</p>
+            <p className="text-[9px] text-gray-400 uppercase tracking-widest">&copy; {new Date().getFullYear()} GS GLOBAL STYLE COLLECTIVE. PASCHIM MEDINIPUR, WEST BENGAL</p>
             <div className="flex gap-6 text-[9px] font-bold uppercase tracking-widest text-vogue-500">
               <Link to="/privacy" className="hover:text-black">Terms</Link>
               <Link to="/privacy" className="hover:text-black">Privacy</Link>

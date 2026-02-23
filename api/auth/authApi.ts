@@ -46,8 +46,9 @@ export const saveSocialLoginUserData = async (user: any) => {
     return response.data;
 }
 
-export const updateProfileDetails = async (user: any) => {
-    const response = await apiClient.patch(`/auth/profile/${user.id}`, user);
+export const updateProfileDetails = async (user: any, accessToken: string) => {
+    const response = await apiClient.patch(`/auth/profile/${user.id}`, user, { headers: { Authorization: `Bearer ${accessToken}` } });
+    console.log("response from updateProfileDetails", response.data)
     return response.data;
 }
 

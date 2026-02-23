@@ -18,7 +18,7 @@ const Profile: React.FC = () => {
   const wishlist = useAppSelector((state) => state.cart.wishlist);
   const catalog = useAppSelector((state) => state.products.items);
   const orders = useAppSelector((state) => state.cart.orders);
-  console.log("user", user)
+  console.log("user from profile", user)
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
