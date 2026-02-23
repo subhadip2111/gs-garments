@@ -21,10 +21,23 @@ const Home: React.FC = () => {
     return (
       <section key={index} className={`relative ${isFirst ? 'h-[95vh]' : 'h-[70vh]'} overflow-hidden flex items-center`}>
         <div className="absolute inset-0 z-0">
-          <div
-            className="w-full h-full bg-center bg-cover"
-            style={{ backgroundImage: `url(${config.imageUrl})` }}
-          />
+          <div className="absolute inset-0 z-0">
+            <div
+              className="
+      w-full 
+      h-full 
+      bg-center 
+      bg-no-repeat
+      bg-cover
+      md:bg-cover
+      sm:bg-contain
+    "
+              style={{
+                backgroundImage: `url(${config.imageUrl})`,
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
+          </div>
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
         </div>
 
@@ -276,10 +289,15 @@ const Home: React.FC = () => {
               "https://images.pexels.com/photos/9419006/pexels-photo-9419006.jpeg",
               "https://images.pexels.com/photos/29049398/pexels-photo-29049398.jpeg",
               "https://images.pexels.com/photos/20319222/pexels-photo-20319222.jpeg",
-              "https://images.pexels.com/photos/28428034/pexels-photo-28428034.jpeg"
+              "https://images.pexels.com/photos/28428034/pexels-photo-28428034.jpeg",
+              "https://images.pexels.com/photos/1684724/pexels-photo-1684724.jpeg",
+              "https://images.pexels.com/photos/13192040/pexels-photo-13192040.jpeg",
+              "https://images.pexels.com/photos/11822276/pexels-photo-11822276.jpeg",
+              "https://images.pexels.com/photos/19600936/pexels-photo-19600936.jpeg"
             ].map((img, i) => (
               <div key={i} className="group relative aspect-[4/5] overflow-hidden bg-gray-100 shadow-sm hover:shadow-2xl transition-all duration-700">
-                <img src={img} className="w-full h-full object-cover transition-all duration-[2000ms] group-hover:scale-110 grayscale-[0.5] group-hover:grayscale-0" alt={`Social Feed ${i}`} />
+                <img src={img} loading="eager"
+                  className="w-full h-full object-cover transition-all duration-[2000ms] group-hover:scale-110 grayscale-[0.5] group-hover:grayscale-0" alt={`Social Feed ${i}`} />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                   <span className="text-[9px] font-bold uppercase tracking-[0.5em] border border-white/40 px-6 py-3 backdrop-blur-md">View Post</span>
                 </div>

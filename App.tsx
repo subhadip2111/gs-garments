@@ -69,7 +69,7 @@ function AppContent() {
     const fetchLatestProfile = async () => {
       if (accessToken) {
         try {
-          const response = await getProfileDetails(accessToken);
+          const response = await getProfileDetails();
           const latestUser = response.user || response.data || response;
           dispatch(setCurrentUser(latestUser));
         } catch (error) {

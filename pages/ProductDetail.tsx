@@ -37,46 +37,62 @@ export const SmartOfferWidget: React.FC<{ currentTotal: number }> = ({ currentTo
   const hasUnlockedAll = currentTotal >= MOCK_COMBO_OFFERS[MOCK_COMBO_OFFERS.length - 1].threshold;
 
   return (
-    <div className="bg-zinc-950 text-white p-4 rounded-xl shadow-2xl overflow-hidden relative group border border-zinc-800/50">
-      <div className="absolute top-0 right-0 p-2 opacity-5 group-hover:opacity-10 transition-opacity">
-        <i className="fa-solid fa-bolt-lightning text-5xl transform rotate-12"></i>
-      </div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-50 to-white border border-zinc-100 p-5 shadow-sm group hover:shadow-md transition-all duration-500">
+      <div className="absolute -right-4 -top-4 w-24 h-24 bg-zinc-50 rounded-full blur-2xl opacity-50 group-hover:bg-emerald-50 transition-colors"></div>
+
       <div className="relative z-10">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-500">{hasUnlockedAll ? 'Max Tier Reached' : nextOffer.label}</span>
+        <div className="flex justify-between items-start mb-4">
+          <div className="space-y-1">
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-300">
+              {hasUnlockedAll ? 'Elite Milestone Reached' : 'Loyalty Progression'}
+            </span>
+            <h3 className="text-sm font-bold text-zinc-900">
+              {hasUnlockedAll ? 'Maximum Privilege Unlocked' : nextOffer.label}
+            </h3>
+          </div>
           {!hasUnlockedAll && (
-            <span className="text-[9px] font-black text-emerald-400 animate-pulse">Up to ₹{nextOffer.discount} OFF</span>
+            <div className="bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+              <span className="text-[10px] font-black text-emerald-600 tracking-wider">₹{nextOffer.discount} OFF</span>
+            </div>
           )}
         </div>
-        <div className="flex items-center gap-3 mb-3">
+
+        <div className="space-y-4">
           <div className="flex-grow">
-            <p className="text-[10px] font-bold">
+            <p className="text-[11px] font-medium text-zinc-500 leading-relaxed">
               {!hasUnlockedAll ? (
-                <>Add <span className="text-emerald-400 font-black">₹{remaining.toLocaleString('en-IN')}</span> more to get <span className="text-zinc-100 bg-emerald-500/20 px-1 py-0.5 rounded ml-1">₹{nextOffer.discount} INSTANT OFF</span></>
+                <>Elevate your bag by <span className="text-zinc-900 font-bold italic">₹{remaining.toLocaleString('en-IN')}</span> to unlock <span className="text-emerald-600 font-bold underline underline-offset-4 decoration-emerald-200">₹{nextOffer.discount} INSTANT CREDIT</span></>
               ) : (
-                <><i className="fa-solid fa-crown text-amber-400 mr-2"></i> All Style Rewards Unlocked!</>
+                <span className="flex items-center gap-2 text-zinc-900 font-bold italic">
+                  <i className="fa-solid fa-crown text-amber-400"></i>
+                  GS Archive Elite Status Secured
+                </span>
               )}
             </p>
           </div>
-        </div>
-        <div className="h-1 bg-zinc-900 rounded-full overflow-hidden flex gap-1">
-          {MOCK_COMBO_OFFERS.map((offer, idx) => {
-            const isAchieved = currentTotal >= offer.threshold;
-            return (
-              <div
-                key={idx}
-                className={`h-full flex-grow rounded-full transition-all duration-1000 ${isAchieved ? 'bg-emerald-500' : 'bg-zinc-800'}`}
-                style={{ opacity: isAchieved ? 1 : 0.3 }}
-              ></div>
-            );
-          })}
-        </div>
-        {!hasUnlockedAll && (
-          <div className="mt-2 flex justify-between text-[7px] font-bold uppercase tracking-widest text-zinc-500">
-            <span>Progress to Reward</span>
-            <span>₹{currentTotal.toLocaleString('en-IN')} / ₹{nextOffer.threshold.toLocaleString('en-IN')}</span>
+
+          <div className="relative h-1.5 bg-zinc-100 rounded-full overflow-hidden flex gap-1.5 p-0.5">
+            {MOCK_COMBO_OFFERS.map((offer, idx) => {
+              const isAchieved = currentTotal >= offer.threshold;
+              return (
+                <div
+                  key={idx}
+                  className={`h-full flex-grow rounded-full transition-all duration-1000 ${isAchieved ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]' : 'bg-zinc-200'}`}
+                ></div>
+              );
+            })}
           </div>
-        )}
+
+          {!hasUnlockedAll && (
+            <div className="flex justify-between items-center text-[10px]">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-zinc-900 animate-pulse"></div>
+                <span className="font-black uppercase tracking-widest text-zinc-400">Archive Progress</span>
+              </div>
+              <span className="font-bold text-zinc-900">₹{currentTotal.toLocaleString('en-IN')} <span className="text-zinc-300 font-light mx-1">/</span> ₹{nextOffer.threshold.toLocaleString('en-IN')}</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -241,18 +257,18 @@ const ProductDetail: React.FC = () => {
     : null;
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-white min-h-screen overflow-x-hidden">
       {/* Size Guide Modal Overlay */}
       {showSizeGuide && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-zinc-950/20 backdrop-blur-xl animate-in fade-in duration-500">
-          <div className="relative bg-white w-full max-w-3xl p-16 shadow-2xl animate-in zoom-in-95 duration-500 rounded-sm">
-            <button onClick={() => setShowSizeGuide(false)} className="absolute top-8 right-8 text-zinc-300 hover:text-black transition-colors"><i className="fa-solid fa-xmark text-xl"></i></button>
-            <div className="space-y-4 mb-12 text-center">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-zinc-950/20 backdrop-blur-xl animate-in fade-in duration-500">
+          <div className="relative bg-white w-full max-w-3xl p-8 sm:p-16 shadow-2xl animate-in zoom-in-95 duration-500 rounded-sm overflow-y-auto max-h-[90vh]">
+            <button onClick={() => setShowSizeGuide(false)} className="absolute top-4 right-4 sm:top-8 sm:right-8 text-zinc-300 hover:text-black transition-colors"><i className="fa-solid fa-xmark text-xl"></i></button>
+            <div className="space-y-4 mb-8 sm:mb-12 text-center">
               <span className="text-[10px] font-black uppercase tracking-[0.6em] text-zinc-300">Archives of Measurement</span>
-              <h2 className="text-5xl font-serif font-bold italic">The Perfect Drape.</h2>
+              <h2 className="text-3xl sm:text-5xl font-serif font-bold italic">The Perfect Drape.</h2>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[500px]">
                 <thead>
                   <tr className="border-b border-zinc-100">
                     <th className="py-6 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-900 leading-none">Standard</th>
@@ -275,13 +291,13 @@ const ProductDetail: React.FC = () => {
       )}
 
       {/* Global Breadcrumbs - Refined */}
-      <div className="max-w-[1920px] mx-auto px-6 sm:px-12 lg:px-24">
-        <nav className="flex items-center pt-24 pb-12 text-[9px] font-black uppercase tracking-[0.5em] text-zinc-300">
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-12 lg:px-24 w-full">
+        <nav className="flex items-center pt-24 pb-12 text-[9px] font-black uppercase tracking-[0.5em] text-zinc-500">
           <Link to="/" className="hover:text-black transition-colors">Atelier</Link>
           <i className="fa-solid fa-circle text-[4px] mx-6 opacity-20"></i>
           <Link to={`/shop?category=${product.category}`} className="hover:text-black transition-colors">{product.category}</Link>
           <i className="fa-solid fa-circle text-[4px] mx-6 opacity-20"></i>
-          <span className="text-black">{product.name}</span>
+          <span className="text-zinc-900 font-black tracking-[0.6em]">{product.name}</span>
         </nav>
 
         <div className="flex flex-col lg:flex-row gap-16 lg:gap-24 xl:gap-32 pb-32">
@@ -352,39 +368,72 @@ const ProductDetail: React.FC = () => {
               {/* Product Signature */}
               <header className="space-y-8">
                 <div className="flex items-center gap-4 animate-in slide-in-from-left duration-700">
-                  <span className="text-[10px] font-black uppercase tracking-[0.6em] text-zinc-300">Bespoke Boutique Selection</span>
-                  <div className="h-[1px] w-12 bg-zinc-100"></div>
-                  {product.isBestSeller && (<span className="text-[8px] font-black text-white bg-zinc-950 px-2 py-1 uppercase tracking-[0.2em] rounded-sm">Elite Choice</span>)}
+                  <span className="text-[10px] font-black uppercase tracking-[0.6em] text-zinc-500">Bespoke Boutique Selection</span>
+                  <div className="h-[1px] w-12 bg-zinc-200"></div>
+                  {product.isBestSeller && (<span className="text-[8px] font-black text-white bg-zinc-950 px-2 py-1 uppercase tracking-[0.2em] rounded-sm shadow-xl">Elite Choice</span>)}
                 </div>
 
-                <div className="space-y-4">
-                  <h1 className="text-5xl xl:text-6xl font-serif font-bold italic tracking-tight text-zinc-900 leading-[0.9]">
-                    {product.name}
-                  </h1>
-                  <div className="flex items-center gap-6">
-                    <span className="text-[11px] font-black uppercase tracking-[0.4em] text-zinc-400">{product.brand || 'GS Heritage'}</span>
-                    <div className="w-1.5 h-1.5 bg-zinc-200 rounded-full"></div>
-                    <span className="text-[11px] font-bold text-zinc-400 italic font-serif">Ref. {product.sku || 'GS-' + product.id.toUpperCase()}</span>
+                <h1 className="text-4xl sm:text-5xl xl:text-6xl font-serif font-bold italic tracking-tight text-zinc-950 leading-[1.1]">
+                  {product.name}
+                </h1>
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-black uppercase tracking-[0.4em] text-zinc-600">{product.brand || 'GS Heritage'}</span>
+                    <div className="w-1.5 h-1.5 bg-zinc-300 rounded-full"></div>
+                    <span className="text-[11px] font-bold text-zinc-500 italic font-serif">Ref. {product.sku || 'GS-' + product.id.toUpperCase()}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 bg-zinc-50 px-3 py-1.5 rounded-lg border border-zinc-100/50">
+                    <div className="flex text-zinc-900 text-[10px] gap-0.5">
+                      {[...Array(5)].map((_, i) => (
+                        <i key={i} className={`fa-solid fa-star ${i < Math.floor(product.rating) ? 'text-zinc-600' : 'text-zinc-200'}`}></i>
+                      ))}
+                    </div>
+                    <span className="text-[10px] font-bold text-zinc-500">{product.rating.toFixed(1)}</span>
+                    <div className="w-1 h-1 bg-zinc-200 rounded-full"></div>
+                    <span className="text-[10px] font-bold text-zinc-400">{reviews.length} Experiences</span>
                   </div>
                 </div>
 
-                <div className="flex items-end gap-6 pt-4">
+                <div className="flex flex-col sm:flex-row sm:items-end gap-6 pt-4">
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-300 mb-2">Acquisition Price</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 mb-2">Acquisition Price</span>
                     <div className="flex items-baseline gap-4">
-                      <span className="text-5xl font-black tracking-tighter text-zinc-950">₹{product.price.toLocaleString('en-IN')}</span>
+                      <span className="text-4xl sm:text-5xl font-black tracking-tighter text-zinc-950">₹{product.price.toLocaleString('en-IN')}</span>
                       {product.originalPrice && (
-                        <span className="text-xl text-zinc-200 line-through italic font-serif opacity-80 font-light">₹{product.originalPrice.toLocaleString('en-IN')}</span>
+                        <span className="text-xl text-zinc-400 line-through italic font-serif opacity-60 font-medium">₹{product.originalPrice.toLocaleString('en-IN')}</span>
                       )}
                     </div>
                   </div>
                   {discountPercentage && (
-                    <div className="pb-1.5">
-                      <span className="bg-emerald-50 text-emerald-600 text-[9px] font-black px-4 py-2 rounded-full uppercase tracking-[0.2em] border border-emerald-100">
+                    <div className="pb-1.5 w-fit">
+                      <span className="bg-emerald-50 text-emerald-700 text-[10px] font-black px-5 py-3 rounded-xl uppercase tracking-[0.2em] border border-emerald-200/50 block text-center shadow-sm">
                         {discountPercentage}% Privileged Offer
                       </span>
                     </div>
                   )}
+                </div>
+
+                {/* Technical Highlights Quick View */}
+                <div className="grid grid-cols-2 gap-4 pt-4">
+                  <div className="p-4 bg-stone-50/70 rounded-2xl border border-stone-200/50 flex items-center gap-3 group/item hover:border-zinc-950 transition-colors">
+                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-zinc-500 shadow-sm">
+                      <i className="fa-solid fa-swatchbook text-xs"></i>
+                    </div>
+                    <div>
+                      <span className="block text-[8px] font-black uppercase tracking-widest text-zinc-500">Fabric</span>
+                      <span className="block text-[11px] font-bold text-zinc-950">{product.fabric || "Heritage Blend"}</span>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-stone-50/70 rounded-2xl border border-stone-200/50 flex items-center gap-3 group/item hover:border-zinc-950 transition-colors">
+                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-zinc-500 shadow-sm">
+                      <i className="fa-solid fa-earth-asia text-xs"></i>
+                    </div>
+                    <div>
+                      <span className="block text-[8px] font-black uppercase tracking-widest text-zinc-500">Origin</span>
+                      <span className="block text-[11px] font-bold text-zinc-950">Indian Heritage</span>
+                    </div>
+                  </div>
                 </div>
               </header>
 
@@ -428,29 +477,38 @@ const ProductDetail: React.FC = () => {
                 </div>
 
                 {/* Primary Actions */}
-                <div className="space-y-4 pt-4">
+                <div className="space-y-6 pt-4">
                   <div className="flex flex-col sm:flex-row gap-4">
                     <button
                       onClick={() => dispatch(addToCart({ productId: product.id, size: selectedSize, color: selectedColor, quantity }))}
-                      className="flex-1 bg-zinc-900 text-white py-6 text-[11px] font-black uppercase tracking-[0.4em] hover:bg-zinc-800 transition-all duration-700 active:scale-[0.98] shadow-lg rounded-full"
+                      className="flex-[1.5] group relative overflow-hidden bg-zinc-900 text-white py-5 px-8 text-[11px] font-black uppercase tracking-[0.3em] transition-all duration-700 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)] active:scale-[0.98] rounded-full"
                     >
-                      Add to Bag
+                      <div className="relative z-10 flex items-center justify-center gap-3">
+                        <i className="fa-solid fa-bag-shopping text-xs transition-transform group-hover:-translate-y-0.5"></i>
+                        <span>Add to Bag</span>
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-r from-zinc-800 to-zinc-900 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
                     </button>
+
                     <button
                       onClick={handleBuyNow}
-                      className="flex-1 bg-white text-black border-2 border-zinc-900 py-6 text-[11px] font-black uppercase tracking-[0.4em] hover:bg-zinc-50 transition-all duration-700 active:scale-[0.98] rounded-full"
+                      className="flex-1 group bg-white text-zinc-900 border-2 border-zinc-900 py-5 px-8 text-[11px] font-black uppercase tracking-[0.3em] transition-all duration-700 hover:bg-zinc-900 hover:text-white active:scale-[0.98] rounded-full"
                     >
-                      Buy Now
+                      <span className="relative z-10">Buy Now</span>
                     </button>
                   </div>
-                  <p className="text-center text-[9px] text-zinc-300 font-bold uppercase tracking-[0.2em]">Complimentary White-Glove Shipping on all Elite Purchases</p>
+
+                  <div className="flex items-center justify-center gap-3 py-2 px-6 bg-zinc-50 rounded-full border border-zinc-100 w-fit mx-auto">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                    <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-[0.2em]">Complimentary White-Glove Shipping</p>
+                  </div>
                 </div>
 
                 {/* The Narrative Section */}
                 <div className="pt-12 border-t border-zinc-100 space-y-12">
                   <div className="space-y-6">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-300">The Narrative</h3>
-                    <p className="text-[15px] font-serif font-medium leading-relaxed text-zinc-600 italic">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500">The Narrative</h3>
+                    <p className="text-[16px] font-serif font-medium leading-relaxed text-stone-800 italic bg-stone-50/30 p-8 rounded-2xl border border-stone-100 shadow-inner">
                       Crafted with a legacy of excellence, this {product.fabric || 'timeless creation'} embodies the spirit of our boutique archives. Every stitch reflects a meticulous attention to detail, designed for the individual who values both heritage and a contemporary silhouette.
                     </p>
                   </div>
@@ -465,12 +523,12 @@ const ProductDetail: React.FC = () => {
                     ].map((spec, i) => (
                       <div key={i} className="space-y-2 group">
                         <div className="flex items-center gap-3">
-                          <i className={`fa-solid ${spec.icon} text-[10px] text-zinc-300 group-hover:text-black transition-colors`}></i>
-                          <span className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-300 leading-none">
+                          <i className={`fa-solid ${spec.icon} text-[10px] text-zinc-400 group-hover:text-black transition-colors`}></i>
+                          <span className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-500 leading-none">
                             {spec.label}
                           </span>
                         </div>
-                        <p className="text-[11px] font-black uppercase tracking-widest text-zinc-900 ml-6 group-hover:translate-x-1 transition-transform">
+                        <p className="text-[11px] font-black uppercase tracking-widest text-zinc-950 ml-6 group-hover:translate-x-1 transition-transform">
                           {spec.value}
                         </p>
                       </div>
@@ -570,13 +628,13 @@ const ProductDetail: React.FC = () => {
                 <RatingHistogram rating={product.rating} reviewsCount={reviews.length} />
               </div>
 
-              <button
+              {/* <button
                 onClick={() => setIsWritingReview(!isWritingReview)}
                 className="w-full bg-zinc-950 text-white py-6 text-[11px] font-black uppercase tracking-[0.4em] hover:bg-zinc-800 transition-all duration-700 shadow-xl rounded-full flex items-center justify-center gap-4 group"
               >
                 <i className={`fa-solid ${isWritingReview ? 'fa-xmark' : 'fa-pen-nib'} text-xs group-hover:scale-110 transition-transform`}></i>
                 {isWritingReview ? 'Cancel' : 'Write a Review'}
-              </button>
+              </button> */}
             </div>
 
             <div className="lg:col-span-3">
@@ -674,8 +732,8 @@ const ProductDetail: React.FC = () => {
             ))}
           </div>
         </section>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 
