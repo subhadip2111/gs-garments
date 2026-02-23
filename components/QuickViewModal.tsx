@@ -94,10 +94,10 @@ const QuickViewModal: React.FC = () => {
             <header className="space-y-4">
               <div className="flex items-center gap-3">
                 <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-vogue-500">{quickViewProduct.subcategory}</span>
-                <div className="flex items-center gap-1.5 text-black text-[9px]">
+                <div className="flex items-center gap-1.5 text-amber-400 text-[9px]">
                   <div className="flex">
                     {[...Array(5)].map((_, i) => (
-                      <i key={i} className={`fa-solid fa-star ${i < Math.floor(quickViewProduct.rating) ? 'text-black' : 'text-gray-100'}`}></i>
+                      <i key={i} className={`fa-solid fa-star ${i < Math.floor(quickViewProduct.rating) ? 'text-amber-400' : 'text-gray-100'}`}></i>
                     ))}
                   </div>
                   <span className="font-bold text-gray-400">({quickViewProduct.rating})</span>

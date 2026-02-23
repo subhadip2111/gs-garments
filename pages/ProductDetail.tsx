@@ -43,7 +43,7 @@ export const SmartOfferWidget: React.FC<{ currentTotal: number }> = ({ currentTo
       <div className="relative z-10">
         <div className="flex justify-between items-start mb-4">
           <div className="space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-300">
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-black">
               {hasUnlockedAll ? 'Elite Milestone Reached' : 'Loyalty Progression'}
             </span>
             <h3 className="text-sm font-bold text-zinc-900">
@@ -147,7 +147,18 @@ const ProductDetail: React.FC = () => {
 
   const fetchRelatedProducts = (currentProd: Product) => {
     setLoadingRelated(true);
-    setRelatedProducts(MOCK_PRODUCTS.filter(p => p.id !== currentProd.id).slice(0, 4));
+    // Prioritize same subcategory, then same category
+    const related = MOCK_PRODUCTS.filter(p => p.id !== currentProd.id)
+      .sort((a, b) => {
+        if (a.subcategory === currentProd.subcategory && b.subcategory !== currentProd.subcategory) return -1;
+        if (a.subcategory !== currentProd.subcategory && b.subcategory === currentProd.subcategory) return 1;
+        if (a.category === currentProd.category && b.category !== currentProd.category) return -1;
+        if (a.category !== currentProd.category && b.category === currentProd.category) return 1;
+        return 0;
+      })
+      .slice(0, 4);
+
+    setRelatedProducts(related);
     setLoadingRelated(false);
   };
 
@@ -384,9 +395,9 @@ const ProductDetail: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-2 bg-zinc-50 px-3 py-1.5 rounded-lg border border-zinc-100/50">
-                    <div className="flex text-zinc-900 text-[10px] gap-0.5">
+                    <div className="flex text-amber-400 text-[10px] gap-0.5">
                       {[...Array(5)].map((_, i) => (
-                        <i key={i} className={`fa-solid fa-star ${i < Math.floor(product.rating) ? 'text-zinc-600' : 'text-zinc-200'}`}></i>
+                        <i key={i} className={`fa-solid fa-star ${i < Math.floor(product.rating) ? 'text-amber-400' : 'text-zinc-200'}`}></i>
                       ))}
                     </div>
                     <span className="text-[10px] font-bold text-zinc-500">{product.rating.toFixed(1)}</span>
@@ -444,7 +455,7 @@ const ProductDetail: React.FC = () => {
                 {/* Size Configuration */}
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-300">Select Silhouette</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-black">Select Silhouette</h4>
                     <button onClick={() => setShowSizeGuide(true)} className="group flex items-center gap-3">
                       <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-900 group-hover:underline underline-offset-8 transition-all">Archives of Measurement</span>
                       <i className="fa-solid fa-ruler-horizontal text-[10px] text-zinc-300 group-hover:text-black transition-colors"></i>
@@ -507,7 +518,7 @@ const ProductDetail: React.FC = () => {
                 {/* The Narrative Section */}
                 <div className="pt-12 border-t border-zinc-100 space-y-12">
                   <div className="space-y-6">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500">The Narrative</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-black">The Narrative</h3>
                     <p className="text-[16px] font-serif font-medium leading-relaxed text-stone-800 italic bg-stone-50/30 p-8 rounded-2xl border border-stone-100 shadow-inner">
                       Crafted with a legacy of excellence, this {product.fabric || 'timeless creation'} embodies the spirit of our boutique archives. Every stitch reflects a meticulous attention to detail, designed for the individual who values both heritage and a contemporary silhouette.
                     </p>
@@ -539,14 +550,14 @@ const ProductDetail: React.FC = () => {
                   <div className="p-10 bg-zinc-50/50 rounded-sm border border-zinc-100 ring-1 ring-zinc-50">
                     <div className="flex justify-between items-center mb-10">
                       <div className="space-y-1">
-                        <h4 className="text-[9px] font-black uppercase tracking-[0.4em] text-zinc-300">Delivery Status</h4>
+                        <h4 className="text-[9px] font-black uppercase tracking-[0.4em] text-black">Delivery Status</h4>
                         <p className="text-[12px] font-serif font-bold italic">Check Availability.</p>
                       </div>
                       <i className="fa-solid fa-map-location-dot text-zinc-300 text-xl"></i>
                     </div>
                     <div className="flex gap-4 mb-8">
                       <div className="flex-grow relative">
-                        <input type="text" placeholder="Enter Pincode" className="w-full bg-white border-b border-zinc-200 py-3 text-[10px] font-black uppercase tracking-[0.2em] outline-none focus:border-black transition-all" />
+                        <input type="text" placeholder="Enter Pincode" className="w-full bg-white border-b border-black-200 py-3 text-[10px] font-black uppercase tracking-[0.2em] outline-none focus:border-black transition-all" />
                         <button className="absolute right-0 top-1/2 -translate-y-1/2 text-[9px] font-black uppercase tracking-widest text-emerald-600 hover:text-black transition-colors">Check</button>
                       </div>
                     </div>
@@ -575,19 +586,31 @@ const ProductDetail: React.FC = () => {
 
                 {/* Social Integration */}
                 <div className="flex items-center gap-6 pt-12 border-t border-zinc-100 group">
-                  <span className="text-[9px] font-black uppercase tracking-[0.5em] text-zinc-300">Share Archivist</span>
+                  <span className="text-[9px] font-black uppercase tracking-[0.5em] text-black">Share Archivist</span>
                   <div className="flex items-center gap-2">
                     {[
-                      { platform: 'facebook', icon: 'fa-facebook-f' },
-                      { platform: 'twitter', icon: 'fa-x-twitter' },
-                      { platform: 'pinterest', icon: 'fa-pinterest-p' }
+                      {
+                        platform: "instagram",
+                        url: "https://instagram.com",
+                        icon: "https://www.svgrepo.com/show/475658/instagram-color.svg",
+                      },
+                      {
+                        platform: "facebook",
+                        url: "https://facebook.com",
+                        icon: "https://www.svgrepo.com/show/475647/facebook-color.svg",
+                      },
+                      {
+                        platform: "whatsapp",
+                        url: "https://wa.me/+919876543210",
+                        icon: "https://www.svgrepo.com/show/475692/whatsapp-color.svg",
+                      },
                     ].map((social) => (
                       <button
                         key={social.platform}
                         onClick={() => handleShare(social.platform as any)}
                         className="w-10 h-10 rounded-full border border-zinc-50 hover:bg-zinc-950 hover:text-white transition-all duration-500 flex items-center justify-center text-xs"
                       >
-                        <i className={`fa-brands ${social.icon}`}></i>
+                        <img src={social.icon} alt={social.platform} className="w-5 h-5" />
                       </button>
                     ))}
                     <button
@@ -617,9 +640,9 @@ const ProductDetail: React.FC = () => {
                 <div className="flex items-center gap-8 border-b border-zinc-100 pb-8">
                   <span className="text-7xl font-black text-zinc-950 leading-none">{product.rating.toFixed(1)}</span>
                   <div className="space-y-2">
-                    <div className="flex text-zinc-900 text-[10px]">
+                    <div className="flex text-amber-400 text-[10px]">
                       {[...Array(5)].map((_, i) => (
-                        <i key={i} className={`fa-solid fa-star ${i < Math.floor(product.rating) ? 'text-zinc-950' : 'text-zinc-100'}`}></i>
+                        <i key={i} className={`fa-solid fa-star ${i < Math.floor(product.rating) ? 'text-amber-400' : 'text-zinc-100'}`}></i>
                       ))}
                     </div>
                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-300">{reviews.length} Reflections</p>
@@ -645,7 +668,7 @@ const ProductDetail: React.FC = () => {
                       <label className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-300 block">Archetype Rating</label>
                       <div className="flex gap-4">
                         {[1, 2, 3, 4, 5].map(star => (
-                          <button key={star} type="button" onClick={() => setNewReview(prev => ({ ...prev, rating: star }))} className={`text-2xl transition-all duration-500 hover:scale-125 ${newReview.rating >= star ? 'text-black' : 'text-zinc-100'}`}><i className="fa-solid fa-star"></i></button>
+                          <button key={star} type="button" onClick={() => setNewReview(prev => ({ ...prev, rating: star }))} className={`text-2xl transition-all duration-500 hover:scale-125 ${newReview.rating >= star ? 'text-amber-400' : 'text-zinc-100'}`}><i className="fa-solid fa-star"></i></button>
                         ))}
                       </div>
                     </div>
@@ -670,9 +693,9 @@ const ProductDetail: React.FC = () => {
                           <span className="text-[8px] text-emerald-500 font-black uppercase tracking-widest">Verified Collector</span>
                         </div>
                       </div>
-                      <div className="flex text-zinc-950 text-[10px] pt-1">
+                      <div className="flex text-amber-400 text-[10px] pt-1">
                         {[...Array(5)].map((_, i) => (
-                          <i key={i} className={`fa-solid fa-star ${i < review.rating ? 'text-zinc-950' : 'text-zinc-100'}`}></i>
+                          <i key={i} className={`fa-solid fa-star ${i < review.rating ? 'text-amber-400' : 'text-zinc-100'}`}></i>
                         ))}
                       </div>
                     </div>
@@ -687,7 +710,7 @@ const ProductDetail: React.FC = () => {
         </section>
 
         {/* Heritage Partners Section */}
-        <section className="pt-32 pb-40 border-t border-zinc-100">
+        {/* <section className="pt-32 pb-40 border-t border-zinc-100">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 mb-24">
             <div className="space-y-6 max-w-2xl">
               <span className="text-zinc-300 text-[10px] font-black uppercase tracking-[0.6em]">The Curated Network</span>
@@ -707,20 +730,20 @@ const ProductDetail: React.FC = () => {
               </div>
             ))}
           </div>
-        </section>
+        </section> */}
 
-        {/* Recommended Pieces Section */}
+        {/* Similar Collection Section */}
         <section className="pt-32 pb-40 border-t border-zinc-100">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 mb-24">
             <div className="space-y-6">
-              <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.5em] text-zinc-300">
+              <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.5em] text-black">
                 <span>Elevate the Ensemble</span>
-                <div className="h-[1px] w-12 bg-zinc-100"></div>
+                <div className="h-[1px] w-12 bg-zinc-200"></div>
               </div>
-              <h2 className="text-6xl md:text-7xl font-serif font-bold italic tracking-tight leading-[0.8] text-zinc-950">Complete <br /> The Look.</h2>
+              <h2 className="text-6xl md:text-7xl font-serif font-bold italic tracking-tight leading-[0.8] text-zinc-950">Similar <br /> Collection.</h2>
             </div>
-            <Link to="/shop" className="group flex items-center gap-6 pb-2 border-b-2 border-zinc-950">
-              <span className="text-[12px] font-black uppercase tracking-[0.4em]">View Entire Archive</span>
+            <Link to={`/shop?category=${product.category}`} className="group flex items-center gap-6 pb-2 border-b-2 border-zinc-950">
+              <span className="text-[12px] font-black uppercase tracking-[0.4em]">Explore Similar Collection</span>
               <i className="fa-solid fa-arrow-right-long transition-transform group-hover:translate-x-3 duration-500"></i>
             </Link>
           </div>
