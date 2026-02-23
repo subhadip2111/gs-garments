@@ -48,6 +48,7 @@ import TrackOrder from './pages/TrackOrder';
 import { ToastProvider } from './components/Toast';
 import { getProfileDetails, saveSocialLoginUserData } from './api/auth/authApi';
 import { PersistGate } from "redux-persist/integration/react";
+
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const user = useAppSelector((state) => state.auth.user);
   const location = useLocation();
@@ -166,41 +167,38 @@ function AppContent() {
   }, [dispatch]);
 
   return (
-    <Router>
-      <ScrollToTop />
-      <div className="flex flex-col min-h-screen">
-        <Navbar />
-        <main className="flex-grow pt-28">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/shop" element={<Shop />} />
-            <Route path="/auth" element={<Auth />} />
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      <main className="flex-grow pt-28">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/shop" element={<Shop />} />
+          <Route path="/auth" element={<Auth />} />
 
-            {/* Freely view products */}
-            <Route path="/product/:id" element={<ProductDetail />} />
+          {/* Freely view products */}
+          <Route path="/product/:id" element={<ProductDetail />} />
 
-            {/* Freely manage bag */}
-            <Route path="/cart" element={<Cart />} />
+          {/* Freely manage bag */}
+          <Route path="/cart" element={<Cart />} />
 
-            {/* Authenticated routes */}
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
-            <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+          {/* Authenticated routes */}
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+          <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
 
-            <Route path="/about" element={<OurStory />} />
-            <Route path="/careers" element={<Careers />} />
-            <Route path="/sustainability" element={<Sustainability />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/shipping" element={<Shipping />} />
-            <Route path="/returns" element={<Returns />} />
-            <Route path="/track-order" element={<TrackOrder />} />
-          </Routes>
-        </main>
-        <Footer />
-        <QuickViewModal />
-      </div>
-    </Router>
+          <Route path="/about" element={<OurStory />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/sustainability" element={<Sustainability />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/shipping" element={<Shipping />} />
+          <Route path="/returns" element={<Returns />} />
+          <Route path="/track-order" element={<TrackOrder />} />
+        </Routes>
+      </main>
+      <Footer />
+      <QuickViewModal />
+    </div>
   );
 }
 
@@ -217,7 +215,10 @@ export default function App() {
     <Provider store={store}>
       <ToastProvider>
         <PersistGate loading={null} persistor={persistor}>
-          <AppContent />
+          <Router>
+            <ScrollToTop />
+            <AppContent />
+          </Router>
         </PersistGate>
       </ToastProvider>
     </Provider>
