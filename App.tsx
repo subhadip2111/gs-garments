@@ -48,6 +48,20 @@ import TrackOrder from './pages/TrackOrder';
 import { ToastProvider } from './components/Toast';
 import { getProfileDetails, saveSocialLoginUserData } from './api/auth/authApi';
 import { PersistGate } from "redux-persist/integration/react";
+import AdminDashboard, { AdminHome } from './components/AdminDashboard';
+import AdminLogin from './components/AdminLogin';
+import { Navigate as Redirect } from 'react-router-dom';
+
+// Admin section managers
+import CategoryManager from './components/admin/CategoryManager';
+import ProductManager from './components/admin/ProductManager';
+import OrderManager from './components/admin/OrderManager';
+import BannerManager from './components/admin/BannerManager';
+import BrandManager from './components/admin/BrandManager';
+import SubcategoryManager from './components/admin/SubcategoryManager';
+import ReviewManager from './components/admin/ReviewManager';
+import EarningsManager from './components/admin/EarningsManager';
+import ProfileManager from './components/admin/ProfileManager';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const user = useAppSelector((state) => state.auth.user);
@@ -60,11 +74,24 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+import UserLayout from './components/UserLayout';
+import AdminLayout from './components/AdminLayout';
+
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const user = useAppSelector((state) => state.auth.user);
+  const location = useLocation();
+
+  if (!user || user.role !== "admin") {
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+};
+
 function AppContent() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
   const accessToken = useAppSelector((state) => state.auth.accessToken);
-
 
   useEffect(() => {
     const fetchLatestProfile = async () => {
@@ -81,28 +108,18 @@ function AppContent() {
     fetchLatestProfile();
   }, [accessToken, dispatch]);
 
-
-
-
-
-
   useEffect(() => {
     // Initial session load
     supabase.auth.getSession().then(({ data, error }) => {
       if (!error && data?.session) {
         const supabaseUser = data.session.user;
         console.log("supabaseUser", supabaseUser)
-        // Check if we already have detailed user data for this ID
-        // if (!user || user.id !== supabaseUser.id) {
-        //   dispatch(setCurrentUser(latestUser));
-        // }
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const supabaseUser = session?.user ?? null;
 
-      // Only sync with backend if we don't already have an accessToken (prevents overwrite on refresh)
       if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && !accessToken) {
         const saveUserdataAndgetToken = async () => {
           try {
@@ -119,7 +136,6 @@ function AppContent() {
               refreshToken: response.refreshToken
             };
             dispatch(setToken(tokens));
-            // dispatch(setCurrentUser(response.user));
           } catch (error) {
             console.log("Error syncing user data:", error);
           }
@@ -153,7 +169,7 @@ function AppContent() {
 
     fetchProducts();
     return () => subscription?.unsubscribe?.();
-  }, [dispatch]); // Removed user from dependency array to avoid loops
+  }, [dispatch]);
 
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -167,38 +183,49 @@ function AppContent() {
   }, [dispatch]);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
-      <main className="flex-grow pt-28">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/auth" element={<Auth />} />
+    <Routes>
+      {/* User Routes */}
+      <Route element={<UserLayout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/shop" element={<Shop />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/product/:id" element={<ProductDetail />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+        <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+        <Route path="/about" element={<OurStory />} />
+        <Route path="/careers" element={<Careers />} />
+        <Route path="/sustainability" element={<Sustainability />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/shipping" element={<Shipping />} />
+        <Route path="/returns" element={<Returns />} />
+        <Route path="/track-order" element={<TrackOrder />} />
+      </Route>
 
-          {/* Freely view products */}
-          <Route path="/product/:id" element={<ProductDetail />} />
+      {/* Admin Routes — AdminDashboard is the layout shell, children use <Outlet /> */}
+      <Route element={<AdminLayout />}>
+        <Route path="/admin/login" element={<AdminLogin />} />
 
-          {/* Freely manage bag */}
-          <Route path="/cart" element={<Cart />} />
-
-          {/* Authenticated routes */}
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
-          <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-
-          <Route path="/about" element={<OurStory />} />
-          <Route path="/careers" element={<Careers />} />
-          <Route path="/sustainability" element={<Sustainability />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/shipping" element={<Shipping />} />
-          <Route path="/returns" element={<Returns />} />
-          <Route path="/track-order" element={<TrackOrder />} />
-        </Routes>
-      </main>
-      <Footer />
-      <QuickViewModal />
-    </div>
+        {/* Protected admin shell */}
+        <Route element={<AdminRoute><AdminDashboard /></AdminRoute>}>
+          <Route index path="/admin/dashboard" element={<AdminHome />} />
+          <Route path="/admin/categories" element={<CategoryManager />} />
+          <Route path="/admin/subcategories" element={<SubcategoryManager />} />
+          <Route path="/admin/products" element={<ProductManager />} />
+          <Route path="/admin/banners" element={<BannerManager />} />
+          <Route path="/admin/brands" element={<BrandManager />} />
+          <Route path="/admin/orders" element={<OrderManager />} />
+          <Route path="/admin/reviews" element={<ReviewManager />} />
+          <Route path="/admin/returns" element={<OrderManager />} />
+          <Route path="/admin/earnings" element={<EarningsManager />} />
+          <Route path="/admin/profile" element={<ProfileManager />} />
+          {/* Catch-all: redirect /admin/* → /admin/dashboard */}
+          <Route path="/admin/*" element={<Redirect to="/admin/dashboard" replace />} />
+        </Route>
+      </Route>
+    </Routes>
   );
 }
 

@@ -1,15 +1,8 @@
+import { store } from "@/store";
 import axios from "axios";
-import { store } from "../../store";
-import { setToken, logout } from "../../store/authSlice";
-
-const apiClient = axios.create({
-    baseURL: process.env.VITE_BACKEND_URL,
-});
-
-export const getApiClient = () => {
-    return apiClient;
-}
-
+import { getApiClient } from "./authApi";
+import { logout, setToken } from "@/store/authSlice";
+const apiClient = getApiClient();
 apiClient.interceptors.request.use(
     (config) => {
         const token = store.getState().auth.accessToken;
@@ -45,29 +38,35 @@ apiClient.interceptors.response.use(
     }
 );
 
-export const saveSocialLoginUserData = async (user: any) => {
-    const response = await apiClient.post(`/auth/social-login`, user);
+export const getAllCategories = async (page: number = 1, limit: number = 10) => {
+    const response = await apiClient.get(`/categories`, { params: { page, limit } });
+    console.log(response.data);
+    // Return the full paginated payload so callers can access results, totalPages, totalResults
     return response.data;
 }
 
-export const updateProfileDetails = async (user: any, accessToken: string) => {
-    const response = await apiClient.patch(`/auth/profile/${user.id}`, user, { headers: { Authorization: `Bearer ${accessToken}` } });
-    console.log("response from updateProfileDetails", response.data)
+export const addCategory = async (category: any) => {
+    const response = await apiClient.post(`/categories`, category);
     return response.data;
 }
 
-export const getProfileDetails = async () => {
-    const response = await apiClient.get(`/auth/profile`);
+export const updateCategory = async (category: { name: string, id: string }) => {
+    const response = await apiClient.patch(`/categories/${category.id}`, { name: category.name });
     return response.data;
 }
 
-export const generateNewAccessAndRefreshToken = async (refreshToken: string) => {
-    const response = await axios.post(`${process.env.VITE_BACKEND_URL}/auth/refresh-tokens`, { refreshToken });
+export const deleteCategory = async (id: string) => {
+    const response = await apiClient.delete(`/categories/${id}`);
     return response.data;
 }
 
-export const adminLogin = async (email: string, password: string) => {
-    const response = await axios.post(`${process.env.VITE_BACKEND_URL}/auth/login`, { email, password });
+
+export const getCategoryById = async (id: string) => {
+    const response = await apiClient.get(`/categories/${id}`);
     return response.data;
 }
 
+export const getAllcategoryList = async () => {
+    const response = await apiClient.get(`/categories`);
+    return response.data
+}
