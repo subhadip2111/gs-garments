@@ -175,7 +175,7 @@ export const HOME_CONFIG: HomeConfig = {
   sections: [
     {
       type: 'banner',
-      imageUrl: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=2400&auto=format&fit=crop',
+      imageUrl: 'https://images.pexels.com/photos/17312687/pexels-photo-17312687.jpeg',
       title: 'Eternal \n Elegance.',
       subtitle: 'Premium Handloom Sarees \n Established 2012 — The GS Heritage',
       description: 'Discover our exclusive collection of Banarasi, Kanjeevaram and Silk sarees. A celebration of Indian craftsmanship.',
@@ -187,7 +187,7 @@ export const HOME_CONFIG: HomeConfig = {
     },
     {
       type: 'banner',
-      imageUrl: 'https://images.pexels.com/photos/28943611/pexels-photo-28943611.jpeg',
+      imageUrl: 'https://images.pexels.com/photos/15181110/pexels-photo-15181110.jpeg',
       title: 'Modern \n Heritage.',
       subtitle: 'Exclusive Designer Blouses \n Spring Summer 2026 Collection',
       ctaText: 'Explore Collection',
@@ -219,7 +219,14 @@ export const HOME_CONFIG: HomeConfig = {
           description: 'Contemporary Draping',
           link: '/shop?brand=GS Traditional',
           tagline: 'Contemporary Draping'
-        }
+        },
+         {
+          name: 'GS Heritage',
+          imageUrl: 'https://images.pexels.com/photos/12579915/pexels-photo-12579915.jpeg',
+          description: 'Timeless Silks',
+          link: '/shop?brand=GS Heritage',
+          tagline: 'Timeless Silks'
+        },
       ]
     }
   ]

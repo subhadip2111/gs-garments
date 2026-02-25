@@ -25,18 +25,21 @@ const Home: React.FC = () => {
             <div
               className="
       w-full 
-      h-full 
-      bg-center 
-      bg-no-repeat
-      bg-cover
-      md:bg-cover
-      sm:bg-contain
+  h-full 
+  bg-no-repeat
+  bg-cover
+  md:bg-cover
+  sm:bg-contain
     "
               style={{
                 backgroundImage: `url(${config.imageUrl})`,
+  backgroundPosition: 'center 29%',
+
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
+            {/* 
+            djnjs */}
+            {/* <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" /> */}
           </div>
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
         </div>
@@ -283,7 +286,7 @@ const Home: React.FC = () => {
             <h2 className="text-6xl md:text-7xl font-serif font-bold tracking-tight">The Lifestyle.</h2>
           </header>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {["https://images.pexels.com/photos/15181108/pexels-photo-15181108.jpeg",
               "https://images.pexels.com/photos/9418783/pexels-photo-9418783.jpeg",
               "https://images.pexels.com/photos/9419006/pexels-photo-9419006.jpeg",
@@ -295,9 +298,9 @@ const Home: React.FC = () => {
               "https://images.pexels.com/photos/11822276/pexels-photo-11822276.jpeg",
               "https://images.pexels.com/photos/19600936/pexels-photo-19600936.jpeg"
             ].map((img, i) => (
-              <div key={i} className="group relative aspect-[4/5] overflow-hidden bg-gray-100 shadow-sm hover:shadow-2xl transition-all duration-700">
+              <div key={i} className="group relative aspect-square overflow-hidden bg-gray-100 shadow-sm hover:shadow-2xl transition-all duration-700">
                 <img src={img} loading="eager"
-                  className="w-full h-full object-cover transition-all duration-[2000ms] group-hover:scale-110 grayscale-[0.5] group-hover:grayscale-0" alt={`Social Feed ${i}`} />
+                  className="w-full h-full object-cover object-center transition-all duration-[2000ms] group-hover:scale-110 grayscale-[0.5] group-hover:grayscale-0" alt={`Social Feed ${i}`} />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                   <span className="text-[9px] font-bold uppercase tracking-[0.5em] border border-white/40 px-6 py-3 backdrop-blur-md">View Post</span>
                 </div>
