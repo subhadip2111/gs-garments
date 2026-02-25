@@ -134,8 +134,9 @@ const ProductDetail: React.FC = () => {
 
   useEffect(() => {
     if (product) {
-      setSelectedSize(product.sizes[0]);
-      setSelectedColor(product.colors[0]);
+      const firstVariant = product.variants[0];
+      setSelectedColor(firstVariant?.color?.name || '');
+      setSelectedSize(firstVariant?.sizes[0]?.size || '');
       setActiveImg(0);
       setQuantity(1);
       setIs360Active(false);
@@ -144,6 +145,10 @@ const ProductDetail: React.FC = () => {
       fetchRelatedProducts(product);
     }
   }, [product, id]);
+
+  // Derive variant-aware helpers
+  const selectedVariant = product?.variants.find(v => v.color.name === selectedColor);
+  const availableSizes = selectedVariant?.sizes || [];
 
   const fetchRelatedProducts = (currentProd: Product) => {
     setLoadingRelated(true);
@@ -228,7 +233,7 @@ const ProductDetail: React.FC = () => {
         buyNowItem: {
           productId: product.id,
           selectedSize,
-          selectedColor: 'Default',
+          selectedColor: selectedColor || 'Default',
           quantity: 1,
           priceAtPurchase: product.price
         }
@@ -303,7 +308,7 @@ const ProductDetail: React.FC = () => {
 
       {/* Global Breadcrumbs - Refined */}
       <div className="max-w-[1920px] mx-auto px-4 sm:px-12 lg:px-24 w-full">
-        <nav className="flex items-center pt-24 pb-12 text-[9px] font-black uppercase tracking-[0.5em] text-zinc-500">
+        <nav className="flex items-center pt-20 pb-6 text-[9px] font-black uppercase tracking-[0.5em] text-zinc-500">
           <Link to="/" className="hover:text-black transition-colors">Atelier</Link>
           <i className="fa-solid fa-circle text-[4px] mx-6 opacity-20"></i>
           <Link to={`/shop?category=${product.category}`} className="hover:text-black transition-colors">{product.category}</Link>
@@ -311,17 +316,17 @@ const ProductDetail: React.FC = () => {
           <span className="text-zinc-900 font-black tracking-[0.6em]">{product.name}</span>
         </nav>
 
-        <div className="flex flex-col lg:flex-row gap-16 lg:gap-24 xl:gap-32 pb-32">
+        <div className="flex flex-col lg:flex-row gap-10 lg:gap-14 xl:gap-16 pb-16">
           {/* Gallery Section - High Impact */}
-          <div className="lg:w-[55%]">
-            <div className="flex flex-col-reverse lg:flex-row gap-8">
+          <div className="lg:w-[50%]">
+            <div className="flex flex-col-reverse lg:flex-row gap-4">
               {/* Thumbnails */}
-              <div className="flex lg:flex-col gap-4 overflow-x-auto lg:overflow-visible no-scrollbar pb-4 lg:pb-0">
+              <div className="flex lg:flex-col gap-2.5 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 lg:pb-0">
                 {product.images.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => { setActiveImg(i); setIs360Active(false); }}
-                    className={`flex-shrink-0 w-16 lg:w-20 aspect-[3/4] overflow-hidden transition-all duration-700 relative ${activeImg === i && !is360Active ? 'ring-2 ring-black ring-offset-4 scale-105' : 'opacity-40 hover:opacity-100 hover:scale-105'}`}
+                    className={`flex-shrink-0 w-12 lg:w-14 aspect-[3/4] overflow-hidden transition-all duration-700 relative ${activeImg === i && !is360Active ? 'ring-2 ring-black ring-offset-2 scale-105' : 'opacity-40 hover:opacity-100 hover:scale-105'}`}
                   >
                     <img src={img} className="w-full h-full object-cover" alt={`${product.name} view ${i + 1}`} />
                     {activeImg === i && !is360Active && <div className="absolute inset-0 bg-white/10"></div>}
@@ -330,10 +335,10 @@ const ProductDetail: React.FC = () => {
                 {product.images.length > 2 && (
                   <button
                     onClick={() => setIs360Active(true)}
-                    className={`flex-shrink-0 w-16 lg:w-20 aspect-[3/4] flex flex-col items-center justify-center gap-2 transition-all duration-700 ${is360Active ? 'bg-black text-white ring-2 ring-black ring-offset-4 scale-105' : 'bg-zinc-50 text-zinc-300 hover:text-black hover:bg-zinc-100'}`}
+                    className={`flex-shrink-0 w-12 lg:w-14 aspect-[3/4] flex flex-col items-center justify-center gap-1.5 transition-all duration-700 ${is360Active ? 'bg-black text-white ring-2 ring-black ring-offset-2 scale-105' : 'bg-zinc-50 text-zinc-300 hover:text-black hover:bg-zinc-100'}`}
                   >
-                    <i className="fa-solid fa-rotate-right text-base animate-slow-spin"></i>
-                    <span className="text-[7px] font-black uppercase tracking-[0.2em]">360° View</span>
+                    <i className="fa-solid fa-rotate-right text-sm animate-slow-spin"></i>
+                    <span className="text-[6px] font-black uppercase tracking-[0.15em]">360°</span>
                   </button>
                 )}
               </div>
@@ -348,22 +353,22 @@ const ProductDetail: React.FC = () => {
                       <img src={product.images[activeImg]} className="w-full h-full object-cover" alt={product.name} />
                     </div>
 
-                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-700 translate-y-4 group-hover:translate-y-0">
-                      <div className="bg-black/80 backdrop-blur-xl px-8 py-4 text-white text-[9px] font-black uppercase tracking-[0.4em] flex items-center gap-4 rounded-full shadow-2xl">
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-700 translate-y-4 group-hover:translate-y-0">
+                      <div className="bg-black/80 backdrop-blur-xl px-5 py-2.5 text-white text-[8px] font-black uppercase tracking-[0.3em] flex items-center gap-3 rounded-full shadow-2xl">
                         <i className={`fa-solid ${isZoomed ? 'fa-magnifying-glass-minus' : 'fa-magnifying-glass-plus'} text-xs`}></i>
                         {isZoomed ? 'Release Viewport' : 'Engage Precision Zoom'}
                       </div>
                     </div>
 
                     <div className="absolute top-8 right-8">
-                      <button onClick={(e) => { e.stopPropagation(); dispatch(toggleWishlist(product.id)); }} className={`w-14 h-14 rounded-full backdrop-blur-xl shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-500 ${isWishlisted ? 'bg-black text-white' : 'bg-white/80 text-zinc-900 hover:bg-black hover:text-white'}`}>
-                        <i className={`${isWishlisted ? 'fa-solid text-red-500' : 'fa-regular'} text-xl fa-heart`}></i>
+                      <button onClick={(e) => { e.stopPropagation(); dispatch(toggleWishlist(product.id)); }} className={`w-10 h-10 rounded-full backdrop-blur-xl shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-500 ${isWishlisted ? 'bg-black text-white' : 'bg-white/80 text-zinc-900 hover:bg-black hover:text-white'}`}>
+                        <i className={`${isWishlisted ? 'fa-solid text-red-500' : 'fa-regular'} text-sm fa-heart`}></i>
                       </button>
                     </div>
 
                     {/* Perspective Label */}
-                    <div className="absolute top-8 left-8">
-                      <div className="bg-white/90 backdrop-blur-md border border-zinc-100 px-4 py-2 rounded-sm shadow-sm">
+                    <div className="absolute top-4 left-4">
+                      <div className="bg-white/90 backdrop-blur-md border border-zinc-100 px-3 py-1.5 rounded-sm shadow-sm">
                         <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-300">Perspective {activeImg + 1} // Archive</span>
                       </div>
                     </div>
@@ -374,17 +379,17 @@ const ProductDetail: React.FC = () => {
           </div>
 
           {/* Configuration & Details Section */}
-          <div className="lg:w-[45%]">
-            <div className="lg:sticky lg:top-32 space-y-12 xl:space-y-16">
+          <div className="lg:w-[50%]">
+            <div className="lg:sticky lg:top-28 space-y-8 xl:space-y-10">
               {/* Product Signature */}
-              <header className="space-y-8">
+              <header className="space-y-5">
                 <div className="flex items-center gap-4 animate-in slide-in-from-left duration-700">
                   <span className="text-[10px] font-black uppercase tracking-[0.6em] text-zinc-500">Bespoke Boutique Selection</span>
                   <div className="h-[1px] w-12 bg-zinc-200"></div>
                   {product.isBestSeller && (<span className="text-[8px] font-black text-white bg-zinc-950 px-2 py-1 uppercase tracking-[0.2em] rounded-sm shadow-xl">Elite Choice</span>)}
                 </div>
 
-                <h1 className="text-4xl sm:text-5xl xl:text-6xl font-serif font-bold italic tracking-tight text-zinc-950 leading-[1.1]">
+                <h1 className="text-2xl sm:text-3xl xl:text-4xl font-serif font-bold italic tracking-tight text-zinc-950 leading-[1.1]">
                   {product.name}
                 </h1>
                 <div className="flex flex-wrap items-center gap-4 sm:gap-6">
@@ -410,15 +415,15 @@ const ProductDetail: React.FC = () => {
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 mb-2">Acquisition Price</span>
                     <div className="flex items-baseline gap-4">
-                      <span className="text-4xl sm:text-5xl font-black tracking-tighter text-zinc-950">₹{product.price.toLocaleString('en-IN')}</span>
+                      <span className="text-2xl sm:text-3xl font-black tracking-tighter text-zinc-950">₹{product.price.toLocaleString('en-IN')}</span>
                       {product.originalPrice && (
-                        <span className="text-xl text-zinc-400 line-through italic font-serif opacity-60 font-medium">₹{product.originalPrice.toLocaleString('en-IN')}</span>
+                        <span className="text-base text-zinc-400 line-through italic font-serif opacity-60 font-medium">₹{product.originalPrice.toLocaleString('en-IN')}</span>
                       )}
                     </div>
                   </div>
                   {discountPercentage && (
                     <div className="pb-1.5 w-fit">
-                      <span className="bg-emerald-50 text-emerald-700 text-[10px] font-black px-5 py-3 rounded-xl uppercase tracking-[0.2em] border border-emerald-200/50 block text-center shadow-sm">
+                      <span className="bg-emerald-50 text-emerald-700 text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-[0.15em] border border-emerald-200/50 block text-center shadow-sm">
                         {discountPercentage}% Privileged Offer
                       </span>
                     </div>
@@ -426,9 +431,9 @@ const ProductDetail: React.FC = () => {
                 </div>
 
                 {/* Technical Highlights Quick View */}
-                <div className="grid grid-cols-2 gap-4 pt-4">
-                  <div className="p-4 bg-stone-50/70 rounded-2xl border border-stone-200/50 flex items-center gap-3 group/item hover:border-zinc-950 transition-colors">
-                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-zinc-500 shadow-sm">
+                <div className="grid grid-cols-2 gap-3 pt-3">
+                  <div className="p-3 bg-stone-50/70 rounded-xl border border-stone-200/50 flex items-center gap-2.5 group/item hover:border-zinc-950 transition-colors">
+                    <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-zinc-500 shadow-sm">
                       <i className="fa-solid fa-swatchbook text-xs"></i>
                     </div>
                     <div>
@@ -436,8 +441,8 @@ const ProductDetail: React.FC = () => {
                       <span className="block text-[11px] font-bold text-zinc-950">{product.fabric || "Heritage Blend"}</span>
                     </div>
                   </div>
-                  <div className="p-4 bg-stone-50/70 rounded-2xl border border-stone-200/50 flex items-center gap-3 group/item hover:border-zinc-950 transition-colors">
-                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-zinc-500 shadow-sm">
+                  <div className="p-3 bg-stone-50/70 rounded-xl border border-stone-200/50 flex items-center gap-2.5 group/item hover:border-zinc-950 transition-colors">
+                    <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-zinc-500 shadow-sm">
                       <i className="fa-solid fa-earth-asia text-xs"></i>
                     </div>
                     <div>
@@ -451,48 +456,84 @@ const ProductDetail: React.FC = () => {
               <SmartOfferWidget currentTotal={product.price} />
 
               {/* Selector Interface */}
-              <div className="space-y-12">
-                {/* Size Configuration */}
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-black">Select Silhouette</h4>
-                    <button onClick={() => setShowSizeGuide(true)} className="group flex items-center gap-3">
-                      <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-900 group-hover:underline underline-offset-8 transition-all">Archives of Measurement</span>
-                      <i className="fa-solid fa-ruler-horizontal text-[10px] text-zinc-300 group-hover:text-black transition-colors"></i>
-                    </button>
+              <div className="space-y-8">
+                {/* Color Selection */}
+                {product.variants.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-[9px] font-black uppercase tracking-[0.3em] text-black">Select Colourway</h4>
+                      <span className="text-[10px] font-bold text-zinc-400">{selectedColor || 'Choose a colour'}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                      {product.variants.map(variant => {
+                        const isActive = selectedColor === variant.color.name;
+                        const variantTotal = variant.sizes.reduce((s, v) => s + v.quantity, 0);
+                        return (
+                          <button
+                            key={variant.color.name}
+                            onClick={() => {
+                              setSelectedColor(variant.color.name);
+                              setSelectedSize(variant.sizes[0]?.size || '');
+                            }}
+                            className={`group relative flex flex-col items-center gap-1.5 transition-all duration-500`}
+                            title={`${variant.color.name} — ${variantTotal} in stock`}
+                          >
+                            <div className={`w-9 h-9 rounded-full border-2 transition-all duration-500 shadow-sm ${isActive
+                              ? 'border-black scale-110 ring-2 ring-offset-2 ring-black shadow-lg'
+                              : 'border-zinc-200 hover:border-zinc-400 hover:scale-105'
+                              }`} style={{ backgroundColor: variant.color.hex }} />
+                            <span className={`text-[7px] font-black uppercase tracking-widest transition-colors ${isActive ? 'text-black' : 'text-zinc-300 group-hover:text-zinc-500'
+                              }`}>{variant.color.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="grid grid-cols-4 gap-4">
-                    {product.sizes.map(size => {
-                      const lowStock = product.stock[size] > 0 && product.stock[size] < 5;
-                      const outOfStock = product.stock[size] === 0;
-                      return (
-                        <button
-                          key={size}
-                          disabled={outOfStock}
-                          onClick={() => setSelectedSize(size)}
-                          className={`relative py-6 text-[11px] font-black tracking-[0.2em] transition-all duration-700 rounded-sm border ${outOfStock ? 'opacity-20 cursor-not-allowed bg-zinc-50 border-zinc-100 grayscale' : selectedSize === size ? 'bg-black text-white border-black shadow-2xl scale-[1.05] z-10' : 'bg-white border-zinc-100 text-zinc-400 hover:border-black hover:text-black'}`}
-                        >
-                          {size}
-                          {lowStock && !outOfStock && (
-                            <div className="absolute -top-2 left-1/2 -translate-x-1/2 flex flex-col items-center">
-                              <div className="bg-red-500 w-1.5 h-1.5 rounded-full animate-ping mb-1"></div>
-                              <span className="bg-red-50 text-red-600 text-[6px] font-black px-2 py-0.5 rounded-full border border-red-100 uppercase tracking-tighter whitespace-nowrap shadow-sm">
-                                Legacy Item: {product.stock[size]} Left
-                              </span>
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
+                )}
+
+                {/* Size Configuration — driven by selected color */}
+                {availableSizes.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-[9px] font-black uppercase tracking-[0.3em] text-black">Select Silhouette</h4>
+                      <button onClick={() => setShowSizeGuide(true)} className="group flex items-center gap-3">
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-900 group-hover:underline underline-offset-8 transition-all">Archives of Measurement</span>
+                        <i className="fa-solid fa-ruler-horizontal text-[10px] text-zinc-300 group-hover:text-black transition-colors"></i>
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-4 gap-3">
+                      {availableSizes.map(vs => {
+                        const lowStock = vs.quantity > 0 && vs.quantity < 5;
+                        const outOfStock = vs.quantity === 0;
+                        return (
+                          <button
+                            key={vs.size}
+                            disabled={outOfStock}
+                            onClick={() => setSelectedSize(vs.size)}
+                            className={`relative py-3 text-[10px] font-black tracking-[0.15em] transition-all duration-700 rounded-sm border ${outOfStock ? 'opacity-20 cursor-not-allowed bg-zinc-50 border-zinc-100 grayscale' : selectedSize === vs.size ? 'bg-black text-white border-black shadow-xl scale-[1.03] z-10' : 'bg-white border-zinc-100 text-zinc-400 hover:border-black hover:text-black'}`}
+                          >
+                            {vs.size}
+                            {lowStock && !outOfStock && (
+                              <div className="absolute -top-2 left-1/2 -translate-x-1/2 flex flex-col items-center">
+                                <div className="bg-red-500 w-1.5 h-1.5 rounded-full animate-ping mb-1"></div>
+                                <span className="bg-red-50 text-red-600 text-[6px] font-black px-2 py-0.5 rounded-full border border-red-100 uppercase tracking-tighter whitespace-nowrap shadow-sm">
+                                  Legacy Item: {vs.quantity} Left
+                                </span>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Primary Actions */}
                 <div className="space-y-6 pt-4">
-                  <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <button
                       onClick={() => dispatch(addToCart({ productId: product.id, size: selectedSize, color: selectedColor, quantity }))}
-                      className="flex-[1.5] group relative overflow-hidden bg-zinc-900 text-white py-5 px-8 text-[11px] font-black uppercase tracking-[0.3em] transition-all duration-700 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)] active:scale-[0.98] rounded-full"
+                      className="flex-[1.5] group relative overflow-hidden bg-zinc-900 text-white py-3 px-6 text-[10px] font-black uppercase tracking-[0.25em] transition-all duration-700 hover:shadow-[0_12px_24px_-8px_rgba(0,0,0,0.3)] active:scale-[0.98] rounded-full"
                     >
                       <div className="relative z-10 flex items-center justify-center gap-3">
                         <i className="fa-solid fa-bag-shopping text-xs transition-transform group-hover:-translate-y-0.5"></i>
@@ -503,7 +544,7 @@ const ProductDetail: React.FC = () => {
 
                     <button
                       onClick={handleBuyNow}
-                      className="flex-1 group bg-white text-zinc-900 border-2 border-zinc-900 py-5 px-8 text-[11px] font-black uppercase tracking-[0.3em] transition-all duration-700 hover:bg-zinc-900 hover:text-white active:scale-[0.98] rounded-full"
+                      className="flex-1 group bg-white text-zinc-900 border-2 border-zinc-900 py-3 px-6 text-[10px] font-black uppercase tracking-[0.25em] transition-all duration-700 hover:bg-zinc-900 hover:text-white active:scale-[0.98] rounded-full"
                     >
                       <span className="relative z-10">Buy Now</span>
                     </button>
@@ -516,16 +557,16 @@ const ProductDetail: React.FC = () => {
                 </div>
 
                 {/* The Narrative Section */}
-                <div className="pt-12 border-t border-zinc-100 space-y-12">
-                  <div className="space-y-6">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-black">The Narrative</h3>
-                    <p className="text-[16px] font-serif font-medium leading-relaxed text-stone-800 italic bg-stone-50/30 p-8 rounded-2xl border border-stone-100 shadow-inner">
+                <div className="pt-8 border-t border-zinc-100 space-y-8">
+                  <div className="space-y-4">
+                    <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-black">The Narrative</h3>
+                    <p className="text-[13px] font-serif font-medium leading-relaxed text-stone-800 italic bg-stone-50/30 p-5 rounded-xl border border-stone-100 shadow-inner">
                       Crafted with a legacy of excellence, this {product.fabric || 'timeless creation'} embodies the spirit of our boutique archives. Every stitch reflects a meticulous attention to detail, designed for the individual who values both heritage and a contemporary silhouette.
                     </p>
                   </div>
 
                   {/* Technical Specifications - Luxury Style */}
-                  <div className="grid grid-cols-2 gap-x-12 gap-y-8">
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-5">
                     {[
                       { label: "Fabrication", value: product.fabric || "Heritage Blend", icon: "fa-swatchbook" },
                       { label: "Archival SKU", value: product.sku || product.id.toUpperCase(), icon: "fa-barcode" },
@@ -547,23 +588,23 @@ const ProductDetail: React.FC = () => {
                   </div>
 
                   {/* Distribution & Assurance */}
-                  <div className="p-10 bg-zinc-50/50 rounded-sm border border-zinc-100 ring-1 ring-zinc-50">
-                    <div className="flex justify-between items-center mb-10">
-                      <div className="space-y-1">
+                  <div className="p-6 bg-zinc-50/50 rounded-sm border border-zinc-100 ring-1 ring-zinc-50">
+                    <div className="flex justify-between items-center mb-6">
+                      <div className="space-y-0.5">
                         <h4 className="text-[9px] font-black uppercase tracking-[0.4em] text-black">Delivery Status</h4>
                         <p className="text-[12px] font-serif font-bold italic">Check Availability.</p>
                       </div>
-                      <i className="fa-solid fa-map-location-dot text-zinc-300 text-xl"></i>
+                      <i className="fa-solid fa-map-location-dot text-zinc-300 text-base"></i>
                     </div>
-                    <div className="flex gap-4 mb-8">
+                    <div className="flex gap-3 mb-5">
                       <div className="flex-grow relative">
                         <input type="text" placeholder="Enter Pincode" className="w-full bg-white border-b border-black-200 py-3 text-[10px] font-black uppercase tracking-[0.2em] outline-none focus:border-black transition-all" />
                         <button className="absolute right-0 top-1/2 -translate-y-1/2 text-[9px] font-black uppercase tracking-widest text-emerald-600 hover:text-black transition-colors">Check</button>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center">
                           <i className="fa-solid fa-calendar-check text-[10px] text-emerald-600"></i>
                         </div>
                         <div className="space-y-0.5">
@@ -571,8 +612,8 @@ const ProductDetail: React.FC = () => {
                           <span className="block text-[10px] font-bold">2-4 Business Days</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center">
                           <i className="fa-solid fa-shield-halved text-[10px] text-zinc-900"></i>
                         </div>
                         <div className="space-y-0.5">
@@ -585,7 +626,7 @@ const ProductDetail: React.FC = () => {
                 </div>
 
                 {/* Social Integration */}
-                <div className="flex items-center gap-6 pt-12 border-t border-zinc-100 group">
+                <div className="flex items-center gap-4 pt-8 border-t border-zinc-100 group">
                   <span className="text-[9px] font-black uppercase tracking-[0.5em] text-black">Share Archivist</span>
                   <div className="flex items-center gap-2">
                     {[
@@ -608,14 +649,14 @@ const ProductDetail: React.FC = () => {
                       <button
                         key={social.platform}
                         onClick={() => handleShare(social.platform as any)}
-                        className="w-10 h-10 rounded-full border border-zinc-50 hover:bg-zinc-950 hover:text-white transition-all duration-500 flex items-center justify-center text-xs"
+                        className="w-8 h-8 rounded-full border border-zinc-50 hover:bg-zinc-950 hover:text-white transition-all duration-500 flex items-center justify-center text-xs"
                       >
-                        <img src={social.icon} alt={social.platform} className="w-5 h-5" />
+                        <img src={social.icon} alt={social.platform} className="w-4 h-4" />
                       </button>
                     ))}
                     <button
                       onClick={() => handleShare('copy')}
-                      className={`h-10 px-6 rounded-full border border-zinc-100 flex items-center gap-2 transition-all duration-700 ${copySuccess ? 'bg-emerald-500 text-white border-emerald-500' : 'hover:border-black text-[9px] font-black uppercase tracking-[0.3em]'}`}
+                      className={`h-8 px-4 rounded-full border border-zinc-100 flex items-center gap-2 transition-all duration-700 text-[8px] ${copySuccess ? 'bg-emerald-500 text-white border-emerald-500' : 'hover:border-black font-black uppercase tracking-[0.25em]'}`}
                     >
                       <i className={`fa-solid ${copySuccess ? 'fa-check' : 'fa-link'}`}></i>
                       {copySuccess ? 'Archived URL' : 'Reference Link'}
@@ -628,17 +669,17 @@ const ProductDetail: React.FC = () => {
         </div>
 
         {/* FEEDBACK & REVIEWS - Boutique Aesthetic */}
-        <section className="pt-32 border-t border-zinc-100">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-24 lg:gap-32 pb-40">
-            <div className="lg:col-span-1 space-y-12">
-              <div className="space-y-6">
-                <span className="text-zinc-300 text-[10px] font-black uppercase tracking-[0.6em]">Clientele Chronicles</span>
-                <h2 className="text-4xl xl:text-5xl font-serif font-bold italic tracking-tight leading-[0.9]">Exceptional <br /> Perspectives.</h2>
+        <section className="pt-16 border-t border-zinc-100">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 lg:gap-16 pb-20">
+            <div className="lg:col-span-1 space-y-8">
+              <div className="space-y-4">
+                <span className="text-zinc-300 text-[9px] font-black uppercase tracking-[0.5em]">Clientele Chronicles</span>
+                <h2 className="text-2xl xl:text-3xl font-serif font-bold italic tracking-tight leading-[0.9]">Exceptional <br /> Perspectives.</h2>
               </div>
 
-              <div className="flex flex-col gap-8">
-                <div className="flex items-center gap-8 border-b border-zinc-100 pb-8">
-                  <span className="text-7xl font-black text-zinc-950 leading-none">{product.rating.toFixed(1)}</span>
+              <div className="flex flex-col gap-5">
+                <div className="flex items-center gap-5 border-b border-zinc-100 pb-5">
+                  <span className="text-5xl font-black text-zinc-950 leading-none">{product.rating.toFixed(1)}</span>
                   <div className="space-y-2">
                     <div className="flex text-amber-400 text-[10px]">
                       {[...Array(5)].map((_, i) => (

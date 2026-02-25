@@ -10,6 +10,7 @@ import productReducer from "./productSlice";
 import uiReducer from "./uiSlice";
 import categoryReducer from "./categorySlice";
 import subcategoryReducer from "./subcategorySlice";
+import adminProductReducer from "./adminProductSlice";
 
 const persistConfig = {
   key: "root",
@@ -22,8 +23,9 @@ const rootReducer = combineReducers({
   cart: cartReducer,
   products: productReducer,
   ui: uiReducer,
-  category:categoryReducer,
-  subcategory:subcategoryReducer,
+  category: categoryReducer,
+  subcategory: subcategoryReducer,
+  adminProducts: adminProductReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

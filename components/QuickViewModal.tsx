@@ -17,8 +17,9 @@ const QuickViewModal: React.FC = () => {
 
   useEffect(() => {
     if (quickViewProduct) {
-      setSelectedSize(quickViewProduct.sizes[0]);
-      setSelectedColor(quickViewProduct.colors[0]);
+      const firstVariant = quickViewProduct.variants[0];
+      setSelectedSize(firstVariant?.sizes[0]?.size || '');
+      setSelectedColor(firstVariant?.color?.name || '');
       setQuantity(1);
       setActiveImg(0);
       document.body.style.overflow = 'hidden';
@@ -28,6 +29,9 @@ const QuickViewModal: React.FC = () => {
   }, [quickViewProduct]);
 
   if (!quickViewProduct) return null;
+
+  const selectedVariant = quickViewProduct.variants.find(v => v.color.name === selectedColor);
+  const availableSizes = selectedVariant?.sizes || [];
 
   const handleClose = () => dispatch(setQuickViewProduct(null));
 
@@ -126,13 +130,16 @@ const QuickViewModal: React.FC = () => {
               <div className="space-y-4">
                 <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-vogue-500">Curated Color</h4>
                 <div className="flex gap-4">
-                  {quickViewProduct.colors.map(color => (
+                  {quickViewProduct.variants.map(variant => (
                     <button
-                      key={color}
-                      onClick={() => setSelectedColor(color)}
-                      title={color}
-                      className={`w-6 h-6 rounded-full border ring-offset-4 transition-all ${selectedColor === color ? 'ring-2 ring-black scale-110' : 'border-gray-200 hover:scale-105'}`}
-                      style={{ backgroundColor: color.toLowerCase().replace(' ', '') }}
+                      key={variant.color.name}
+                      onClick={() => {
+                        setSelectedColor(variant.color.name);
+                        setSelectedSize(variant.sizes[0]?.size || '');
+                      }}
+                      title={variant.color.name}
+                      className={`w-8 h-8 rounded-full border-2 ring-offset-4 transition-all ${selectedColor === variant.color.name ? 'ring-2 ring-black scale-110 border-black' : 'border-gray-200 hover:scale-105'}`}
+                      style={{ backgroundColor: variant.color.hex }}
                     ></button>
                   ))}
                 </div>
@@ -142,14 +149,14 @@ const QuickViewModal: React.FC = () => {
               <div className="space-y-4">
                 <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-vogue-500">Heritage Fit</h4>
                 <div className="grid grid-cols-4 gap-2">
-                  {quickViewProduct.sizes.map(size => (
+                  {availableSizes.map(vs => (
                     <button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={`py-3 text-[10px] font-bold border transition-all ${selectedSize === size ? 'bg-black text-white border-black shadow-lg' : 'border-gray-100 hover:border-black text-gray-400 hover:text-black'
+                      key={vs.size}
+                      onClick={() => setSelectedSize(vs.size)}
+                      className={`py-3 text-[10px] font-bold border transition-all ${selectedSize === vs.size ? 'bg-black text-white border-black shadow-lg' : 'border-gray-100 hover:border-black text-gray-400 hover:text-black'
                         }`}
                     >
-                      {size}
+                      {vs.size}
                     </button>
                   ))}
                 </div>

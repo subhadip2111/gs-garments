@@ -115,12 +115,12 @@ const SubcategoryManager: React.FC = () => {
     }, [page]);
 
 
-
+console.log("subcategories", subcategories)
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
             <div className="flex justify-between items-end">
                 <div className="space-y-1">
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tighter premium-gradient-text">Structural DNA</h1>
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tighter premium-gradient-text">Subcategory Management</h1>
                     <p className="text-black text-sm font-medium">Fine-tune the architectural hierarchy of your heritage pieces</p>
                 </div>
                 <button
@@ -150,7 +150,7 @@ const SubcategoryManager: React.FC = () => {
                                 </td>
                             </tr>
                         ) : (
-                            subcategories.map((sub, idx) => (
+                            subcategories?.map((sub, idx) => (
                                 <tr key={sub.id} className="hover:bg-zinc-50 transition-all duration-300 group">
                                     <td className="px-8 py-4 w-12">
                                         <span className="text-[10px] font-black text-black/30 tabular-nums">{(page - 1) * limit + idx + 1}</span>
@@ -158,7 +158,7 @@ const SubcategoryManager: React.FC = () => {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-xl bg-black flex items-center justify-center text-white text-[10px] font-black flex-shrink-0">
-                                                {sub.category.name.charAt(0).toUpperCase()}
+                                                {sub?.name.charAt(0).toUpperCase()}
                                             </div>
                                             <span className="font-black text-gray-900 tracking-tight text-sm">{sub.name}</span>
                                         </div>

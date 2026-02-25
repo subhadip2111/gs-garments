@@ -16,8 +16,8 @@ const Wishlist: React.FC = () => {
         const product = catalog.find(p => p.id === productId);
         if (product) {
             // Default to first available size and color
-            const defaultSize = product.sizes[0] || 'One Size';
-            const defaultColor = product.colors[0] || 'Default';
+            const defaultSize = product.variants[0]?.sizes[0]?.size || 'One Size';
+            const defaultColor = product.variants[0]?.color?.name || 'Default';
             dispatch(addToCart({ productId: product.id, size: defaultSize, color: defaultColor, quantity: 1 }));
             dispatch(toggleWishlist(product.id));
         }

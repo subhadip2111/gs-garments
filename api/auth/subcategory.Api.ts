@@ -40,7 +40,6 @@ apiClient.interceptors.response.use(
 
 export const getAllSubCategories = async (page: number = 1, limit: number = 10) => {
     const response = await apiClient.get(`/subcategories`, { params: { page, limit } });
-    console.log(response.data);
     // Return the full paginated payload so callers can access results, totalPages, totalResults
     return response.data;
 }

@@ -38,34 +38,58 @@ apiClient.interceptors.response.use(
     }
 );
 
-export const getAllCategories = async (page: number = 1, limit: number = 10) => {
-    const response = await apiClient.get(`/categories`, { params: { page, limit } });
-    // Return the full paginated payload so callers can access results, totalPages, totalResults
+export const getALlBanners = async (page: number = 1, limit: number = 10) => {
+    const response = await apiClient.get(`/banners`, { params: { page, limit } });
     return response.data;
 }
 
-export const addCategory = async (category: any) => {
-    const response = await apiClient.post(`/categories`, category);
+export const addBanner = async (banner: any) => {
+    console.log("objform frotedn", banner)
+    const response = await apiClient.post(`/banners`, banner);
+    return response.data;
+}
+export const updateBanner = async (bannerId: string, payload: any) => {
+    const response = await apiClient.patch(`/banners/${bannerId}`, payload);
     return response.data;
 }
 
-export const updateCategory = async (category: { name: string, id: string }) => {
-    const response = await apiClient.patch(`/categories/${category.id}`, { name: category.name });
-    return response.data;
-}
-
-export const deleteCategory = async (id: string) => {
-    const response = await apiClient.delete(`/categories/${id}`);
+export const deleteBanner = async (id: string) => {
+    const response = await apiClient.delete(`/banners/${id}`);
     return response.data;
 }
 
 
-export const getCategoryById = async (id: string) => {
-    const response = await apiClient.get(`/categories/${id}`);
+export const getBannerById = async (id: string) => {
+    const response = await apiClient.get(`/banners/${id}`);
     return response.data;
 }
 
-export const getAllcategoryList = async () => {
-    const response = await apiClient.get(`/categories`);
+export const getAllBannerList = async () => {
+    const response = await apiClient.get(`/banners`);
+    return response.data
+}
+
+/// make is as form data not a normal data 
+export const uploadBannerImage = async (image: File) => {
+    const formData = new FormData();
+    formData.append('image', image);
+    const response = await apiClient.post(`/upload/single`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+    return response.data
+}
+
+export const uploadsBulkImages = async (images: File[]) => {
+    const formData = new FormData();
+    images.forEach((image) => {
+        formData.append('images', image);
+    });
+    const response = await apiClient.post(`/upload/bulk`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
     return response.data
 }

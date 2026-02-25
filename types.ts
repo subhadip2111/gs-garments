@@ -1,4 +1,14 @@
 
+export interface VariantSize {
+  size: string;
+  quantity: number;
+}
+
+export interface ProductVariant {
+  color: { name: string; hex: string };
+  sizes: VariantSize[];
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -8,11 +18,9 @@ export interface Product {
   originalPrice?: number;
   description: string;
   images: string[];
-  sizes: string[];
-  colors: string[];
+  variants: ProductVariant[];
   rating: number;
   reviewsCount: number;
-  stock: { [size: string]: number };
   isNewArrival?: boolean;
   isBestSeller?: boolean;
   isTrending?: boolean;
@@ -26,6 +34,7 @@ export interface Product {
   priceDetails?: { mrp: number; discount: number; sellingPrice: number };
   bestOffers?: { title: string; description: string }[];
 }
+
 
 export interface Review {
   id: string;
