@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store';
-import { placeOrder } from '../store/cartSlice';
+import { createOrderServer } from '../store/cartSlice';
 import { useToast } from '../components/Toast';
 import { MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
-import { Order, CartItem } from '../types';
+import { CartItem } from '../types';
 
 const Checkout: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -119,47 +119,34 @@ const Checkout: React.FC = () => {
     }
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     setLoading(true);
-
-    // Create new order object
-    const newOrder: Order = {
-      id: `ORD-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-      date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
-      items: itemsToPurchase.map(item => ({
-        ...item,
-        priceAtPurchase: catalog.find(p => (p._id || p.id) === item.productId)?.price || 0
-      })),
-      total: finalTotal,
-      status: 'Processing',
-      type: buyNowItem ? 'buy-now' : 'cart',
-      appliedCoupon: appliedCouponId || undefined,
-      discountAmount: comboDiscount + couponDiscount,
-      shippingAddress: {
-        fullName: `${shippingDetails.firstName} ${shippingDetails.lastName}`,
-        mobile: shippingDetails.mobile,
-        street: shippingDetails.addressLine1,
-        village: shippingDetails.addressLine2,
-        city: shippingDetails.city,
-        pincode: shippingDetails.pincode,
-        country: 'India'
-      },
-      deliveryDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
-      trackingSteps: [
-        { status: 'Order Accepted', description: 'Your order has been received and is being processed.', date: new Date().toLocaleString(), isCompleted: true },
-        { status: 'Packed', description: 'Item has been quality checked and packed.', date: '', isCompleted: false },
-        { status: 'Shipped', description: 'Parcel has been handed over to our courier partner.', date: '', isCompleted: false },
-        { status: 'Out for Delivery', description: 'Our delivery executive is on the way to your location.', date: '', isCompleted: false },
-        { status: 'Delivered', description: 'Parcel successfully delivered.', date: '', isCompleted: false },
-      ]
-    };
-
-    setTimeout(() => {
-      dispatch(placeOrder(newOrder)); // Persist to Redux
-      setLoading(false);
-      showToast("Order Placed Successfully", "success");
+    try {
+      await dispatch(createOrderServer({
+        items: itemsToPurchase.map(item => ({
+          product: item.productId,
+          quantity: item.quantity,
+          selectedSize: item.selectedSize,
+          selectedColor: item.selectedColor,
+        })),
+        shippingAddress: {
+          fullName: `${shippingDetails.firstName} ${shippingDetails.lastName}`,
+          mobile: shippingDetails.mobile,
+          street: shippingDetails.addressLine1,
+          village: shippingDetails.addressLine2,
+          city: shippingDetails.city,
+          pincode: shippingDetails.pincode,
+          country: 'India',
+        },
+        paymentMethod: 'COD',
+      })).unwrap();
+      showToast('Order Placed Successfully', 'success');
       navigate('/profile?tab=orders');
-    }, 2000);
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to place order. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

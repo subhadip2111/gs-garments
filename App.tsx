@@ -48,11 +48,12 @@ import TrackOrder from './pages/TrackOrder';
 import Unauthorized from './pages/Unauthorized';
 import ErrorPage from './pages/ErrorPage';
 import { ToastProvider } from './components/Toast';
+import SlowConnectionBanner from './components/SlowConnectionBanner';
 import { getProfileDetails, saveSocialLoginUserData } from './api/auth/authApi';
 import { PersistGate } from "redux-persist/integration/react";
 import AdminDashboard, { AdminHome } from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
-import { Navigate as Redirect } from 'react-router-dom';
+
 
 // Admin section managers
 import CategoryManager from './components/admin/CategoryManager';
@@ -98,6 +99,15 @@ function AppContent() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
   const accessToken = useAppSelector((state) => state.auth.accessToken);
+
+  // ── Proactive Hash Cleanup ──
+  // If the URL contains a legacy hash (e.g., /#/), clean it up immediately.
+  useEffect(() => {
+    if (window.location.hash.startsWith('#/')) {
+      const cleanPath = window.location.hash.replace('#', '');
+      window.history.replaceState(null, '', cleanPath || '/');
+    }
+  }, []);
 
   useEffect(() => {
     const fetchLatestProfile = async () => {
@@ -187,53 +197,56 @@ function AppContent() {
   }, [dispatch]);
 
   return (
-    <Routes>
-      {/* User Routes */}
-      <Route element={<UserLayout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/shop" element={<Shop />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/product/:id" element={<ProductDetail />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
-        <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-        <Route path="/about" element={<OurStory />} />
-        <Route path="/careers" element={<Careers />} />
-        <Route path="/sustainability" element={<Sustainability />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/shipping" element={<Shipping />} />
-        <Route path="/returns" element={<Returns />} />
-        <Route path="/track-order" element={<TrackOrder />} />
-      </Route>
-
-      {/* Admin Routes — AdminDashboard is the layout shell, children use <Outlet /> */}
-      <Route element={<AdminLayout />}>
-        <Route path="/admin/login" element={<AdminLogin />} />
-
-        {/* Protected admin shell */}
-        <Route element={<AdminRoute><AdminDashboard /></AdminRoute>}>
-          <Route index path="/admin/dashboard" element={<AdminHome />} />
-          <Route path="/admin/categories" element={<CategoryManager />} />
-          <Route path="/admin/subcategories" element={<SubcategoryManager />} />
-          <Route path="/admin/products" element={<ProductManager />} />
-          <Route path="/admin/banners" element={<BannerManager />} />
-          <Route path="/admin/brands" element={<BrandManager />} />
-          <Route path="/admin/orders" element={<OrderManager />} />
-          <Route path="/admin/reviews" element={<ReviewManager />} />
-          <Route path="/admin/returns" element={<OrderManager />} />
-          <Route path="/admin/earnings" element={<EarningsManager />} />
-          <Route path="/admin/profile" element={<ProfileManager />} />
-          {/* Catch-all: redirect /admin/* → /admin/dashboard */}
-          <Route path="/admin/*" element={<Redirect to="/admin/dashboard" replace />} />
+    <>
+      <SlowConnectionBanner />
+      <Routes>
+        {/* User Routes */}
+        <Route element={<UserLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/shop" element={<Shop />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+          <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+          <Route path="/about" element={<OurStory />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/sustainability" element={<Sustainability />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/shipping" element={<Shipping />} />
+          <Route path="/returns" element={<Returns />} />
+          <Route path="/track-order" element={<TrackOrder />} />
         </Route>
-      </Route>
 
-      {/* Catch-all route for error page */}
-      <Route path="/unauthorized" element={<Unauthorized />} />
-      <Route path="*" element={<ErrorPage />} />
-    </Routes>
+        {/* Admin Routes — AdminDashboard is the layout shell, children use <Outlet /> */}
+        <Route element={<AdminLayout />}>
+          <Route path="/admin/login" element={<AdminLogin />} />
+
+          {/* Protected admin shell */}
+          <Route element={<AdminRoute><AdminDashboard /></AdminRoute>}>
+            <Route index path="/admin/dashboard" element={<AdminHome />} />
+            <Route path="/admin/categories" element={<CategoryManager />} />
+            <Route path="/admin/subcategories" element={<SubcategoryManager />} />
+            <Route path="/admin/products" element={<ProductManager />} />
+            <Route path="/admin/banners" element={<BannerManager />} />
+            <Route path="/admin/brands" element={<BrandManager />} />
+            <Route path="/admin/orders" element={<OrderManager />} />
+            <Route path="/admin/reviews" element={<ReviewManager />} />
+            <Route path="/admin/returns" element={<OrderManager />} />
+            <Route path="/admin/earnings" element={<EarningsManager />} />
+            <Route path="/admin/profile" element={<ProfileManager />} />
+            {/* Catch-all: redirect /admin/* → /admin/dashboard */}
+            <Route path="/admin/*" element={<Navigate to="/admin/dashboard" replace />} />
+          </Route>
+        </Route>
+
+        {/* Catch-all route for error page */}
+        <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="*" element={<ErrorPage />} />
+      </Routes>
+    </>
   );
 }
 

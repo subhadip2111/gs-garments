@@ -99,6 +99,7 @@ export interface ComboOffer {
 
 export interface Order {
   id: string;
+  _id?: string;
   date: string;
   items: CartItem[];
   total: number;

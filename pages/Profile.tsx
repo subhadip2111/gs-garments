@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store';
-import { logout, setCurrentUser, setUser } from '../store/authSlice';
-import { placeOrder, cancelOrder } from '../store/cartSlice';
+import { logout, setCurrentUser } from '../store/authSlice';
+import { fetchOrders, cancelOrderServer } from '../store/cartSlice';
 import { useToast } from '../components/Toast';
 import ProductCard from '../components/ProductCard';
 import { supabase } from '../services/supabase';
 import { Address } from '../types';
 import { updateProfileDetails } from '@/api/auth/authApi';
+import * as addressApi from '../api/auth/addressApi';
 
 const Profile: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -79,9 +80,14 @@ const Profile: React.FC = () => {
     } else {
       setFullName(user?.fullName || '');
       setMobile(user?.mobile || '');
-      setAddresses(user?.addresses || []);
+      // Fetch addresses from backend
+      addressApi.getAddresses()
+        .then(res => setAddresses(res?.addresses || res?.data || res || []))
+        .catch(() => setAddresses(user?.addresses || []));
+      // Fetch orders from backend
+      dispatch(fetchOrders());
     }
-  }, [user, navigate]);
+  }, [user, navigate, dispatch]);
 
   if (!user) return null;
 
@@ -127,19 +133,8 @@ const Profile: React.FC = () => {
     }
   };
 
-  const markAsDelivered = (orderId: string) => {
-    const order = orders.find(o => o.id === orderId);
-    if (!order) return;
-
-    const updatedOrder = {
-      ...order,
-      status: 'Delivered' as const,
-      trackingSteps: order.trackingSteps.map(step => ({ ...step, isCompleted: true, date: step.date || new Date().toLocaleString() }))
-    };
-    // dispatch(placeOrder)
-    dispatch(placeOrder(updatedOrder));
-    showToast("Order status updated to Delivered", "success");
-  };
+  // markAsDelivered is a legacy local-only function, no longer used with backend orders
+  const markAsDelivered = (_orderId: string) => { };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,64 +157,56 @@ const Profile: React.FC = () => {
   };
 
   const persistAddresses = async (newAddresses: Address[]) => {
-    try {
-      const { error } = await supabase.auth.updateUser({
-        data: { addresses: newAddresses }
-      });
-      if (error) throw error;
-      setAddresses(newAddresses);
-    } catch (err: any) {
-      alert("Error saving addresses: " + err.message);
-    }
+    // Local state update only — actual save happens individually via API
+    setAddresses(newAddresses);
   };
 
   const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
-    let newAddresses = [...addresses];
-
-    if (editingAddress) {
-      newAddresses = addresses.map(addr =>
-        addr.id === editingAddress.id ? { ...addressForm, id: addr.id } : addr
-      );
-    } else {
-      const newAddress: Address = {
-        ...addressForm,
-        id: Math.random().toString(36).substr(2, 9)
-      };
-      newAddresses.push(newAddress);
+    try {
+      if (editingAddress) {
+        const res = await addressApi.updateAddress(editingAddress.id, addressForm);
+        const updated: Address = res?.address || res?.data || { ...addressForm, id: editingAddress.id };
+        setAddresses(prev => prev.map(a => a.id === editingAddress.id ? updated : a));
+      } else {
+        const res = await addressApi.addAddress(addressForm);
+        const created: Address = res?.address || res?.data || { ...addressForm, id: Math.random().toString(36).substr(2, 9) };
+        setAddresses(prev => [...prev, created]);
+      }
+      showToast('Address saved successfully.', 'success');
+    } catch (err: any) {
+      showToast('Error saving address: ' + (err?.response?.data?.message || err.message), 'error');
     }
-
-    // Ensure only one default
-    if (addressForm.isDefault) {
-      newAddresses = newAddresses.map(addr => ({
-        ...addr,
-        isDefault: addr.id === (editingAddress ? editingAddress.id : newAddresses[newAddresses.length - 1].id)
-      }));
-    } else if (newAddresses.length === 1) {
-      newAddresses[0].isDefault = true;
-    }
-
-    await persistAddresses(newAddresses);
     setIsAddressModalOpen(false);
     setEditingAddress(null);
     setAddressForm({ label: '', fullName: '', mobile: '', village: '', street: '', city: '', pincode: '', country: 'India', isDefault: false });
   };
 
   const handleDeleteAddress = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this address?")) return;
-    const newAddresses = addresses.filter(addr => addr.id !== id);
-    if (newAddresses.length > 0 && !newAddresses.some(a => a.isDefault)) {
-      newAddresses[0].isDefault = true;
+    if (!confirm('Are you sure you want to delete this address?')) return;
+    try {
+      await addressApi.deleteAddress(id);
+      setAddresses(prev => {
+        const remaining = prev.filter(a => a.id !== id);
+        if (remaining.length > 0 && !remaining.some(a => a.isDefault)) {
+          remaining[0].isDefault = true;
+        }
+        return remaining;
+      });
+      showToast('Address deleted.', 'success');
+    } catch (err: any) {
+      showToast('Error deleting address.', 'error');
     }
-    await persistAddresses(newAddresses);
   };
 
   const handleSetDefault = async (id: string) => {
-    const newAddresses = addresses.map(addr => ({
-      ...addr,
-      isDefault: addr.id === id
-    }));
-    await persistAddresses(newAddresses);
+    try {
+      await addressApi.setDefaultAddress(id);
+      setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === id })));
+      showToast('Default address updated.', 'success');
+    } catch (err: any) {
+      showToast('Error updating default address.', 'error');
+    }
   };
 
   return (
@@ -314,20 +301,22 @@ const Profile: React.FC = () => {
                           <p className="text-sm font-black">₹{order.total.toLocaleString('en-IN')}</p>
                         </div>
                         <div className="flex items-center gap-3">
-                          {order.status !== 'Delivered' && order.status !== 'Cancelled' && (
-                            <>
-                              {order.status !== 'Out for Delivery' && (
-                                <button
-                                  onClick={() => {
-                                    setSelectedOrderId(order.id);
-                                    setIsCancelModalOpen(true);
-                                  }}
-                                  className="px-3 py-1 bg-white border border-red-200 text-red-500 text-[8px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white hover:border-red-500 transition-all shadow-sm"
-                                >
-                                  Cancel Order
-                                </button>
-                              )}
-                            </>
+                          {/* Cancel button — disabled if Shipped or later */}
+                          {order.status !== 'Delivered' && order.status !== 'Cancelled' && order.status !== 'Shipped' && order.status !== 'Out for Delivery' && (
+                            <button
+                              onClick={() => {
+                                setSelectedOrderId((order._id || order.id) as string);
+                                setIsCancelModalOpen(true);
+                              }}
+                              className="px-3 py-1 bg-white border border-red-200 text-red-500 text-[8px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white hover:border-red-500 transition-all shadow-sm"
+                            >
+                              Cancel Order
+                            </button>
+                          )}
+                          {(order.status === 'Shipped' || order.status === 'Out for Delivery') && (
+                            <span className="px-3 py-1 text-[8px] font-bold text-zinc-400 uppercase tracking-widest border border-zinc-100 rounded-full">
+                              Cannot Cancel
+                            </span>
                           )}
                           <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-[0.2em] ${order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
                             order.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
@@ -354,14 +343,25 @@ const Profile: React.FC = () => {
                                     <p className="text-xs font-serif font-bold mt-2">₹{(item.priceAtPurchase || product?.price || 0).toLocaleString('en-IN')}</p>
 
                                     {order.status === 'Delivered' && (
-                                      <div className="flex gap-4 mt-4">
+                                      <div className="flex flex-wrap gap-4 mt-4">
                                         <button onClick={() => navigate(`/product/${item.productId}`)} className="text-[9px] font-black uppercase tracking-widest underline underline-offset-4 hover:text-black">Write Review</button>
+
+                                        {/* WhatsApp Share */}
                                         <button onClick={() => {
-                                          const text = `I just received my ${product?.name} from GS Garments! The quality is amazing. #GSGarments #Fashion`;
-                                          const url = window.location.origin + `#/product/${item.productId}`;
+                                          const text = `I just received my ${product?.name} from GS Garments! The quality is amazing.`;
+                                          const url = window.location.origin + `/product/${item.productId}`;
+                                          window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`, '_blank');
+                                        }} className="text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-emerald-500 flex items-center gap-1.5 transition-colors">
+                                          <i className="fa-brands fa-whatsapp text-xs"></i> WhatsApp
+                                        </button>
+
+                                        {/* Twitter Share */}
+                                        <button onClick={() => {
+                                          const text = `I just received my ${product?.name} from GS Garments! #Fashion #GSGarments`;
+                                          const url = window.location.origin + `/product/${item.productId}`;
                                           window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
-                                        }} className="text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-sky-500 flex items-center gap-1">
-                                          <i className="fa-brands fa-twitter"></i> Share Experience
+                                        }} className="text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-sky-500 flex items-center gap-1.5 transition-colors">
+                                          <i className="fa-brands fa-twitter text-xs"></i> Twitter
                                         </button>
                                       </div>
                                     )}
@@ -729,10 +729,14 @@ const Profile: React.FC = () => {
 
               <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (selectedOrderId) {
-                      dispatch(cancelOrder({ orderId: selectedOrderId, reason: cancelReason }));
-                      showToast("Order Cancelled Successfully", "success");
+                      try {
+                        await dispatch(cancelOrderServer(selectedOrderId)).unwrap();
+                        showToast('Order Cancelled Successfully', 'success');
+                      } catch (err: any) {
+                        showToast(err || 'Cannot cancel this order.', 'error');
+                      }
                       setIsCancelModalOpen(false);
                       setCancelReason('');
                       setSelectedOrderId(null);

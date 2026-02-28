@@ -3,6 +3,7 @@ import { CartItem, Order, Product } from '../types';
 import { MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
 import * as cartApi from '../api/auth/cartApi';
 import * as wishlistApi from '../api/auth/wishlistApi';
+import * as orderApi from '../api/auth/orderApi';
 
 const storedCart = localStorage.getItem('gs_cart');
 const storedWishlist = localStorage.getItem('gs_wishlist');
@@ -53,6 +54,33 @@ export const toggleWishlistServer = createAsyncThunk(
   async (productId: string) => {
     const response = await wishlistApi.toggleWishlistApi(productId);
     return { productId, data: response.data || response };
+  }
+);
+
+// --- Order Thunks ---
+
+export const fetchOrders = createAsyncThunk('cart/fetchOrders', async () => {
+  const response = await orderApi.getMyOrders();
+  return response.data || response || [];
+});
+
+export const createOrderServer = createAsyncThunk(
+  'cart/createOrderServer',
+  async (payload: Parameters<typeof orderApi.createOrder>[0]) => {
+    const response = await orderApi.createOrder(payload);
+    return response.data || response;
+  }
+);
+
+export const cancelOrderServer = createAsyncThunk(
+  'cart/cancelOrderServer',
+  async (orderId: string, { rejectWithValue }) => {
+    try {
+      const response = await orderApi.cancelOrder(orderId);
+      return { orderId, data: response.data || response };
+    } catch (err: any) {
+      return rejectWithValue(err?.response?.data?.message || 'Cannot cancel this order.');
+    }
   }
 );
 
@@ -232,6 +260,27 @@ const cartSlice = createSlice({
       .addCase(clearCartServer.fulfilled, (state) => {
         state.cart = [];
         localStorage.removeItem('gs_cart');
+      })
+      // Order Thunks
+      .addCase(fetchOrders.fulfilled, (state, action) => {
+        const raw = action.payload;
+        state.orders = Array.isArray(raw) ? raw : (raw?.orders || raw?.data || []);
+      })
+      .addCase(createOrderServer.fulfilled, (state, action) => {
+        const order = action.payload?.order || action.payload;
+        if (order) {
+          state.orders.unshift(order);
+        }
+        // Cart is cleared server-side; clear locally too
+        state.cart = [];
+        localStorage.removeItem('gs_cart');
+      })
+      .addCase(cancelOrderServer.fulfilled, (state, action) => {
+        const { orderId } = action.payload;
+        const idx = state.orders.findIndex((o: any) => (o._id || o.id) === orderId);
+        if (idx !== -1) {
+          state.orders[idx] = { ...state.orders[idx], status: 'Cancelled' };
+        }
       });
   }
 });
