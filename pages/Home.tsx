@@ -1,14 +1,43 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MOCK_PRODUCTS, LAUNCH_PROMOS, HOME_CONFIG } from '../constants';
+import { LAUNCH_PROMOS, HOME_CONFIG } from '../constants';
 import ProductCard from '../components/ProductCard';
-import { useAppSelector } from '../store';
+import ProductSkeleton from '../components/ProductSkeleton';
+import { useAppSelector, useAppDispatch } from '../store';
 import { BannerConfig, SpotlightConfig, GridConfig, BrandsConfig } from '../types';
+import { getTrendingProducts, getNewArrivals } from '../api/auth/ProductApi';
+import { setProducts, setLoadingProducts } from '../store/productSlice';
 
 const Home: React.FC = () => {
+  const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
+  const products = useAppSelector((state) => state.products.items);
+  const isLoadingProducts = useAppSelector((state) => state.products.isLoading);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  // Fetch critical sections on mount
+  React.useEffect(() => {
+    const fetchHomeData = async () => {
+      dispatch(setLoadingProducts(true));
+      try {
+        const [trending, arrivals] = await Promise.all([
+          getTrendingProducts(),
+          getNewArrivals()
+        ]);
+
+        // Merge into redux store
+        const merged = [...(trending.results || trending), ...(arrivals.results || arrivals)];
+        // Deduplicate by ID
+        const unique = Array.from(new Map(merged.map(p => [p._id || p.id, p])).values());
+        dispatch(setProducts(unique));
+      } catch (err) {
+        console.error('Failed to fetch home products', err);
+      } finally {
+        dispatch(setLoadingProducts(false));
+      }
+    };
+    fetchHomeData();
+  }, [dispatch]);
 
   const handleCopy = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -33,7 +62,7 @@ const Home: React.FC = () => {
     "
               style={{
                 backgroundImage: `url(${config.imageUrl})`,
-  backgroundPosition: 'center 29%',
+                backgroundPosition: 'center 29%',
 
               }}
             />
@@ -144,11 +173,19 @@ const Home: React.FC = () => {
 
 
   const renderGrid = (config: GridConfig, index: number) => {
-    let products = MOCK_PRODUCTS;
-    if (config.filter === 'trending') products = products.filter(p => p.isTrending);
-    else if (config.filter === 'new') products = products.filter(p => p.isNewArrival);
-    else if (config.filter === 'best-seller') products = products.filter(p => p.isBestSeller);
-    else if (config.filter === 'category' && config.category) products = products.filter(p => p.category === config.category);
+    let displayProducts = [...products];
+    if (config.filter === 'trending') displayProducts = displayProducts.filter(p => p.isTrending);
+    else if (config.filter === 'new') displayProducts = displayProducts.filter(p => p.isNewArrival);
+    else if (config.filter === 'best-seller') displayProducts = displayProducts.filter(p => p.isBestSeller);
+    else if (config.filter === 'category' && config.category) {
+      displayProducts = displayProducts.filter(p => {
+        const catId = typeof p.category === 'object' ? p.category._id : p.category;
+        return catId === config.category;
+      });
+    }
+
+    // Limit to 4 for grid sections
+    const items = displayProducts.slice(0, 4);
 
     return (
       <section key={index} className="py-40 bg-vogue-50">
@@ -164,9 +201,17 @@ const Home: React.FC = () => {
           </header>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-10 gap-y-20">
-            {products.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            {isLoadingProducts ? (
+              [...Array(4)].map((_, i) => <ProductSkeleton key={i} />)
+            ) : items.length > 0 ? (
+              items.map(product => (
+                <ProductCard key={product._id || product.id} product={product} />
+              ))
+            ) : (
+              <div className="col-span-full py-20 text-center text-zinc-400 font-serif italic">
+                Coming soon to the archives.
+              </div>
+            )}
           </div>
         </div>
       </section>

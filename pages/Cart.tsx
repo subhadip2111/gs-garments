@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store';
-import { removeFromCart, updateCartQuantity } from '../store/cartSlice';
-import { MOCK_PRODUCTS, MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
+import { removeFromCartServer, updateQuantityServer, recalculateDiscounts, fetchCart } from '../store/cartSlice';
+import { MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
 import { SmartOfferWidget } from './ProductDetail';
 
 const Cart: React.FC = () => {
@@ -11,10 +10,21 @@ const Cart: React.FC = () => {
   const cart = useAppSelector((state) => state.cart.cart);
   const appliedCouponId = useAppSelector((state) => state.cart.appliedCouponId);
   const comboDiscount = useAppSelector((state) => state.cart.comboDiscount);
+  const catalog = useAppSelector((state) => state.products.items);
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    dispatch(fetchCart());
+  }, [dispatch]);
+
+  React.useEffect(() => {
+    if (catalog.length > 0) {
+      dispatch(recalculateDiscounts(catalog));
+    }
+  }, [cart, catalog, dispatch]);
+
   const cartDetails = cart.map(item => {
-    const product = MOCK_PRODUCTS.find(p => p.id === item.productId);
+    const product = catalog.find(p => (p._id || p.id) === item.productId);
     return { ...item, product };
   });
 
@@ -57,7 +67,7 @@ const Cart: React.FC = () => {
       <div className="flex flex-col lg:flex-row gap-16">
         {/* Items List */}
         <div className="lg:w-2/3 space-y-8">
-          {cartDetails.map((item, idx) => (
+          {cartDetails.map((item) => (
             <div key={`${item.productId}-${item.selectedSize}-${item.selectedColor}`} className="flex gap-6 border-b border-gray-100 pb-8">
               <div className="w-32 aspect-[3/4] bg-gray-100 flex-shrink-0">
                 <img src={item.product?.images[0]} className="w-full h-full object-cover" alt={item.product?.name} />
@@ -67,13 +77,13 @@ const Cart: React.FC = () => {
                   <div className="flex justify-between items-start">
                     <h3 className="text-lg font-medium">{item.product?.name}</h3>
                     <button
-                      onClick={() => dispatch(removeFromCart({ productId: item.productId, size: item.selectedSize, color: item.selectedColor }))}
+                      onClick={() => dispatch(removeFromCartServer(item.id || item._id || ''))}
                       className="text-gray-400 hover:text-red-500 transition-colors"
                     >
                       <i className="fa-regular fa-trash-can"></i>
                     </button>
                   </div>
-                  <p className="text-sm text-gray-500 mt-1">{item.product?.category} • {item.product?.subcategory}</p>
+                  <p className="text-sm text-gray-500 mt-1">{item.product?.category && (typeof item.product.category === 'object' ? item.product.category.name : item.product.category)} • {item.product?.subcategory && (typeof item.product.subcategory === 'object' ? item.product.subcategory.name : item.product.subcategory)}</p>
 
                   {item.product?.originalPrice && (
                     <div className="mt-2 flex items-center gap-3">
@@ -90,14 +100,14 @@ const Cart: React.FC = () => {
                 <div className="flex justify-between items-end mt-4">
                   <div className="flex items-center border border-gray-200">
                     <button
-                      onClick={() => dispatch(updateCartQuantity({ productId: item.productId, size: item.selectedSize, color: item.selectedColor, delta: -1 }))}
+                      onClick={() => dispatch(updateQuantityServer({ itemId: item.id || item._id || '', quantity: Math.max(1, item.quantity - 1) }))}
                       className="px-3 py-1 hover:bg-gray-50 transition-colors text-xs font-bold"
                     >
                       -
                     </button>
                     <span className="px-4 py-1 text-xs font-bold">{item.quantity}</span>
                     <button
-                      onClick={() => dispatch(updateCartQuantity({ productId: item.productId, size: item.selectedSize, color: item.selectedColor, delta: 1 }))}
+                      onClick={() => dispatch(updateQuantityServer({ itemId: item.id || item._id || '', quantity: item.quantity + 1 }))}
                       className="px-3 py-1 hover:bg-gray-50 transition-colors text-xs font-bold"
                     >
                       +
@@ -169,22 +179,6 @@ const Cart: React.FC = () => {
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl font-black tracking-tighter text-zinc-900">₹{(bagDiscount + comboDiscount + couponDiscount).toLocaleString('en-IN')}</span>
                     <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest">Congratulations!</span>
-                  </div>
-                </div>
-              )}
-
-              {bagDiscount + comboDiscount + couponDiscount > 0 && (
-                <div className="py-4 px-4 bg-orange-50 border border-orange-100 rounded-xl shadow-sm relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-2 opacity-5 transform rotate-12 group-hover:scale-110 transition-transform">
-                    <i className="fa-solid fa-fire text-3xl text-orange-600"></i>
-                  </div>
-                  <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest flex items-center gap-2 mb-1">
-                    <i className="fa-solid fa-sparkles animate-pulse"></i>
-                    Your Fashion Savings
-                  </p>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-black tracking-tighter text-zinc-900">₹{(bagDiscount + comboDiscount + couponDiscount).toLocaleString('en-IN')}</span>
-                    <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest">Saved so far</span>
                   </div>
                 </div>
               )}

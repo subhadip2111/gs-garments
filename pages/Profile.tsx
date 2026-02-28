@@ -5,7 +5,6 @@ import { useAppDispatch, useAppSelector } from '../store';
 import { logout, setCurrentUser, setUser } from '../store/authSlice';
 import { placeOrder, cancelOrder } from '../store/cartSlice';
 import { useToast } from '../components/Toast';
-import { MOCK_PRODUCTS } from '../constants';
 import ProductCard from '../components/ProductCard';
 import { supabase } from '../services/supabase';
 import { Address } from '../types';

@@ -6,19 +6,22 @@ interface AdminProduct {
     sku: string;
     name: string;
     brand: string;
-    category: any; // ObjectId ref populated or string
-    subcategory: any; // ObjectId ref populated or string
+    category: any;
+    subcategory: any;
     price: number;
     originalPrice?: number;
     description: string;
     images: string[];
-    variants: { color: { name: string; hex: string }; sizes: { size: string; quantity: number }[] }[];
+    variants: { color: { name: string; hex: string; images: string[] }; sizes: { size: string; quantity: number }[] }[];
     fabric?: string;
     specifications: string[];
+    materialAndCare?: string[];
+    sizeAndFit?: string[];
     rating: number;
     reviewsCount: number;
     isTrending: boolean;
     isNewArrival: boolean;
+    isBestSeller?: boolean;
     createdAt?: string;
     updatedAt?: string;
 }

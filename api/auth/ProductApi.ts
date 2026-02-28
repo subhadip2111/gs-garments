@@ -38,8 +38,27 @@ apiClient.interceptors.response.use(
     }
 );
 
-export const getAllProducts = async (page: number = 1, limit: number = 10) => {
-    const response = await apiClient.get(`/products`, { params: { page, limit } });
+export const getAllProducts = async (params?: {
+    page?: number; limit?: number;
+    category?: string; subcategory?: string;
+    sortBy?: string; search?: string;
+}) => {
+    const response = await apiClient.get(`/products`, { params: { page: 1, limit: 50, ...params } });
+    return response.data;
+}
+
+export const getProductById = async (id: string) => {
+    const response = await apiClient.get(`/products/${id}`);
+    return response.data;
+}
+
+export const getTrendingProducts = async () => {
+    const response = await apiClient.get(`/products/trending`);
+    return response.data;
+}
+
+export const getNewArrivals = async () => {
+    const response = await apiClient.get(`/products/new-arrivals`);
     return response.data;
 }
 
@@ -57,9 +76,8 @@ export const deleteProduct = async (id: string) => {
     return response.data;
 }
 
-
-export const getProductById = async (id: string) => {
-    const response = await apiClient.get(`/banners/${id}`);
+export const getSimilarProducts = async (productId: string) => {
+    const response = await apiClient.get(`/products/${productId}/similar`);
     return response.data;
 }
 

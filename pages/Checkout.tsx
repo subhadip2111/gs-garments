@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store';
 import { placeOrder } from '../store/cartSlice';
 import { useToast } from '../components/Toast';
-import { MOCK_PRODUCTS, MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
+import { MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
 import { Order, CartItem } from '../types';
 
 const Checkout: React.FC = () => {
@@ -12,6 +12,7 @@ const Checkout: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user);
   const appliedCouponId = useAppSelector((state) => state.cart.appliedCouponId);
   const comboDiscount = useAppSelector((state) => state.cart.comboDiscount);
+  const catalog = useAppSelector((state) => state.products.items);
   const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -60,12 +61,12 @@ const Checkout: React.FC = () => {
   const itemsToPurchase = buyNowItem ? [buyNowItem] : cart;
 
   const subtotal = itemsToPurchase.reduce((acc, item) => {
-    const product = MOCK_PRODUCTS.find(p => p.id === item.productId);
+    const product = catalog.find(p => (p._id || p.id) === item.productId);
     return acc + (product?.price || 0) * item.quantity;
   }, 0);
 
   const totalMrp = itemsToPurchase.reduce((acc, item) => {
-    const product = MOCK_PRODUCTS.find(p => p.id === item.productId);
+    const product = catalog.find(p => (p._id || p.id) === item.productId);
     return acc + (product?.originalPrice || product?.price || 0) * item.quantity;
   }, 0);
 
@@ -127,7 +128,7 @@ const Checkout: React.FC = () => {
       date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
       items: itemsToPurchase.map(item => ({
         ...item,
-        priceAtPurchase: MOCK_PRODUCTS.find(p => p.id === item.productId)?.price || 0
+        priceAtPurchase: catalog.find(p => (p._id || p.id) === item.productId)?.price || 0
       })),
       total: finalTotal,
       status: 'Processing',
@@ -347,7 +348,7 @@ const Checkout: React.FC = () => {
             <h3 className="text-xs font-bold uppercase tracking-widest mb-6 border-b border-gray-100 pb-4">Bag Summary</h3>
             <div className="space-y-4 mb-8">
               {itemsToPurchase.map(item => {
-                const product = MOCK_PRODUCTS.find(p => p.id === item.productId);
+                const product = catalog.find(p => (p._id || p.id) === item.productId);
                 return (
                   <div key={`${item.productId}-${item.selectedSize}`} className="flex justify-between text-sm">
                     <span className="text-gray-500">{product?.name} x{item.quantity}</span>

@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector } from '../store';
-import { LAUNCH_PROMOS, NAV_ITEMS_STRUCTURE } from '../constants';
+import { LAUNCH_PROMOS } from '../constants';
+import { useCategoryData } from '../hooks/useCategoryData';
 
 const Navbar: React.FC = () => {
   const cart = useAppSelector((state) => state.cart.cart);
@@ -13,6 +14,8 @@ const Navbar: React.FC = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+
+  const { categories, getSubcategoriesForCategory } = useCategoryData();
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -28,6 +31,8 @@ const Navbar: React.FC = () => {
       navigate(path);
     }
   };
+
+  const getCatId = (cat: any) => cat._id || cat.id;
 
   return (
     <header className="fixed top-0 w-full z-50 shadow-sm font-sans bg-white">
@@ -61,43 +66,46 @@ const Navbar: React.FC = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center h-full ml-8">
-          {NAV_ITEMS_STRUCTURE.map((item) => (
-            <div
-              key={item.name}
-              className="h-full group flex items-center"
-              onMouseEnter={() => setHoveredCategory(item.name)}
-              onMouseLeave={() => setHoveredCategory(null)}
-            >
-              <Link
-                to={item.href}
-                className="px-6 h-full flex items-center text-[12px] font-black uppercase tracking-[0.2em] text-zinc-600 hover:text-black transition-colors"
+          {categories.map((cat) => {
+            const catId = getCatId(cat);
+            const subs = getSubcategoriesForCategory(catId);
+            return (
+              <div
+                key={catId}
+                className="h-full group flex items-center"
+                onMouseEnter={() => setHoveredCategory(cat.name)}
+                onMouseLeave={() => setHoveredCategory(null)}
               >
-                {item.name}
-              </Link>
+                <Link
+                  to={`/shop?category=${catId}`}
+                  className="px-6 h-full flex items-center text-[12px] font-black uppercase tracking-[0.2em] text-zinc-600 hover:text-black transition-colors"
+                >
+                  {cat.name}
+                </Link>
 
-              {/* Megamenu UI (Condensed) */}
-              <div className="absolute top-full left-0 w-full bg-white shadow-2xl transition-all duration-300 opacity-0 invisible group-hover:opacity-100 group-hover:visible border-t border-zinc-100 z-[60] py-12">
-                <div className="max-w-[1400px] mx-auto px-12 grid grid-cols-4 gap-12">
-                  {item.subcategories.map((sub) => (
-                    <div key={sub.name} className="space-y-6">
-                      <h4 className="text-[10px] font-black text-zinc-300 uppercase tracking-[0.3em]">{sub.name}</h4>
-                      <div className="flex flex-col space-y-3">
-                        {sub.items.map((subItem) => (
-                          <Link
-                            key={subItem}
-                            to={`${item.href}&subcategory=${subItem}`}
-                            className="text-[13px] font-medium text-zinc-600 hover:text-black transition-colors"
-                          >
-                            {subItem}
-                          </Link>
-                        ))}
-                      </div>
+                {/* Megamenu — show subcategories */}
+                {subs.length > 0 && (
+                  <div className="absolute top-full left-0 w-full bg-white shadow-2xl transition-all duration-300 opacity-0 invisible group-hover:opacity-100 group-hover:visible border-t border-zinc-100 z-[60] py-12">
+                    <div className="max-w-[1400px] mx-auto px-12 flex flex-wrap gap-12">
+                      {subs.map((sub) => {
+                        const subId = sub._id || sub.id;
+                        return (
+                          <div key={subId} className="space-y-3">
+                            <Link
+                              to={`/shop?category=${catId}&subcategory=${subId}`}
+                              className="text-sm font-semibold text-zinc-800 hover:text-black transition-colors"
+                            >
+                              {sub.name}
+                            </Link>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Action Icons */}
@@ -138,23 +146,27 @@ const Navbar: React.FC = () => {
               </div>
 
               <div className="space-y-8">
-                {NAV_ITEMS_STRUCTURE.map((item) => (
-                  <div key={item.name} className="space-y-4">
-                    <Link to={item.href} className="text-xl font-serif font-bold italic text-zinc-900 block">{item.name}</Link>
-                    <div className="grid grid-cols-1 gap-2 pl-4">
-                      {item.subcategories.map(sub => (
-                        <div key={sub.name} className="py-2">
-                          <span className="text-[9px] font-black text-zinc-300 uppercase tracking-widest block mb-2">{sub.name}</span>
-                          <div className="flex flex-col gap-2">
-                            {sub.items.slice(0, 3).map(i => (
-                              <Link key={i} to={`${item.href}&subcategory=${i}`} className="text-sm text-zinc-500 font-medium">{i}</Link>
-                            ))}
-                          </div>
+                {categories.map((cat) => {
+                  const catId = getCatId(cat);
+                  const subs = getSubcategoriesForCategory(catId);
+                  return (
+                    <div key={catId} className="space-y-4">
+                      <Link to={`/shop?category=${catId}`} className="text-xl font-serif font-bold italic text-zinc-900 block">{cat.name}</Link>
+                      {subs.length > 0 && (
+                        <div className="grid grid-cols-1 gap-2 pl-4">
+                          {subs.map(sub => {
+                            const subId = sub._id || sub.id;
+                            return (
+                              <Link key={subId} to={`/shop?category=${catId}&subcategory=${subId}`} className="text-sm text-zinc-500 font-medium py-1">
+                                {sub.name}
+                              </Link>
+                            );
+                          })}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="pt-12 border-t border-zinc-100 space-y-6">
@@ -191,8 +203,10 @@ const Navbar: React.FC = () => {
               <div>
                 <h4 className="text-[9px] font-black uppercase tracking-widest text-zinc-300 mb-4">Quick Links</h4>
                 <div className="flex flex-wrap gap-2">
-                  {['Sarees', 'Blouses', 'Bridal', 'GS Heritage'].map(t => (
-                    <button key={t} className="px-4 py-2 rounded-full bg-zinc-50 text-xs font-bold hover:bg-zinc-900 hover:text-white transition-all">{t}</button>
+                  {categories.slice(0, 4).map(cat => (
+                    <Link key={getCatId(cat)} to={`/shop?category=${getCatId(cat)}`} className="px-4 py-2 rounded-full bg-zinc-50 text-xs font-bold hover:bg-zinc-900 hover:text-white transition-all">
+                      {cat.name}
+                    </Link>
                   ))}
                 </div>
               </div>

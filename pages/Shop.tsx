@@ -1,11 +1,12 @@
-
 import React, { useState, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { CATEGORIES, NAV_ITEMS_STRUCTURE, NavStructure } from '../constants';
 import ProductCard from '../components/ProductCard';
 import ProductSkeleton from '../components/ProductSkeleton';
-import { useAppSelector } from '../store';
+import { useAppSelector, useAppDispatch } from '../store';
 import { Product } from '../types';
+import { useCategoryData } from '../hooks/useCategoryData';
+import { getAllProducts } from '../api/auth/ProductApi';
+import { setProducts, setLoadingProducts, setProductsError } from '../store/productSlice';
 
 const FilterSection = ({ title, children, showClear, onClear }: { title: string, children: React.ReactNode, showClear?: boolean, onClear?: () => void }) => (
   <div className="border-b border-zinc-100 py-6 last:border-0">
@@ -42,69 +43,93 @@ const CheckboxOption = ({ label, count, isChecked, onChange }: { label: string, 
 );
 
 const Shop: React.FC = () => {
+  const dispatch = useAppDispatch();
   const products = useAppSelector((state) => state.products.items);
   const isLoadingProducts = useAppSelector((state) => state.products.isLoading);
   const [searchParams, setSearchParams] = useSearchParams();
   const [openSections, setOpenSections] = useState<string[]>(['category']);
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
-  const [expandedSubcategories, setExpandedSubcategories] = useState<string[]>([]);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [isMobileSortOpen, setIsMobileSortOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const { categories, subcategories: allSubcategories, getSubcategoriesForCategory, getCategoryName, getSubcategoryName } = useCategoryData();
 
   const activeCategory = searchParams.get('category') || 'All';
   const activeSubcategory = searchParams.get('subcategory') || 'All';
   const activeItem = searchParams.get('item') || 'All';
 
-  // Automatically expand active filter branches
-  React.useEffect(() => {
-    if (activeCategory !== 'All') {
-      const navItem = NAV_ITEMS_STRUCTURE.find(n => n.id === activeCategory);
-      if (navItem && !expandedCategories.includes(navItem.name)) {
-        setExpandedCategories(prev => [...prev, navItem.name]);
-      }
-    }
-    if (activeSubcategory !== 'All' && !expandedSubcategories.includes(activeSubcategory)) {
-      setExpandedSubcategories(prev => [...prev, activeSubcategory]);
-    }
-  }, [activeCategory, activeSubcategory]);
-
   const activeSort = searchParams.get('sort') || 'newest';
   const activePriceMax = parseInt(searchParams.get('maxPrice') || '15000');
   const activeBrand = searchParams.get('brand') || 'All';
 
+  // Fetch products from API when params change
+  React.useEffect(() => {
+    const fetchProducts = async () => {
+      dispatch(setLoadingProducts(true));
+      try {
+        const filters: any = {};
+        if (activeCategory !== 'All') filters.category = activeCategory;
+        if (activeSubcategory !== 'All') filters.subcategory = activeSubcategory;
+        if (searchQuery) filters.search = searchQuery;
+
+        const data = await getAllProducts(filters);
+        // Assuming data is the array or has a results field
+        dispatch(setProducts(data.results || data));
+      } catch (err: any) {
+        dispatch(setProductsError(err.message || 'Failed to fetch products'));
+      }
+    };
+    fetchProducts();
+  }, [dispatch, activeCategory, activeSubcategory, searchQuery]);
+
+  // Subcategories for the active category
+  const filteredSubcategories = useMemo(() => {
+    if (activeCategory === 'All') return [];
+    return getSubcategoriesForCategory(activeCategory);
+  }, [activeCategory, allSubcategories]);
+
   const brands = useMemo<string[]>(() => {
-    const allBrands = products.map((p: Product) => p.name.split(' ')[0]);
+    const allBrands = products.map((p: Product) => {
+      if (typeof p.brand === 'object' && p.brand) return p.brand.name;
+      return p.brand || p.name.split(' ')[0];
+    }).filter(Boolean);
     return Array.from(new Set(allBrands));
   }, [products]);
 
-  const subcategories = useMemo<string[]>(() => {
-    let pool = products;
-    if (activeCategory !== 'All') pool = pool.filter(p => p.category === activeCategory);
-    const allSubcats = pool.map((p: Product) => p.subcategory);
-    return Array.from(new Set(allSubcats));
-  }, [products, activeCategory]);
-
   const filteredProducts = useMemo(() => {
     let result = [...products];
-    if (activeCategory !== 'All') result = result.filter(p => p.category === activeCategory);
-    if (activeSubcategory !== 'All') result = result.filter(p => p.subcategory === activeSubcategory);
-    // If specific item is selected, we might need to filter by name matching or subcategory matching
-    if (activeItem !== 'All') {
-      result = result.filter(p =>
-        p.subcategory === activeItem ||
-        p.name.toLowerCase().includes(activeItem.toLowerCase())
-      );
+    if (activeCategory !== 'All') {
+      result = result.filter(p => {
+        const catId = typeof p.category === 'object' ? (p.category._id || p.category.id) : p.category;
+        return catId === activeCategory;
+      });
     }
-    if (activeBrand !== 'All') result = result.filter(p => p.name.toLowerCase().includes(activeBrand.toLowerCase()));
+    if (activeSubcategory !== 'All') {
+      result = result.filter(p => {
+        const subId = typeof p.subcategory === 'object' ? (p.subcategory._id || p.subcategory.id) : p.subcategory;
+        return subId === activeSubcategory;
+      });
+    }
+    if (activeItem !== 'All') {
+      result = result.filter(p => {
+        const subName = typeof p.subcategory === 'object' ? p.subcategory.name : p.subcategory;
+        return subName === activeItem || p.name.toLowerCase().includes(activeItem.toLowerCase());
+      });
+    }
+    if (activeBrand !== 'All') {
+      result = result.filter(p => {
+        const brandName = typeof p.brand === 'object' ? p.brand?.name : p.brand;
+        return (brandName || p.name).toLowerCase().includes(activeBrand.toLowerCase());
+      });
+    }
     result = result.filter(p => p.price <= activePriceMax);
 
     if (searchQuery) {
-      result = result.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.subcategory.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      result = result.filter(p => {
+        const bName = typeof p.brand === 'object' ? p.brand?.name : p.brand;
+        return p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (bName || '').toLowerCase().includes(searchQuery.toLowerCase());
+      });
     }
 
     if (activeSort === 'price-low') result.sort((a, b) => a.price - b.price);
@@ -119,7 +144,6 @@ const Shop: React.FC = () => {
     if (value === 'All' || !value) newParams.delete(key);
     else newParams.set(key, value);
 
-    // Reset lower levels when upper level changes
     if (key === 'category') {
       newParams.delete('subcategory');
       newParams.delete('item');
@@ -132,38 +156,22 @@ const Shop: React.FC = () => {
 
   const clearAllFilters = () => setSearchParams({});
 
-  const toggleSection = (section: string) => {
-    setOpenSections(prev =>
-      prev.includes(section) ? prev.filter(s => s !== section) : [...prev, section]
-    );
-  };
-
-  const toggleExpandedCategory = (cat: string) => {
-    setExpandedCategories(prev =>
-      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
-    );
-  };
-
-  const toggleExpandedSubcategory = (sub: string) => {
-    setExpandedSubcategories(prev =>
-      prev.includes(sub) ? prev.filter(s => s !== sub) : [...prev, sub]
-    );
-  };
-
-  // Compute counts for each filter option
+  // Compute counts
   const filterCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     products.forEach(p => {
-      // Category counts
-      counts[`cat:${p.category}`] = (counts[`cat:${p.category}`] || 0) + 1;
-      // Subcategory counts
-      counts[`sub:${p.subcategory}`] = (counts[`sub:${p.subcategory}`] || 0) + 1;
-      // Brand counts (extracted from name)
-      const brand = p.name.split(' ')[0];
-      counts[`brand:${brand}`] = (counts[`brand:${brand}`] || 0) + 1;
+      const catId = typeof p.category === 'object' ? (p.category._id || p.category.id) : p.category;
+      const subId = typeof p.subcategory === 'object' ? (p.subcategory._id || p.subcategory.id) : p.subcategory;
+      if (catId) counts[`cat:${catId}`] = (counts[`cat:${catId}`] || 0) + 1;
+      if (subId) counts[`sub:${subId}`] = (counts[`sub:${subId}`] || 0) + 1;
+
+      const brand = typeof p.brand === 'object' ? p.brand?.name : (p.brand || p.name.split(' ')[0]);
+      if (brand) counts[`brand:${brand}`] = (counts[`brand:${brand}`] || 0) + 1;
     });
     return counts;
   }, [products]);
+
+  const activeCategoryName = activeCategory === 'All' ? 'All Pieces' : getCategoryName(activeCategory);
 
   const SidebarContent = () => (
     <div className="flex flex-col">
@@ -173,28 +181,34 @@ const Shop: React.FC = () => {
           isChecked={activeCategory === 'All'}
           onChange={() => updateParams('category', 'All')}
         />
-        {NAV_ITEMS_STRUCTURE.map(cat => (
-          <CheckboxOption
-            key={cat.id}
-            label={cat.name}
-            count={filterCounts[`cat:${cat.name}`]}
-            isChecked={activeCategory === cat.id}
-            onChange={() => updateParams('category', cat.id)}
-          />
-        ))}
+        {categories.map(cat => {
+          const catId = cat._id || cat.id;
+          return (
+            <CheckboxOption
+              key={catId}
+              label={cat.name}
+              count={filterCounts[`cat:${catId}`]}
+              isChecked={activeCategory === catId}
+              onChange={() => updateParams('category', catId)}
+            />
+          );
+        })}
       </FilterSection>
 
-      {activeCategory !== 'All' && (
+      {activeCategory !== 'All' && filteredSubcategories.length > 0 && (
         <FilterSection title="Subcategories" showClear={activeSubcategory !== 'All'} onClear={() => updateParams('subcategory', 'All')}>
-          {subcategories.map(sub => (
-            <CheckboxOption
-              key={sub}
-              label={sub}
-              count={filterCounts[`sub:${sub}`]}
-              isChecked={activeSubcategory === sub}
-              onChange={() => updateParams('subcategory', sub)}
-            />
-          ))}
+          {filteredSubcategories.map(sub => {
+            const subId = sub._id || sub.id;
+            return (
+              <CheckboxOption
+                key={subId}
+                label={sub.name}
+                count={filterCounts[`sub:${subId}`]}
+                isChecked={activeSubcategory === subId}
+                onChange={() => updateParams('subcategory', subId)}
+              />
+            );
+          })}
         </FilterSection>
       )}
 
@@ -212,7 +226,7 @@ const Shop: React.FC = () => {
 
       <FilterSection title="Price">
         <div className="space-y-3">
-          {[2000, 5000, 8000, 12000, 15000].map(price => (
+          {[299,499,999,1499, 1999, 2499, 2999].map(price => (
             <label key={price} className="flex items-center group cursor-pointer">
               <input
                 type="radio"
@@ -245,7 +259,7 @@ const Shop: React.FC = () => {
             {activeCategory !== 'All' && (
               <>
                 <i className="fa-solid fa-chevron-right text-[8px]"></i>
-                <span className="text-zinc-900 font-medium">{activeCategory}</span>
+                <span className="text-zinc-900 font-medium">{activeCategoryName}</span>
               </>
             )}
           </nav>
@@ -253,7 +267,7 @@ const Shop: React.FC = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-baseline gap-4">
               <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
-                {activeCategory === 'All' ? 'All Pieces' : activeCategory}
+                {activeCategoryName}
               </h1>
               <span className="text-zinc-400 text-sm font-medium"> - {filteredProducts.length} items</span>
             </div>
@@ -393,28 +407,37 @@ const Shop: React.FC = () => {
             <div className="w-2/3 bg-white px-6 py-6 overflow-y-auto no-scrollbar">
               {activeMobileFilterTab === 'category' && (
                 <div className="space-y-6">
-                  {NAV_ITEMS_STRUCTURE.map(cat => (
-                    <CheckboxOption
-                      key={cat.id}
-                      label={cat.name}
-                      count={filterCounts[`cat:${cat.name}`]}
-                      isChecked={activeCategory === cat.id}
-                      onChange={() => updateParams('category', cat.id)}
-                    />
-                  ))}
+                  {categories.map(cat => {
+                    const catId = cat._id || cat.id;
+                    return (
+                      <CheckboxOption
+                        key={catId}
+                        label={cat.name}
+                        count={filterCounts[`cat:${catId}`]}
+                        isChecked={activeCategory === catId}
+                        onChange={() => updateParams('category', catId)}
+                      />
+                    );
+                  })}
                 </div>
               )}
               {activeMobileFilterTab === 'subcategory' && (
                 <div className="space-y-6">
-                  {subcategories.map(sub => (
-                    <CheckboxOption
-                      key={sub}
-                      label={sub}
-                      count={filterCounts[`sub:${sub}`]}
-                      isChecked={activeSubcategory === sub}
-                      onChange={() => updateParams('subcategory', sub)}
-                    />
-                  ))}
+                  {filteredSubcategories.map(sub => {
+                    const subId = sub._id || sub.id;
+                    return (
+                      <CheckboxOption
+                        key={subId}
+                        label={sub.name}
+                        count={filterCounts[`sub:${subId}`]}
+                        isChecked={activeSubcategory === subId}
+                        onChange={() => updateParams('subcategory', subId)}
+                      />
+                    );
+                  })}
+                  {filteredSubcategories.length === 0 && (
+                    <p className="text-sm text-zinc-400">Select a category first</p>
+                  )}
                 </div>
               )}
               {activeMobileFilterTab === 'brand' && (

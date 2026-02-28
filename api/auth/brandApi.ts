@@ -2,7 +2,9 @@ import { store } from "@/store";
 import axios from "axios";
 import { getApiClient } from "./authApi";
 import { logout, setToken } from "@/store/authSlice";
+
 const apiClient = getApiClient();
+
 apiClient.interceptors.request.use(
     (config) => {
         const token = store.getState().auth.accessToken;
@@ -38,33 +40,27 @@ apiClient.interceptors.response.use(
     }
 );
 
-export const getAllSubCategories = async (page: number = 1, limit: number = 10) => {
-    const response = await apiClient.get(`/subcategories`, { params: { page, limit } });
-    // Return the full paginated payload so callers can access results, totalPages, totalResults
+export const getAllBrands = async (page: number = 1, limit: number = 10) => {
+    const response = await apiClient.get(`/brands`, { params: { page, limit } });
     return response.data;
-}
+};
 
-export const addSubCategory = async (category: any) => {
-    const response = await apiClient.post(`/subcategories`, category);
+export const createBrand = async (brandData: { name: string }) => {
+    const response = await apiClient.post(`/brands`, brandData);
     return response.data;
-}
-export const updateSubCategory = async (subcategoryId: string, name: string, category: string) => {
-    const response = await apiClient.patch(`/subcategories/${subcategoryId}`, { name, category });
+};
+
+export const updateBrand = async (brandId: string, name: string) => {
+    const response = await apiClient.patch(`/brands/${brandId}`, { name });
     return response.data;
-}
+};
 
-export const deleteSubCategory = async (id: string) => {
-    const response = await apiClient.delete(`/subcategories/${id}`);
+export const deleteBrand = async (brandId: string) => {
+    const response = await apiClient.delete(`/brands/${brandId}`);
     return response.data;
-}
+};
 
-
-export const getSubCategoryById = async (id: string) => {
-    const response = await apiClient.get(`/subcategories/${id}`);
+export const getBrandById = async (brandId: string) => {
+    const response = await apiClient.get(`/brands/${brandId}`);
     return response.data;
-}
-
-export const getAllSubCategoryList = async () => {
-    const response = await apiClient.get(`/subcategories`);
-    return response.data
-}
+};

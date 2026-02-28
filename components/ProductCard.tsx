@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Product } from '../types';
 import { useAppDispatch, useAppSelector } from '../store';
-import { toggleWishlist } from '../store/cartSlice';
+import { toggleWishlistServer } from '../store/cartSlice';
 
 interface ProductCardProps {
   product: Product;
@@ -15,7 +15,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const user = useAppSelector((state) => state.auth.user);
   const navigate = useNavigate();
 
-  const isWishlisted = wishlist.includes(product.id);
+  const productId = product._id || product.id;
+  const isWishlisted = wishlist.includes(productId);
 
   const discountPercentage = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
@@ -23,7 +24,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const handleNavigateToDetail = (e: React.MouseEvent) => {
     e.preventDefault();
-    navigate(`/product/${product.id}`);
+    navigate(`/product/${productId}`);
   };
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
@@ -33,8 +34,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       navigate('/auth', { state: { from: `/shop` } });
       return;
     }
-    dispatch(toggleWishlist(product.id));
+    dispatch(toggleWishlistServer(productId));
   };
+
+  const subcategoryName = typeof product.subcategory === 'object'
+    ? product.subcategory.name
+    : product.subcategory;
 
   return (
     <div
@@ -75,7 +80,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Quick View Link - Minimalist */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-          <div className="px-6 py-2 bg-black/90 text-white text-[9px] font-black uppercase tracking-[0.4em] backdrop-blur-md rounded-full shadow-2xl">
+          <div className="px-6 py-2 bg-black/90 text-white text-[10px] font-black uppercase tracking-[0.4em] backdrop-blur-md rounded-full shadow-2xl">
             VIEW DETAILS
           </div>
         </div>
@@ -95,7 +100,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-300">
-              {product.subcategory}
+              {subcategoryName}
+            </span>
+            <span className="text-[9px] text-zinc-200 mt-[-2px]">·</span>
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">
+              {typeof product.brand === 'object' ? product.brand.name : product.brand}
             </span>
           </div>
           {product.originalPrice && (

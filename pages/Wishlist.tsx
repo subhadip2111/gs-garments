@@ -3,7 +3,6 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store';
 import { toggleWishlist, addToCart } from '../store/cartSlice';
-import { MOCK_PRODUCTS } from '../constants';
 
 const Wishlist: React.FC = () => {
     const dispatch = useAppDispatch();
@@ -67,7 +66,7 @@ const Wishlist: React.FC = () => {
 
                         <div className="flex-grow space-y-2">
                             <div className="flex justify-between items-start gap-2">
-                                <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-vogue-500">{product.subcategory}</h3>
+                                <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-vogue-500">{typeof product.subcategory === 'object' ? product.subcategory?.name : product.subcategory}</h3>
                                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{product.sku || 'GS-ITEM'}</span>
                             </div>
                             <Link to={`/product/${product.id}`} className="block text-sm font-bold tracking-tight text-gray-900 group-hover:underline line-clamp-2 leading-snug">{product.name}</Link>

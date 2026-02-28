@@ -5,34 +5,34 @@ export interface VariantSize {
 }
 
 export interface ProductVariant {
-  color: { name: string; hex: string };
+  color: { name: string; hex: string; images: string[] };
   sizes: VariantSize[];
 }
 
 export interface Product {
   id: string;
+  _id?: string;
   name: string;
-  category: 'Sarees' | 'Blouses' | 'Ethnic Wear' | 'Luxe Collection';
-  subcategory: string;
+  sku?: string;
+  brand?: string | { id: string; name: string; _id?: string };
+  category: string | { id: string; name: string; _id?: string };
+  subcategory: string | { id: string; name: string; category?: string; _id?: string };
   price: number;
   originalPrice?: number;
   description: string;
   images: string[];
   variants: ProductVariant[];
+  fabric?: string;
+  specifications?: string[];
   rating: number;
   reviewsCount: number;
+  isTrending?: boolean;
   isNewArrival?: boolean;
   isBestSeller?: boolean;
-  isTrending?: boolean;
-  sku?: string;
-  brand?: string;
-  fabric?: string;
-  sizeAndFit?: string[];
   materialAndCare?: string[];
-  specifications?: string[];
-  richSpecifications?: { label: string; value: string }[];
-  priceDetails?: { mrp: number; discount: number; sellingPrice: number };
-  bestOffers?: { title: string; description: string }[];
+  sizeAndFit?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 
@@ -48,11 +48,14 @@ export interface Review {
 }
 
 export interface CartItem {
+  id?: string;
+  _id?: string;
   productId: string;
   quantity: number;
   selectedSize: string;
   selectedColor: string;
   priceAtPurchase?: number; // Capture price at time of order
+  product?: Product; // Populated product data from backend
 }
 
 export interface User {

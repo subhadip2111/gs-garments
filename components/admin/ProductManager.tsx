@@ -9,6 +9,7 @@ import { useToast } from '../Toast';
 import { getAllProducts, addProduct, updateProduct, deleteProduct, uploadsBulkImages } from '@/api/auth/ProductApi';
 import { getAllCategories } from '@/api/auth/categoryApi';
 import { getAllSubCategories } from '@/api/auth/subcategory.Api';
+import { getAllBrands } from '@/api/auth/brandApi';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
     setAdminProducts, setAdminProductsLoading, setAdminProductsPagination,
@@ -26,12 +27,14 @@ const EMPTY_FORM = {
     originalPrice: 0,
     description: '',
     images: [] as string[],
-    variants: [] as { color: { name: string; hex: string }; sizes: { size: string; quantity: number }[] }[],
+    variants: [] as { color: { name: string; hex: string; images: string[] }; sizes: { size: string; quantity: number }[] }[],
     fabric: '',
     specifications: [] as string[],
     materialAndCare: [] as string[],
+    sizeAndFit: [] as string[],
     isTrending: false,
     isNewArrival: false,
+    isBestSeller: false,
 };
 
 const COMMON_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Onesize', 'Free Size'];
@@ -44,7 +47,7 @@ const badgeFor = (prod: AdminProduct) => {
 };
 
 const totalStock = (prod: AdminProduct) =>
-    (prod.variants || []).reduce((total, v) => total + v.sizes.reduce((s, vs) => s + vs.quantity, 0), 0);
+    (prod.variants || []).reduce((total, v) => total + (v.sizes || []).reduce((s, vs) => s + (vs.quantity || 0), 0), 0);
 
 /* ── drawer steps ── */
 const STEPS = ['Identity', 'Media', 'Pricing & Stock', 'Details', 'Badges'];
@@ -76,6 +79,9 @@ const ProductManager: React.FC = () => {
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const imageInputRef = useRef<HTMLInputElement>(null);
 
+    // Per-variant image files (array of arrays, one per variant)
+    const [variantImageFiles, setVariantImageFiles] = useState<File[][]>([]);
+
     // Pagination
     const [page, setPage] = useState(1);
     const limit = 10;
@@ -83,9 +89,10 @@ const ProductManager: React.FC = () => {
     // Categories & Subcategories
     const [categories, setCategories] = useState<any[]>([]);
     const [subcategories, setSubcategories] = useState<any[]>([]);
+    const [brandsList, setBrandsList] = useState<any[]>([]);
     const [selectedImageIdx, setSelectedImageIdx] = useState(0);
 
-    /* ── fetch categories / subcategories ── */
+    /* ── fetch categories / subcategories / brands ── */
     useEffect(() => {
         (async () => {
             try {
@@ -96,6 +103,10 @@ const ProductManager: React.FC = () => {
                 const subData = await getAllSubCategories(1, 100);
                 setSubcategories(Array.isArray(subData) ? subData : (subData.results ?? []));
             } catch { /* ignore */ }
+            try {
+                const brandData = await getAllBrands(1, 100);
+                setBrandsList(Array.isArray(brandData) ? brandData : (brandData.results ?? []));
+            } catch { /* ignore */ }
         })();
     }, []);
 
@@ -104,7 +115,7 @@ const ProductManager: React.FC = () => {
         setLoading(true);
         dispatch(setAdminProductsLoading(true));
         try {
-            const data = await getAllProducts(pageNum, limit);
+            const data = await getAllProducts({ page: pageNum, limit });
             const results = Array.isArray(data) ? data : (data.results ?? []);
             dispatch(setAdminProducts(results));
             dispatch(setAdminProductsPagination({
@@ -163,12 +174,18 @@ const ProductManager: React.FC = () => {
     };
 
     /* ── variants ── */
-    const addVariant = () => setForm(prev => ({
-        ...prev, variants: [...prev.variants, { color: { name: '', hex: '#a02828ff' }, sizes: [] }]
-    }));
-    const removeVariant = (idx: number) => setForm(prev => ({
-        ...prev, variants: prev.variants.filter((_, i) => i !== idx)
-    }));
+    const addVariant = () => {
+        setForm(prev => ({
+            ...prev, variants: [...prev.variants, { color: { name: '', hex: '#a02828ff', images: [] }, sizes: [] }]
+        }));
+        setVariantImageFiles(prev => [...prev, []]);
+    };
+    const removeVariant = (idx: number) => {
+        setForm(prev => ({
+            ...prev, variants: prev.variants.filter((_, i) => i !== idx)
+        }));
+        setVariantImageFiles(prev => prev.filter((_, i) => i !== idx));
+    };
     const updateVariantColorName = (idx: number, name: string) => setForm(prev => ({
         ...prev, variants: prev.variants.map((v, i) => i === idx ? { ...v, color: { ...v.color, name } } : v)
     }));
@@ -188,6 +205,58 @@ const ProductManager: React.FC = () => {
             return { ...v, sizes: v.sizes.map(s => s.size === size ? { ...s, quantity } : s) };
         })
     }));
+
+    /* ── variant images ── */
+    const handleVariantImageSelect = (variantIdx: number, e: React.ChangeEvent<HTMLInputElement>) => {
+        const files: File[] = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+        const oversized = files.find(f => f.size > 5 * 1024 * 1024);
+        if (oversized) { showToast('Each image must be under 5MB', 'error'); return; }
+
+        setVariantImageFiles(prev => {
+            const copy = [...prev];
+            while (copy.length <= variantIdx) copy.push([]);
+            copy[variantIdx] = [...(copy[variantIdx] || []), ...files];
+            return copy;
+        });
+
+        // Generate local previews and add to variant's images
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setForm(prev => ({
+                    ...prev,
+                    variants: prev.variants.map((v, i) =>
+                        i === variantIdx ? { ...v, color: { ...v.color, images: [...v.color.images, reader.result as string] } } : v
+                    )
+                }));
+            };
+            reader.readAsDataURL(file);
+        });
+        // Reset the input
+        e.target.value = '';
+    };
+
+    const removeVariantImage = (variantIdx: number, imgIdx: number) => {
+        // Determine if this is an existing URL or a new file preview
+        const existingUrlCount = (form.variants[variantIdx]?.color?.images || []).filter(img => !img.startsWith('data:')).length;
+        setForm(prev => ({
+            ...prev,
+            variants: prev.variants.map((v, i) =>
+                i === variantIdx ? { ...v, color: { ...v.color, images: v.color.images.filter((_, j) => j !== imgIdx) } } : v
+            )
+        }));
+        if (imgIdx >= existingUrlCount) {
+            const fileIdx = imgIdx - existingUrlCount;
+            setVariantImageFiles(prev => {
+                const copy = [...prev];
+                if (copy[variantIdx]) {
+                    copy[variantIdx] = copy[variantIdx].filter((_, j) => j !== fileIdx);
+                }
+                return copy;
+            });
+        }
+    };
 
     /* ── specifications ── */
     const addSpec = () => setForm(prev => ({ ...prev, specifications: [...prev.specifications, ''] }));
@@ -217,6 +286,7 @@ const ProductManager: React.FC = () => {
         setForm({ ...EMPTY_FORM });
         setImageFiles([]);
         setImagePreviews([]);
+        setVariantImageFiles([]);
         setDrawerStep(0);
         setDrawerOpen(true);
     };
@@ -225,25 +295,29 @@ const ProductManager: React.FC = () => {
         setEditingProduct(p);
         const catId = typeof p.category === 'object' ? (p.category?._id || p.category?.id) : p.category;
         const subId = typeof p.subcategory === 'object' ? (p.subcategory?._id || p.subcategory?.id) : p.subcategory;
+        const brandId = typeof p.brand === 'object' ? ((p.brand as any)?._id || (p.brand as any)?.id) : p.brand;
         setForm({
             sku: p.sku || '',
             name: p.name || '',
-            brand: p.brand || '',
+            brand: brandId || '',
             category: catId || '',
             subcategory: subId || '',
             price: p.price || 0,
             originalPrice: p.originalPrice || 0,
             description: p.description || '',
             images: p.images || [],
-            variants: (p as any).variants || [],
+            variants: ((p as any).variants || []).map((v: any) => ({ ...v, color: { ...v.color, images: v.color?.images || [] } })),
             fabric: p.fabric || '',
             specifications: p.specifications || [],
             materialAndCare: (p as any).materialAndCare || [],
+            sizeAndFit: (p as any).sizeAndFit || [],
             isTrending: p.isTrending || false,
             isNewArrival: p.isNewArrival || false,
+            isBestSeller: (p as any).isBestSeller || false,
         });
         setImageFiles([]);
         setImagePreviews([...(p.images || [])]);
+        setVariantImageFiles(((p as any).variants || []).map(() => [] as File[]));
         setDrawerStep(0);
         setDrawerOpen(true);
     };
@@ -269,20 +343,32 @@ const ProductManager: React.FC = () => {
                 imageUrls = [...imageUrls, ...newUrls];
             }
 
+            // Upload variant images
+            const variantImageUrls: string[][] = [];
+            for (let vi = 0; vi < form.variants.length; vi++) {
+                const existingUrls = (form.variants[vi]?.color?.images || []).filter(img => !img.startsWith('data:'));
+                let newUrls: string[] = [];
+                if (variantImageFiles[vi] && variantImageFiles[vi].length > 0) {
+                    const vResult = await uploadsBulkImages(variantImageFiles[vi]);
+                    newUrls = vResult.urls ?? vResult;
+                }
+                variantImageUrls.push([...existingUrls, ...newUrls]);
+            }
+
             // Build variants — keep all that have sizes, default color name to hex if blank
             const cleanedVariants = form.variants
                 .filter(v => v.sizes.length > 0)
-                .map(v => ({
-                    color: { name: v.color?.name?.trim() || v.color?.hex || 'Unnamed', hex: v.color?.hex || '#000000' },
+                .map((v, idx) => ({
+                    color: { name: v.color?.name?.trim() || v.color?.hex || 'Unnamed', hex: v.color?.hex || '#000000', images: variantImageUrls[idx] || [] },
                     sizes: v.sizes.map(s => ({ size: s.size, quantity: s.quantity })),
                 }));
 
             const payload = {
                 sku: form.sku,
                 name: form.name,
-                brand: form.brand,
-                category: form.category,
-                subcategory: form.subcategory,
+                brand: typeof form.brand === 'object' ? ((form.brand as any)?._id || (form.brand as any)?.id) : form.brand,
+                category: typeof form.category === 'object' ? (form.category?._id || form.category?.id) : form.category,
+                subcategory: typeof form.subcategory === 'object' ? (form.subcategory?._id || form.subcategory?.id) : form.subcategory,
                 price: form.price,
                 originalPrice: form.originalPrice || undefined,
                 description: form.description,
@@ -291,8 +377,10 @@ const ProductManager: React.FC = () => {
                 fabric: form.fabric || undefined,
                 specifications: form.specifications.filter(s => s.trim()),
                 materialAndCare: form.materialAndCare.filter(s => s.trim()),
+                sizeAndFit: form.sizeAndFit.filter(s => s.trim()),
                 isTrending: form.isTrending,
                 isNewArrival: form.isNewArrival,
+                isBestSeller: form.isBestSeller,
             };
 
 
@@ -332,7 +420,8 @@ const ProductManager: React.FC = () => {
         .filter(p =>
             p.name?.toLowerCase().includes(search.toLowerCase()) ||
             (p.sku || '').toLowerCase().includes(search.toLowerCase()) ||
-            (typeof p.category === 'string' ? p.category : (p.category?.name || '')).toLowerCase().includes(search.toLowerCase())
+            getBrandName(p.brand).toLowerCase().includes(search.toLowerCase()) ||
+            getCategoryName(p.category).toLowerCase().includes(search.toLowerCase())
         )
         .sort((a, b) => {
             if (sortBy === 'price') return (a.price || 0) - (b.price || 0);
@@ -358,6 +447,15 @@ const ProductManager: React.FC = () => {
         return sub.name || '—';
     };
 
+    const getBrandName = (brand: any) => {
+        if (!brand) return '—';
+        if (typeof brand === 'string') {
+            const found = brandsList.find(b => (b.id || b._id) === brand);
+            return found?.name || brand;
+        }
+        return brand.name || '—';
+    };
+
     /* ── filter subcategories by selected category ── */
     const filteredSubcategories = form.category
         ? subcategories.filter(s => {
@@ -379,8 +477,12 @@ const ProductManager: React.FC = () => {
                         </DrawerField>
                         <div className="grid grid-cols-2 gap-4">
                             <DrawerField label="Brand" required>
-                                <input value={form.brand} onChange={e => setForm({ ...form, brand: e.target.value })}
-                                    placeholder="e.g. GS Heritage" className="drawer-input" />
+                                <select value={form.brand} onChange={e => setForm({ ...form, brand: e.target.value })} className="drawer-input">
+                                    <option value="">Select Brand</option>
+                                    {brandsList.map(b => (
+                                        <option key={b.id || b._id} value={b.id || b._id}>{b.name}</option>
+                                    ))}
+                                </select>
                             </DrawerField>
                             <DrawerField label="SKU Code" required>
                                 <input value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })}
@@ -563,6 +665,32 @@ const ProductManager: React.FC = () => {
                                                     </div>
                                                 </div>
                                             )}
+
+                                            {/* Variant Images */}
+                                            <div className="border-t border-gray-100 pt-4">
+                                                <p className="text-[9px] font-black uppercase tracking-widest text-black/40 mb-3 flex items-center gap-1">
+                                                    <ImageIcon size={10} /> Variant Images ({variant.color?.images?.length || 0})
+                                                </p>
+                                                {(variant.color?.images?.length || 0) > 0 && (
+                                                    <div className="grid grid-cols-4 gap-2 mb-3">
+                                                        {(variant.color?.images || []).map((img: string, imgIdx: number) => (
+                                                            <div key={imgIdx} className="relative aspect-square rounded-lg overflow-hidden border border-gray-100 group/vimg bg-gray-50">
+                                                                <img src={img} alt="" className="w-full h-full object-cover" />
+                                                                <button type="button" onClick={() => removeVariantImage(vIdx, imgIdx)}
+                                                                    className="absolute top-1 right-1 w-5 h-5 bg-black/60 hover:bg-black text-white rounded-full flex items-center justify-center opacity-0 group-hover/vimg:opacity-100 transition-all">
+                                                                    <X size={8} />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                <label className="border border-dashed border-gray-200 hover:border-black/30 rounded-xl py-4 flex flex-col items-center justify-center cursor-pointer transition-all group hover:bg-gray-50/50">
+                                                    <Upload size={14} className="text-gray-400 group-hover:text-black transition-colors mb-1" />
+                                                    <span className="text-[9px] font-bold text-gray-400">Upload variant images</span>
+                                                    <input type="file" accept="image/png,image/jpeg,image/webp" multiple
+                                                        onChange={(e) => handleVariantImageSelect(vIdx, e)} className="hidden" />
+                                                </label>
+                                            </div>
                                         </div>
                                     );
                                 })}
@@ -585,13 +713,12 @@ const ProductManager: React.FC = () => {
                                 placeholder="e.g. 100% Pure Silk with Gold Zari" className="drawer-input" />
                         </DrawerField>
 
-
-                        {/* Specifications */}
+                        {/* Specifications (simple string list) */}
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-3 flex items-center gap-1.5">
                                 <Tag size={12} /> Specifications
                             </p>
-                            {form.specifications.map((spec, idx) => (
+                            {(form.specifications || []).map((spec, idx) => (
                                 <div key={idx} className="flex gap-3 items-center mb-3">
                                     <input type="text" value={spec} onChange={(e) => updateSpec(idx, e.target.value)}
                                         placeholder="e.g. Weight: 650g" className="drawer-input flex-1" />
@@ -612,7 +739,7 @@ const ProductManager: React.FC = () => {
                             <p className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-3 flex items-center gap-1.5">
                                 <CheckCircle2 size={12} /> Material & Care
                             </p>
-                            {form.materialAndCare.map((item, idx) => (
+                            {(form.materialAndCare || []).map((item, idx) => (
                                 <div key={idx} className="flex gap-3 items-center mb-3">
                                     <input type="text" value={item} onChange={(e) => updateCareItem(idx, e.target.value)}
                                         placeholder="e.g. Dry Clean Only" className="drawer-input flex-1" />
@@ -627,6 +754,28 @@ const ProductManager: React.FC = () => {
                                 <Plus size={14} strokeWidth={3} /> Add Care Instruction
                             </button>
                         </div>
+
+                        {/* Size & Fit */}
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-3 flex items-center gap-1.5">
+                                <Ruler size={12} /> Size & Fit
+                            </p>
+                            {(form.sizeAndFit || []).map((item, idx) => (
+                                <div key={idx} className="flex gap-3 items-center mb-3">
+                                    <input type="text" value={item}
+                                        onChange={(e) => setForm(prev => ({ ...prev, sizeAndFit: prev.sizeAndFit.map((s, i) => i === idx ? e.target.value : s) }))}
+                                        placeholder="e.g. Model is 5'8, wearing size M" className="drawer-input flex-1" />
+                                    <button type="button" onClick={() => setForm(prev => ({ ...prev, sizeAndFit: prev.sizeAndFit.filter((_, i) => i !== idx) }))}
+                                        className="w-9 h-9 flex items-center justify-center text-rose-400 hover:bg-rose-50 rounded-xl transition-colors flex-shrink-0">
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                            <button type="button" onClick={() => setForm(prev => ({ ...prev, sizeAndFit: [...prev.sizeAndFit, ''] }))}
+                                className="flex items-center gap-2 text-[10px] font-black text-black uppercase tracking-widest hover:gap-3 transition-all">
+                                <Plus size={14} strokeWidth={3} /> Add Size & Fit Note
+                            </button>
+                        </div>
                     </div>
                 );
 
@@ -638,6 +787,7 @@ const ProductManager: React.FC = () => {
                         {[
                             { key: 'isTrending' as const, label: 'Trending Now', desc: 'Show in trending section', icon: <TrendingUp size={18} /> },
                             { key: 'isNewArrival' as const, label: 'New Arrival', desc: 'Feature in new arrivals', icon: <Star size={18} /> },
+                            { key: 'isBestSeller' as const, label: 'Best Seller', desc: 'Highlight as a best seller', icon: <TrendingUp size={18} /> },
                         ].map(({ key, label, desc, icon }) => {
                             const active = form[key];
                             return (
@@ -771,8 +921,9 @@ const ProductManager: React.FC = () => {
                                                 {stock > 0 ? `${stock} left` : 'Out'}
                                             </span>
                                         </div>
-                                        <div className="flex items-center gap-1.5 pt-1">
+                                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
                                             <span className="px-2.5 py-0.5 bg-black text-white rounded-full text-[8px] font-black uppercase tracking-widest">{getCategoryName(prod.category)}</span>
+                                            <span className="px-2 py-0.5 bg-gray-100 text-black/60 rounded-full text-[8px] font-black uppercase tracking-widest">{getBrandName(prod.brand)}</span>
                                             {prod.sku && <span className="text-[8px] text-black/30 font-mono font-black uppercase">{prod.sku}</span>}
                                         </div>
                                     </div>
@@ -788,6 +939,7 @@ const ProductManager: React.FC = () => {
                                 <tr className="text-[10px] font-black uppercase tracking-widest text-black">
                                     <th className="px-6 py-4">Product</th>
                                     <th className="px-6 py-4">Category</th>
+                                    <th className="px-6 py-4">Brand</th>
                                     <th className="px-6 py-4">Price</th>
                                     <th className="px-6 py-4">Stock</th>
                                     <th className="px-6 py-4 text-right">Actions</th>
@@ -812,6 +964,9 @@ const ProductManager: React.FC = () => {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className="px-2.5 py-1 bg-black text-white rounded-full text-[9px] font-black uppercase tracking-widest">{getCategoryName(prod.category)}</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="px-2 py-1 bg-gray-100 text-black/60 rounded-full text-[9px] font-black uppercase tracking-widest">{getBrandName(prod.brand)}</span>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <p className="font-black text-gray-900 font-serif italic">₹{prod.price?.toLocaleString('en-IN')}</p>
@@ -956,7 +1111,7 @@ const ProductManager: React.FC = () => {
                                 <div>
                                     <h2 className="text-2xl font-black text-gray-900 tracking-tight">{vp.name}</h2>
                                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-black/50">{vp.brand}</span>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-black/50">{getBrandName(vp.brand)}</span>
                                         <span className="text-black/20">·</span>
                                         <span className="text-[10px] font-bold text-black/40">{getCategoryName(vp.category)}</span>
                                         <span className="text-black/20">›</span>
@@ -985,7 +1140,7 @@ const ProductManager: React.FC = () => {
                                     </div>
                                     {vp.images.length > 1 && (
                                         <div className="grid grid-cols-5 gap-2">
-                                            {vp.images.slice(0, 5).map((img, i) => (
+                                            {vp.images?.slice(0, 5).map((img, i) => (
                                                 <div key={i}
                                                     onClick={() => setSelectedImageIdx(i)}
                                                     className={`aspect-square rounded-lg overflow-hidden border-2 bg-gray-50 cursor-pointer transition-all duration-200 hover:opacity-80 ${(selectedImageIdx >= vp.images.length ? 0 : selectedImageIdx) === i
@@ -1053,6 +1208,24 @@ const ProductManager: React.FC = () => {
                                                             {variantStock} pcs
                                                         </span>
                                                     </div>
+
+                                                    {/* Variant Images */}
+                                                    {variant.color?.images && variant.color.images.length > 0 && (
+                                                        <div className="mb-3">
+                                                            <p className="text-[9px] font-black uppercase tracking-widest text-black/30 mb-2 flex items-center gap-1">
+                                                                <ImageIcon size={10} /> Variant Images
+                                                            </p>
+                                                            <div className="grid grid-cols-4 gap-2">
+                                                                {(variant.color.images || []).map((img: string, imgI: number) => (
+                                                                    <div key={imgI} className="aspect-square rounded-lg overflow-hidden border border-gray-100 bg-gray-50 cursor-pointer hover:ring-2 hover:ring-black transition-all"
+                                                                        onClick={() => { setSelectedImageIdx(0); /* show variant img in main gallery */ window.open(img, '_blank'); }}>
+                                                                        <img src={img} alt="" className="w-full h-full object-cover" />
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
                                                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                                                         {(variant.sizes || []).map((vs: any) => (
                                                             <div key={vs.size} className="bg-white p-2.5 rounded-lg border border-gray-100 text-center">
@@ -1087,7 +1260,7 @@ const ProductManager: React.FC = () => {
                                 <div>
                                     <p className="text-[10px] text-black/40 uppercase font-black tracking-widest mb-2">Specifications</p>
                                     <div className="flex flex-wrap gap-2">
-                                        {vp.specifications.map((spec, i) => (
+                                        {(vp.specifications || []).map((spec, i) => (
                                             <span key={i} className="px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg text-xs font-bold text-gray-700">
                                                 {spec}
                                             </span>

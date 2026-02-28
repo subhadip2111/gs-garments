@@ -23,7 +23,7 @@ import {
 
 import { Product } from './types';
 import { supabase } from './services/supabase';
-import { MOCK_PRODUCTS } from './constants';
+import { getAllProducts } from './api/auth/ProductApi';
 
 // --- Components ---
 import Navbar from './components/Navbar';
@@ -45,6 +45,8 @@ import Contact from './pages/Contact';
 import Shipping from './pages/Shipping';
 import Returns from './pages/Returns';
 import TrackOrder from './pages/TrackOrder';
+import Unauthorized from './pages/Unauthorized';
+import ErrorPage from './pages/ErrorPage';
 import { ToastProvider } from './components/Toast';
 import { getProfileDetails, saveSocialLoginUserData } from './api/auth/authApi';
 import { PersistGate } from "redux-persist/integration/react";
@@ -81,8 +83,12 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const user = useAppSelector((state) => state.auth.user);
   const location = useLocation();
 
-  if (!user || user.role !== "admin") {
+  if (!user) {
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
+  }
+
+  if (user.role !== "admin") {
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return <>{children}</>;
@@ -150,24 +156,22 @@ function AppContent() {
       }
     });
 
-    const fetchProducts = async () => {
+    const fetchProductsData = async () => {
       dispatch(setLoadingProducts(true));
       try {
-        const { data, error } = await supabase.from('products').select('*');
-        if (error) throw error;
-        if (data && data.length > 0) {
-          dispatch(setProducts(data as Product[]));
-        } else {
-          dispatch(setProducts(MOCK_PRODUCTS));
+        const response = await getAllProducts();
+        const products = response.data || response.items || response;
+        if (Array.isArray(products)) {
+          dispatch(setProducts(products));
         }
       } catch (err) {
-        dispatch(setProducts(MOCK_PRODUCTS));
+        console.error("Failed to fetch products:", err);
       } finally {
         dispatch(setLoadingProducts(false));
       }
     };
 
-    fetchProducts();
+    fetchProductsData();
     return () => subscription?.unsubscribe?.();
   }, [dispatch]);
 
@@ -225,6 +229,10 @@ function AppContent() {
           <Route path="/admin/*" element={<Redirect to="/admin/dashboard" replace />} />
         </Route>
       </Route>
+
+      {/* Catch-all route for error page */}
+      <Route path="/unauthorized" element={<Unauthorized />} />
+      <Route path="*" element={<ErrorPage />} />
     </Routes>
   );
 }

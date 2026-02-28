@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { MOCK_PRODUCTS, LAUNCH_PROMOS, MOCK_REVIEWS, MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
+import { LAUNCH_PROMOS, MOCK_REVIEWS, MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
 import { useAppDispatch, useAppSelector } from '../store';
-import { addToCart, toggleWishlist } from '../store/cartSlice';
+import { addToCartServer, toggleWishlistServer } from '../store/cartSlice';
 import { setSharedProduct } from '../store/uiSlice';
 import ProductCard from '../components/ProductCard';
 import ProductSkeleton from '../components/ProductSkeleton';
 import ProductDetailSkeleton from '../components/ProductDetailSkeleton';
 import { Product, Review } from '../types';
 import Product360View from '../components/Product360View';
+import { getProductById, getAllProducts, getSimilarProducts } from '../api/auth/ProductApi';
+import { setLoadingProducts } from '../store/productSlice';
 
 const RatingHistogram: React.FC<{ rating: number; reviewsCount: number }> = ({ rating, reviewsCount }) => {
   const distribution = [70, 15, 8, 5, 2]; // Mocked distribution percentages
@@ -106,7 +108,7 @@ const ProductDetail: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user);
   const isLoadingProducts = useAppSelector((state) => state.products.isLoading);
 
-  const product = MOCK_PRODUCTS.find(p => p.id === id);
+  const [product, setProduct] = useState<Product | null>(null);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -133,38 +135,52 @@ const ProductDetail: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (product) {
-      const firstVariant = product.variants[0];
-      setSelectedColor(firstVariant?.color?.name || '');
-      setSelectedSize(firstVariant?.sizes[0]?.size || '');
-      setActiveImg(0);
-      setQuantity(1);
-      setIs360Active(false);
+    const fetchProduct = async () => {
+      if (!id) return;
+      dispatch(setLoadingProducts(true));
+      try {
+        const data = await getProductById(id);
+        const prod = data.results || data;
+        setProduct(prod);
 
-      // Trigger Related Products
-      fetchRelatedProducts(product);
-    }
-  }, [product, id]);
+        if (prod) {
+          const firstVariant = prod.variants[0];
+          setSelectedColor(firstVariant?.color?.name || '');
+          setSelectedSize(firstVariant?.sizes[0]?.size || '');
+          setActiveImg(0);
+          setQuantity(1);
+          setIs360Active(false);
+          fetchRelatedProducts(prod);
+        }
+      } catch (err) {
+        console.error('Failed to fetch product', err);
+      } finally {
+        dispatch(setLoadingProducts(false));
+      }
+    };
+    fetchProduct();
+  }, [id, dispatch]);
 
   // Derive variant-aware helpers
   const selectedVariant = product?.variants.find(v => v.color.name === selectedColor);
   const availableSizes = selectedVariant?.sizes || [];
 
-  const fetchRelatedProducts = (currentProd: Product) => {
-    setLoadingRelated(true);
-    // Prioritize same subcategory, then same category
-    const related = MOCK_PRODUCTS.filter(p => p.id !== currentProd.id)
-      .sort((a, b) => {
-        if (a.subcategory === currentProd.subcategory && b.subcategory !== currentProd.subcategory) return -1;
-        if (a.subcategory !== currentProd.subcategory && b.subcategory === currentProd.subcategory) return 1;
-        if (a.category === currentProd.category && b.category !== currentProd.category) return -1;
-        if (a.category !== currentProd.category && b.category === currentProd.category) return 1;
-        return 0;
-      })
-      .slice(0, 4);
+  // Use variant color images if available, otherwise fall back to product images
+  const displayImages = (selectedVariant?.color?.images && selectedVariant.color.images.length > 0)
+    ? selectedVariant.color.images
+    : (product?.images || []);
 
-    setRelatedProducts(related);
-    setLoadingRelated(false);
+  const fetchRelatedProducts = async (currentProd: Product) => {
+    setLoadingRelated(true);
+    try {
+      const data = await getSimilarProducts(currentProd._id || currentProd.id);
+      const list = (data.results || data || []).filter((p: any) => (p._id || p.id) !== (currentProd._id || currentProd.id));
+      setRelatedProducts(list.slice(0, 4));
+    } catch (err) {
+      console.error('Failed to fetch related products', err);
+    } finally {
+      setLoadingRelated(false);
+    }
   };
 
   const handleHelpful = (reviewId: string) => {
@@ -224,6 +240,10 @@ const ProductDetail: React.FC = () => {
   }
 
   const handleBuyNow = () => {
+    if (!user) {
+      navigate('/auth', { state: { returnUrl: `/product/${product._id || product.id}` } });
+      return;
+    }
     if (!selectedSize) {
       alert('Please select a size first.');
       return;
@@ -267,10 +287,14 @@ const ProductDetail: React.FC = () => {
     window.open(shareUrl, '_blank', 'width=600,height=400');
   };
 
-  const isWishlisted = wishlist.includes(product.id);
+  const isWishlisted = wishlist.includes(product._id || product.id);
   const discountPercentage = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : null;
+
+  const categoryName = typeof product.category === 'object' ? product.category.name : product.category;
+  const categoryId = typeof product.category === 'object' ? (product.category._id || product.category.id) : product.category;
+  const brandName = typeof product.brand === 'object' ? product.brand?.name : (product.brand || 'GS Heritage');
 
   return (
     <div className="bg-white min-h-screen overflow-x-hidden">
@@ -311,7 +335,7 @@ const ProductDetail: React.FC = () => {
         <nav className="flex items-center pt-20 pb-6 text-[9px] font-black uppercase tracking-[0.5em] text-zinc-500">
           <Link to="/" className="hover:text-black transition-colors">Atelier</Link>
           <i className="fa-solid fa-circle text-[4px] mx-6 opacity-20"></i>
-          <Link to={`/shop?category=${product.category}`} className="hover:text-black transition-colors">{product.category}</Link>
+          <Link to={`/shop?category=${categoryId}`} className="hover:text-black transition-colors">{categoryName}</Link>
           <i className="fa-solid fa-circle text-[4px] mx-6 opacity-20"></i>
           <span className="text-zinc-900 font-black tracking-[0.6em]">{product.name}</span>
         </nav>
@@ -322,7 +346,7 @@ const ProductDetail: React.FC = () => {
             <div className="flex flex-col-reverse lg:flex-row gap-4">
               {/* Thumbnails */}
               <div className="flex lg:flex-col gap-2.5 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 lg:pb-0">
-                {product.images.map((img, i) => (
+                {displayImages.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => { setActiveImg(i); setIs360Active(false); }}
@@ -332,7 +356,7 @@ const ProductDetail: React.FC = () => {
                     {activeImg === i && !is360Active && <div className="absolute inset-0 bg-white/10"></div>}
                   </button>
                 ))}
-                {product.images.length > 2 && (
+                {displayImages.length > 2 && (
                   <button
                     onClick={() => setIs360Active(true)}
                     className={`flex-shrink-0 w-12 lg:w-14 aspect-[3/4] flex flex-col items-center justify-center gap-1.5 transition-all duration-700 ${is360Active ? 'bg-black text-white ring-2 ring-black ring-offset-2 scale-105' : 'bg-zinc-50 text-zinc-300 hover:text-black hover:bg-zinc-100'}`}
@@ -346,11 +370,11 @@ const ProductDetail: React.FC = () => {
               {/* Main Image Viewport */}
               <div className="flex-grow aspect-[3/4] bg-zinc-50 relative group overflow-hidden rounded-sm ring-1 ring-zinc-100/50 cursor-crosshair">
                 {is360Active ? (
-                  <Product360View images={product.images} onExit={() => setIs360Active(false)} />
+                  <Product360View images={displayImages} onExit={() => setIs360Active(false)} />
                 ) : (
                   <>
                     <div className={`w-full h-full transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] ${isZoomed ? 'scale-[2] origin-center' : 'scale-100'}`} onClick={() => setIsZoomed(!isZoomed)}>
-                      <img src={product.images[activeImg]} className="w-full h-full object-cover" alt={product.name} />
+                      <img src={displayImages[activeImg] || displayImages[0]} className="w-full h-full object-cover" alt={product.name} />
                     </div>
 
                     <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-700 translate-y-4 group-hover:translate-y-0">
@@ -360,11 +384,9 @@ const ProductDetail: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="absolute top-8 right-8">
-                      <button onClick={(e) => { e.stopPropagation(); dispatch(toggleWishlist(product.id)); }} className={`w-10 h-10 rounded-full backdrop-blur-xl shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-500 ${isWishlisted ? 'bg-black text-white' : 'bg-white/80 text-zinc-900 hover:bg-black hover:text-white'}`}>
-                        <i className={`${isWishlisted ? 'fa-solid text-red-500' : 'fa-regular'} text-sm fa-heart`}></i>
-                      </button>
-                    </div>
+                    <button onClick={(e) => { e.stopPropagation(); dispatch(toggleWishlistServer(product._id || product.id)); }} className={`w-10 h-10 rounded-full backdrop-blur-xl shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-500 ${isWishlisted ? 'bg-black text-white' : 'bg-white/80 text-zinc-900 hover:bg-black hover:text-white'}`}>
+                      <i className={`${isWishlisted ? 'fa-solid text-red-500' : 'fa-regular'} text-sm fa-heart`}></i>
+                    </button>
 
                     {/* Perspective Label */}
                     <div className="absolute top-4 left-4">
@@ -394,9 +416,9 @@ const ProductDetail: React.FC = () => {
                 </h1>
                 <div className="flex flex-wrap items-center gap-4 sm:gap-6">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-black uppercase tracking-[0.4em] text-zinc-600">{product.brand || 'GS Heritage'}</span>
+                    <span className="text-[11px] font-black uppercase tracking-[0.4em] text-zinc-600">{brandName}</span>
                     <div className="w-1.5 h-1.5 bg-zinc-300 rounded-full"></div>
-                    <span className="text-[11px] font-bold text-zinc-500 italic font-serif">Ref. {product.sku || 'GS-' + product.id.toUpperCase()}</span>
+                    <span className="text-[11px] font-bold text-zinc-500 italic font-serif">Ref. {product.sku || 'GS-' + (product._id || product.id).toUpperCase()}</span>
                   </div>
 
                   <div className="flex items-center gap-2 bg-zinc-50 px-3 py-1.5 rounded-lg border border-zinc-100/50">
@@ -474,6 +496,8 @@ const ProductDetail: React.FC = () => {
                             onClick={() => {
                               setSelectedColor(variant.color.name);
                               setSelectedSize(variant.sizes[0]?.size || '');
+                              setActiveImg(0);
+                              setIs360Active(false);
                             }}
                             className={`group relative flex flex-col items-center gap-1.5 transition-all duration-500`}
                             title={`${variant.color.name} — ${variantTotal} in stock`}
@@ -532,7 +556,13 @@ const ProductDetail: React.FC = () => {
                 <div className="space-y-6 pt-4">
                   <div className="flex flex-col sm:flex-row gap-3">
                     <button
-                      onClick={() => dispatch(addToCart({ productId: product.id, size: selectedSize, color: selectedColor, quantity }))}
+                      onClick={() => {
+                        if (!user) {
+                          navigate('/auth', { state: { returnUrl: `/product/${product._id || product.id}` } });
+                          return;
+                        }
+                        dispatch(addToCartServer({ productId: product._id || product.id, size: selectedSize, color: selectedColor, quantity }));
+                      }}
                       className="flex-[1.5] group relative overflow-hidden bg-zinc-900 text-white py-3 px-6 text-[10px] font-black uppercase tracking-[0.25em] transition-all duration-700 hover:shadow-[0_12px_24px_-8px_rgba(0,0,0,0.3)] active:scale-[0.98] rounded-full"
                     >
                       <div className="relative z-10 flex items-center justify-center gap-3">
@@ -569,7 +599,7 @@ const ProductDetail: React.FC = () => {
                   <div className="grid grid-cols-2 gap-x-8 gap-y-5">
                     {[
                       { label: "Fabrication", value: product.fabric || "Heritage Blend", icon: "fa-swatchbook" },
-                      { label: "Archival SKU", value: product.sku || product.id.toUpperCase(), icon: "fa-barcode" },
+                      { label: "Archival SKU", value: product.sku || (product._id || product.id).toUpperCase(), icon: "fa-barcode" },
                       { label: "Origin", value: "Indian Heritage", icon: "fa-earth-asia" },
                       { label: "Care Protocol", value: "Dry Clean Only", icon: "fa-wind" }
                     ].map((spec, i) => (
@@ -750,29 +780,6 @@ const ProductDetail: React.FC = () => {
           </div>
         </section>
 
-        {/* Heritage Partners Section */}
-        {/* <section className="pt-32 pb-40 border-t border-zinc-100">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 mb-24">
-            <div className="space-y-6 max-w-2xl">
-              <span className="text-zinc-300 text-[10px] font-black uppercase tracking-[0.6em]">The Curated Network</span>
-              <h2 className="text-5xl md:text-6xl font-serif font-bold italic tracking-tight leading-[0.9]">Heritage & <br /> Craftsmanship.</h2>
-            </div>
-            <p className="text-xl text-zinc-300 font-serif font-medium italic leading-relaxed max-w-sm">
-              We partner with prestigious ateliers to bring you the finest expressions of Indian ethnic craftsmanship.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 lg:gap-16">
-            {['GS Heritage', 'GS Boutique', 'Aura Ethnic', 'Vogue Archive'].map(brand => (
-              <div key={brand} className="group relative grayscale hover:grayscale-0 transition-all duration-1000">
-                <div className="relative aspect-video flex items-center justify-center bg-zinc-50 border border-zinc-100 group-hover:bg-white group-hover:border-zinc-950 transition-all duration-700 overflow-hidden shadow-sm hover:shadow-2xl">
-                  <span className="text-[20px] font-serif font-bold italic text-zinc-300 group-hover:text-black group-hover:scale-110 transition-all duration-700 tracking-tight">{brand}</span>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section> */}
-
         {/* Similar Collection Section */}
         <section className="pt-32 pb-40 border-t border-zinc-100">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 mb-24">
@@ -783,21 +790,21 @@ const ProductDetail: React.FC = () => {
               </div>
               <h2 className="text-6xl md:text-7xl font-serif font-bold italic tracking-tight leading-[0.8] text-zinc-950">Similar <br /> Collection.</h2>
             </div>
-            <Link to={`/shop?category=${product.category}`} className="group flex items-center gap-6 pb-2 border-b-2 border-zinc-950">
+            <Link to={`/shop?category=${categoryId}`} className="group flex items-center gap-6 pb-2 border-b-2 border-zinc-950">
               <span className="text-[12px] font-black uppercase tracking-[0.4em]">Explore Similar Collection</span>
               <i className="fa-solid fa-arrow-right-long transition-transform group-hover:translate-x-3 duration-500"></i>
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-12 gap-y-24">
             {loadingRelated ? [...Array(4)].map((_, i) => <ProductSkeleton key={i} />) : relatedProducts.map(p => (
-              <div key={p.id} className="animate-in fade-in slide-in-from-bottom-8 duration-1000" style={{ animationDelay: `${relatedProducts.indexOf(p) * 100}ms` }}>
+              <div key={p._id || p.id} className="animate-in fade-in slide-in-from-bottom-8 duration-1000" style={{ animationDelay: `${relatedProducts.indexOf(p) * 100}ms` }}>
                 <ProductCard product={p} />
               </div>
             ))}
           </div>
         </section>
-      </div >
-    </div >
+      </div>
+    </div>
   );
 };
 

@@ -15,56 +15,6 @@ export const MOCK_COMBO_OFFERS: ComboOffer[] = [
 
 export const CATEGORIES = ['Sarees', 'Blouses', 'Ethnic Wear', 'Luxe Collection'] as const;
 
-export interface NavStructure {
-  name: string;
-  id: string;
-  href: string;
-  subcategories: {
-    name: string;
-    items: string[];
-  }[];
-}
-
-export const NAV_ITEMS_STRUCTURE: NavStructure[] = [
-  {
-    name: 'Sarees',
-    id: 'Sarees',
-    href: '/shop?category=Sarees',
-    subcategories: [
-      { name: 'Traditional', items: ['Banarasi Silk', 'Kanjeevaram Silk', 'Chanderi', 'Cotton Silk', 'Tant'] },
-      { name: 'Modern', items: ['Chiffon', 'Georgette', 'Organza', 'Satin Silk', 'Net Sarees'] },
-      { name: 'Specialty', items: ['Handloom', 'Printed', 'Embroidered', 'Party Wear', 'Daily Wear'] }
-    ]
-  },
-  {
-    name: 'Blouses',
-    id: 'Blouses',
-    href: '/shop?category=Blouses',
-    subcategories: [
-      { name: 'Styles', items: ['Designer Blouses', 'Readymade', 'Sleeveless', 'Padded', 'Backless'] },
-      { name: 'Work', items: ['Embroidered', 'Zari Work', 'Sequined', 'Printed', 'Plain Silk'] }
-    ]
-  },
-  {
-    name: 'Ethnic Wear',
-    id: 'Ethnic Wear',
-    href: '/shop?category=Ethnic Wear',
-    subcategories: [
-      { name: 'Suits & Sets', items: ['Kurtas & Suits', 'Salwar Kameez', 'Anarkali Sets', 'Sharara Sets'] },
-      { name: 'Bottoms', items: ['Leggings', 'Palazzos', 'Skirts', 'Petticoats'] },
-      { name: 'Occasion', items: ['Lehenga Choli', 'Gowns', 'Ethnic Jackets'] }
-    ]
-  },
-  {
-    name: 'Luxe',
-    id: 'Luxe Collection',
-    href: '/shop?category=Luxe Collection',
-    subcategories: [
-      { name: 'Premium', items: ['Handloom Silk', 'Bridal Collection', 'Boutique Designs'] }
-    ]
-  }
-];
-
 export const LAUNCH_PROMOS = [
   { id: 'p1', code: 'GSLAUNCH25', discount: '25% OFF', description: 'On your first order from the Heritage Collection' },
   { id: 'p2', code: 'FREESHIP', discount: 'FREE DELIVERY', description: 'Complimentary shipping on all launch items' },
@@ -180,9 +130,9 @@ export const HOME_CONFIG: HomeConfig = {
       subtitle: 'Premium Handloom Sarees \n Established 2012 — The GS Heritage',
       description: 'Discover our exclusive collection of Banarasi, Kanjeevaram and Silk sarees. A celebration of Indian craftsmanship.',
       ctaText: 'Shop Sarees',
-      ctaLink: 'https://gssarees.com/shop?category=Sarees',
+      ctaLink: '/shop?category=Sarees',
       secondaryCtaText: "The Blouse Edit",
-      secondaryCtaLink: 'https://gssarees.com/shop?category=Blouses',
+      secondaryCtaLink: '/shop?category=Blouses',
       badge: 'Boutique Special: Free Custom Fitting'
     },
     {
@@ -220,7 +170,7 @@ export const HOME_CONFIG: HomeConfig = {
           link: '/shop?brand=GS Traditional',
           tagline: 'Contemporary Draping'
         },
-         {
+        {
           name: 'GS Heritage',
           imageUrl: 'https://images.pexels.com/photos/12579915/pexels-photo-12579915.jpeg',
           description: 'Timeless Silks',
@@ -232,138 +182,3 @@ export const HOME_CONFIG: HomeConfig = {
   ]
 };
 
-export const MOCK_PRODUCTS: Product[] = [
-  {
-    id: 'saree-pexels-1',
-    name: 'Royal Red Bridal Silk Saree',
-    brand: 'GS Heritage',
-    category: 'Sarees',
-    subcategory: 'Bridal',
-    price: 18999,
-    originalPrice: 25999,
-    description:
-      'Luxurious bridal silk saree crafted with intricate zari weaving and rich traditional patterns.',
-    images: [
-      'https://images.pexels.com/photos/15181108/pexels-photo-15181108.jpeg',
-      'https://images.pexels.com/photos/20319222/pexels-photo-20319222.jpeg',
-      'https://images.pexels.com/photos/13192040/pexels-photo-13192040.jpeg',
-      'https://images.pexels.com/photos/9419006/pexels-photo-9419006.jpeg',
-    ],
-    variants: [
-      { color: { name: 'Royal Red', hex: '#B22222' }, sizes: [{ size: 'Onesize', quantity: 4 }] },
-    ],
-    rating: 4.9,
-    reviewsCount: 78,
-    isTrending: true,
-    sku: 'GS-W-SR-101',
-    fabric: 'Pure Silk',
-    materialAndCare: ['Dry Clean Only', 'Store in cotton wrap'],
-    specifications: ['Heavy Zari Work', '5.5 Meter Length', 'Blouse Included'],
-  },
-  {
-    id: 'saree-pexels-2',
-    name: 'Pastel Green Designer Saree',
-    brand: 'GS Modern',
-    category: 'Sarees',
-    subcategory: 'Designer',
-    price: 7499,
-    originalPrice: 10999,
-    description:
-      'Elegant pastel saree designed for receptions and festive gatherings.',
-    images: [
-      'https://images.pexels.com/photos/9418783/pexels-photo-9418783.jpeg',
-      'https://images.pexels.com/photos/29049398/pexels-photo-29049398.jpeg',
-      'https://images.pexels.com/photos/11822276/pexels-photo-11822276.jpeg',
-      'https://images.pexels.com/photos/28428034/pexels-photo-28428034.jpeg',
-    ],
-    variants: [
-      { color: { name: 'Pastel Green', hex: '#98D8AA' }, sizes: [{ size: 'Onesize', quantity: 12 }] },
-    ],
-    rating: 4.7,
-    reviewsCount: 112,
-    isNewArrival: true,
-    sku: 'GS-W-SR-102',
-    fabric: 'Soft Georgette',
-    materialAndCare: ['Dry Clean Recommended'],
-    specifications: ['Light Embroidery', 'Scalloped Border'],
-  },
-  {
-    id: 'saree-pexels-3',
-    name: 'Traditional Yellow Silk Saree',
-    brand: 'GS Heritage',
-    category: 'Sarees',
-    subcategory: 'Traditional',
-    price: 12999,
-    originalPrice: 17999,
-    description:
-      'Classic yellow silk saree with temple border and rich woven motifs.',
-    images: [
-      'https://images.pexels.com/photos/9419006/pexels-photo-9419006.jpeg',
-      'https://images.pexels.com/photos/15181108/pexels-photo-15181108.jpeg',
-      'https://images.pexels.com/photos/1684724/pexels-photo-1684724.jpeg',
-      'https://images.pexels.com/photos/13192040/pexels-photo-13192040.jpeg',
-    ],
-    variants: [
-      { color: { name: 'Mustard Yellow', hex: '#E1AD01' }, sizes: [{ size: 'Onesize', quantity: 6 }] },
-    ],
-    rating: 4.8,
-    reviewsCount: 54,
-    sku: 'GS-W-SR-103',
-    fabric: 'Kanchipuram Silk',
-    materialAndCare: ['Dry Clean Only'],
-    specifications: ['Temple Border', 'Gold Zari Pallu'],
-  },
-  {
-    id: 'saree-pexels-4',
-    name: 'Elegant Ivory Party Saree',
-    brand: 'GS Modern',
-    category: 'Sarees',
-    subcategory: 'Party Wear',
-    price: 5999,
-    originalPrice: 8499,
-    description:
-      'Graceful ivory saree perfect for evening events and celebrations.',
-    images: [
-      'https://images.pexels.com/photos/29049398/pexels-photo-29049398.jpeg',
-      'https://images.pexels.com/photos/11822276/pexels-photo-11822276.jpeg',
-      'https://images.pexels.com/photos/9418783/pexels-photo-9418783.jpeg',
-      'https://images.pexels.com/photos/1684724/pexels-photo-1684724.jpeg',
-    ],
-    variants: [
-      { color: { name: 'Ivory', hex: '#FFFFF0' }, sizes: [{ size: 'Onesize', quantity: 10 }] },
-    ],
-    rating: 4.6,
-    reviewsCount: 39,
-    sku: 'GS-W-SR-104',
-    fabric: 'Organza',
-    materialAndCare: ['Dry Clean Only'],
-    specifications: ['Floral Detailing', 'Lightweight Fabric'],
-  },
-  {
-    id: 'saree-pexels-5',
-    name: 'Maroon Wedding Banarasi Saree',
-    brand: 'GS Heritage',
-    category: 'Sarees',
-    subcategory: 'Wedding',
-    price: 21999,
-    originalPrice: 28999,
-    description:
-      'Premium Banarasi saree with heavy gold zari ideal for weddings.',
-    images: [
-      'https://images.pexels.com/photos/20319222/pexels-photo-20319222.jpeg',
-      'https://images.pexels.com/photos/15181108/pexels-photo-15181108.jpeg',
-      'https://images.pexels.com/photos/9419006/pexels-photo-9419006.jpeg',
-      'https://images.pexels.com/photos/13192040/pexels-photo-13192040.jpeg',
-    ],
-    variants: [
-      { color: { name: 'Maroon', hex: '#800000' }, sizes: [{ size: 'Onesize', quantity: 3 }] },
-    ],
-    rating: 5.0,
-    reviewsCount: 23,
-    isBestSeller: true,
-    sku: 'GS-W-SR-105',
-    fabric: 'Banarasi Silk',
-    materialAndCare: ['Dry Clean Only'],
-    specifications: ['Heavy Bridal Work', 'Rich Pallu Design'],
-  }
-];
