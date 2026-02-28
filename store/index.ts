@@ -11,6 +11,7 @@ import uiReducer from "./uiSlice";
 import categoryReducer from "./categorySlice";
 import subcategoryReducer from "./subcategorySlice";
 import adminProductReducer from "./adminProductSlice";
+import adminOrderReducer from "./adminOrderSlice";
 
 const persistConfig = {
   key: "root",
@@ -26,6 +27,7 @@ const rootReducer = combineReducers({
   category: categoryReducer,
   subcategory: subcategoryReducer,
   adminProducts: adminProductReducer,
+  adminOrders: adminOrderReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

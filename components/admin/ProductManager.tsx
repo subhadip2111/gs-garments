@@ -916,7 +916,7 @@ const ProductManager: React.FC = () => {
                                     <div className="p-4 space-y-2">
                                         <p className="font-black text-gray-900 text-sm tracking-tight line-clamp-1">{prod.name}</p>
                                         <div className="flex items-center justify-between">
-                                            <span className="font-black text-base text-gray-900 italic font-serif">₹{prod.price?.toLocaleString('en-IN')}</span>
+                                            <span className="font-black text-base text-gray-900 italic font-serif">₹{(prod.price || 0).toLocaleString('en-IN')}</span>
                                             <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${stock > 0 ? 'bg-gray-50 text-black border-gray-100' : 'bg-rose-50 text-rose-500 border-rose-100'}`}>
                                                 {stock > 0 ? `${stock} left` : 'Out'}
                                             </span>
@@ -969,8 +969,8 @@ const ProductManager: React.FC = () => {
                                                 <span className="px-2 py-1 bg-gray-100 text-black/60 rounded-full text-[9px] font-black uppercase tracking-widest">{getBrandName(prod.brand)}</span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <p className="font-black text-gray-900 font-serif italic">₹{prod.price?.toLocaleString('en-IN')}</p>
-                                                {prod.originalPrice && <p className="text-[9px] text-black/30 line-through font-bold tracking-widest">₹{prod.originalPrice.toLocaleString('en-IN')}</p>}
+                                                <p className="font-black text-gray-900 font-serif italic">₹{(prod.price || 0).toLocaleString('en-IN')}</p>
+                                                {prod.originalPrice && <p className="text-[9px] text-black/30 line-through font-bold tracking-widest">₹{(prod.originalPrice || 0).toLocaleString('en-IN')}</p>}
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${stock > 0 ? 'bg-gray-50 text-black border-gray-100' : 'bg-rose-50 text-rose-500 border-rose-100'}`}>
@@ -1159,10 +1159,10 @@ const ProductManager: React.FC = () => {
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 <div className="p-4 bg-black rounded-xl col-span-2 md:col-span-1">
                                     <p className="text-[9px] text-white/40 uppercase font-black tracking-widest mb-1">Price</p>
-                                    <p className="text-2xl font-black text-white tracking-tight font-serif italic">₹{vp.price?.toLocaleString('en-IN')}</p>
+                                    <p className="text-2xl font-black text-white tracking-tight font-serif italic">₹{(vp.price || 0).toLocaleString('en-IN')}</p>
                                     {vp.originalPrice && vp.originalPrice > vp.price && (
                                         <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-xs text-white/30 line-through font-serif">₹{vp.originalPrice.toLocaleString('en-IN')}</span>
+                                            <span className="text-xs text-white/30 line-through font-serif">₹{(vp.originalPrice || 0).toLocaleString('en-IN')}</span>
                                             <span className="px-1.5 py-0.5 bg-emerald-500 text-white rounded text-[9px] font-black">{discount}% OFF</span>
                                         </div>
                                     )}

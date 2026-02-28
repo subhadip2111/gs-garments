@@ -63,7 +63,7 @@ export const SmartOfferWidget: React.FC<{ currentTotal: number }> = ({ currentTo
           <div className="flex-grow">
             <p className="text-[11px] font-medium text-zinc-500 leading-relaxed">
               {!hasUnlockedAll ? (
-                <>Elevate your bag by <span className="text-zinc-900 font-bold italic">₹{remaining.toLocaleString('en-IN')}</span> to unlock <span className="text-emerald-600 font-bold underline underline-offset-4 decoration-emerald-200">₹{nextOffer.discount} INSTANT CREDIT</span></>
+                <>Elevate your bag by <span className="text-zinc-900 font-bold italic">₹{(remaining || 0).toLocaleString('en-IN')}</span> to unlock <span className="text-emerald-600 font-bold underline underline-offset-4 decoration-emerald-200">₹{nextOffer.discount} INSTANT CREDIT</span></>
               ) : (
                 <span className="flex items-center gap-2 text-zinc-900 font-bold italic">
                   <i className="fa-solid fa-crown text-amber-400"></i>
@@ -91,7 +91,7 @@ export const SmartOfferWidget: React.FC<{ currentTotal: number }> = ({ currentTo
                 <div className="w-1.5 h-1.5 rounded-full bg-zinc-900 animate-pulse"></div>
                 <span className="font-black uppercase tracking-widest text-zinc-400">Archive Progress</span>
               </div>
-              <span className="font-bold text-zinc-900">₹{currentTotal.toLocaleString('en-IN')} <span className="text-zinc-300 font-light mx-1">/</span> ₹{nextOffer.threshold.toLocaleString('en-IN')}</span>
+              <span className="font-bold text-zinc-900">₹{(currentTotal || 0).toLocaleString('en-IN')} <span className="text-zinc-300 font-light mx-1">/</span> ₹{(nextOffer.threshold || 0).toLocaleString('en-IN')}</span>
             </div>
           )}
         </div>
@@ -437,9 +437,9 @@ const ProductDetail: React.FC = () => {
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 mb-2">Acquisition Price</span>
                     <div className="flex items-baseline gap-4">
-                      <span className="text-2xl sm:text-3xl font-black tracking-tighter text-zinc-950">₹{product.price.toLocaleString('en-IN')}</span>
+                      <span className="text-2xl sm:text-3xl font-black tracking-tighter text-zinc-950">₹{(product.price || 0).toLocaleString('en-IN')}</span>
                       {product.originalPrice && (
-                        <span className="text-base text-zinc-400 line-through italic font-serif opacity-60 font-medium">₹{product.originalPrice.toLocaleString('en-IN')}</span>
+                        <span className="text-base text-zinc-400 line-through italic font-serif opacity-60 font-medium">₹{(product.originalPrice || 0).toLocaleString('en-IN')}</span>
                       )}
                     </div>
                   </div>

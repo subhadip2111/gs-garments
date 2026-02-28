@@ -24,7 +24,7 @@ const Cart: React.FC = () => {
   }, [cart, catalog, dispatch]);
 
   const cartDetails = cart.map(item => {
-    const product = catalog.find(p => (p._id || p.id) === item.productId);
+    const product = item.product || catalog.find(p => (p._id || p.id) === item.productId);
     return { ...item, product };
   });
 
@@ -49,7 +49,7 @@ const Cart: React.FC = () => {
   }
 
   const finalTotal = subtotal + shipping - comboDiscount - couponDiscount;
-
+  console.log("items", cartDetails)
   if (cart.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-40 text-center">
@@ -70,7 +70,11 @@ const Cart: React.FC = () => {
           {cartDetails.map((item) => (
             <div key={`${item.productId}-${item.selectedSize}-${item.selectedColor}`} className="flex gap-6 border-b border-gray-100 pb-8">
               <div className="w-32 aspect-[3/4] bg-gray-100 flex-shrink-0">
-                <img src={item.product?.images[0]} className="w-full h-full object-cover" alt={item.product?.name} />
+                <img
+                  src={item?.product?.images?.[0] || 'https://via.placeholder.com/300x400?text=No+Image'}
+                  className="w-full h-full object-cover"
+                  alt={item?.product?.name || 'Product'}
+                />
               </div>
               <div className="flex-grow flex flex-col justify-between">
                 <div>
@@ -88,7 +92,7 @@ const Cart: React.FC = () => {
                   {item.product?.originalPrice && (
                     <div className="mt-2 flex items-center gap-3">
                       <span className="text-[9px] font-black bg-red-600 text-white px-2 py-0.5 uppercase tracking-widest">Offer Applied</span>
-                      <span className="text-xs text-gray-300 line-through italic">₹{item.product.originalPrice.toLocaleString('en-IN')}</span>
+                      <span className="text-xs text-gray-300 line-through italic">₹{(item.product.originalPrice || 0).toLocaleString('en-IN')}</span>
                     </div>
                   )}
 
@@ -117,7 +121,7 @@ const Cart: React.FC = () => {
                     <p className="text-lg font-bold">₹{((item.product?.price || 0) * item.quantity).toLocaleString('en-IN')}</p>
                     {item.product?.originalPrice && (
                       <p className="text-[9px] font-bold text-red-600 uppercase tracking-widest">
-                        Saved ₹{((item.product.originalPrice - item.product.price) * item.quantity).toLocaleString('en-IN')}
+                        Saved ₹{(((item.product.originalPrice - item.product.price) * item.quantity) || 0).toLocaleString('en-IN')}
                       </p>
                     )}
                   </div>
@@ -138,27 +142,27 @@ const Cart: React.FC = () => {
             <div className="space-y-4 mb-6 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-500 font-medium">Total MRP</span>
-                <span className="font-bold text-zinc-400 line-through">₹{totalMrp.toLocaleString('en-IN')}</span>
+                <span className="font-bold text-zinc-400 line-through">₹{(totalMrp || 0).toLocaleString('en-IN')}</span>
               </div>
 
               {bagDiscount > 0 && (
                 <div className="flex justify-between text-emerald-600 font-bold">
                   <span>Bag Discount</span>
-                  <span>- ₹{bagDiscount.toLocaleString('en-IN')}</span>
+                  <span>- ₹{(bagDiscount || 0).toLocaleString('en-IN')}</span>
                 </div>
               )}
 
               {comboDiscount > 0 && (
                 <div className="flex justify-between text-orange-600 font-bold">
                   <span>Combo Offer Reward</span>
-                  <span>- ₹{comboDiscount.toLocaleString('en-IN')}</span>
+                  <span>- ₹{(comboDiscount || 0).toLocaleString('en-IN')}</span>
                 </div>
               )}
 
               {coupon && (
                 <div className="flex justify-between text-orange-600 font-bold">
                   <span>Coupon ({coupon.code})</span>
-                  <span>- ₹{couponDiscount.toLocaleString('en-IN')}</span>
+                  <span>- ₹{(couponDiscount || 0).toLocaleString('en-IN')}</span>
                 </div>
               )}
 
@@ -177,7 +181,7 @@ const Cart: React.FC = () => {
                     Total Bag Savings
                   </p>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-black tracking-tighter text-zinc-900">₹{(bagDiscount + comboDiscount + couponDiscount).toLocaleString('en-IN')}</span>
+                    <span className="text-2xl font-black tracking-tighter text-zinc-900">₹{(bagDiscount + comboDiscount + couponDiscount || 0).toLocaleString('en-IN')}</span>
                     <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest">Congratulations!</span>
                   </div>
                 </div>
@@ -186,7 +190,7 @@ const Cart: React.FC = () => {
               <div className="border-t border-gray-200 pt-5 flex justify-between items-center">
                 <span className="text-xs font-black uppercase tracking-widest">Total Amount</span>
                 <div className="text-right">
-                  <span className="text-2xl font-black tracking-tighter">₹{finalTotal.toLocaleString('en-IN')}</span>
+                  <span className="text-2xl font-black tracking-tighter">₹{(finalTotal || 0).toLocaleString('en-IN')}</span>
                   <p className="text-[8px] font-bold text-emerald-500 uppercase tracking-widest">Inc. of all taxes</p>
                 </div>
               </div>

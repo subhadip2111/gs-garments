@@ -214,7 +214,7 @@ const OrderManager: React.FC = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-6 text-center">
-                                                <div className="font-black text-gray-900 text-lg tracking-tighter italic font-serif">₹{total.toLocaleString('en-IN')}</div>
+                                                <div className="font-black text-gray-900 text-lg tracking-tighter italic font-serif">₹{(total || 0).toLocaleString('en-IN')}</div>
                                             </td>
                                             <td className="px-6 py-6 italic"><StatusBadge status={order.status} /></td>
                                             <td className="px-10 py-6 text-right">
@@ -286,7 +286,7 @@ const OrderManager: React.FC = () => {
                                                     Qty: {item.quantity}{item.selectedSize ? ` • ${item.selectedSize}` : ''}{item.selectedColor ? ` • ${item.selectedColor}` : ''}
                                                 </span>
                                             </div>
-                                            {price && <span className="font-serif italic font-black text-lg">₹{price.toLocaleString('en-IN')}</span>}
+                                            {price && <span className="font-serif italic font-black text-lg">₹{(price || 0).toLocaleString('en-IN')}</span>}
                                         </div>
                                     );
                                 })}

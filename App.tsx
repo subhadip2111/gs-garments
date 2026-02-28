@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store, RootState, AppDispatch, useAppDispatch, useAppSelector, persistor } from './store';
 import { setCurrentUser, setToken, setUser } from './store/authSlice';
@@ -99,6 +99,17 @@ function AppContent() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
   const accessToken = useAppSelector((state) => state.auth.accessToken);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      const returnUrl = sessionStorage.getItem('authReturnUrl');
+      if (returnUrl) {
+        sessionStorage.removeItem('authReturnUrl');
+        navigate(returnUrl, { replace: true });
+      }
+    }
+  }, [user, navigate]);
 
   // ── Proactive Hash Cleanup ──
   // If the URL contains a legacy hash (e.g., /#/), clean it up immediately.

@@ -104,6 +104,16 @@ const initialState: CartState = {
   error: null
 };
 
+const normalizeCartItems = (items: any[]): CartItem[] => {
+  return items.map(item => ({
+    ...item,
+    productId: item.productId || item.product?.id || item.product?._id,
+    selectedSize: item.selectedSize || item.size,
+    selectedColor: item.selectedColor || item.color,
+    product: item.product
+  }));
+};
+
 const cartSlice = createSlice({
   name: 'cart',
   initialState,
@@ -215,7 +225,22 @@ const cartSlice = createSlice({
       })
       .addCase(fetchCart.fulfilled, (state, action) => {
         state.loading = false;
-        state.cart = action.payload;
+        const payload = action.payload;
+        let cartItems = [];
+        if (Array.isArray(payload)) {
+          cartItems = payload;
+        } else if (payload?.cart && Array.isArray(payload.cart)) {
+          cartItems = payload.cart;
+        } else if (payload?.items && Array.isArray(payload.items)) {
+          cartItems = payload.items;
+        } else if (payload?.data && Array.isArray(payload.data)) {
+          cartItems = payload.data;
+        } else if (payload?.cart?.items && Array.isArray(payload.cart.items)) {
+          cartItems = payload.cart.items;
+        } else if (payload?.results && Array.isArray(payload.results)) {
+          cartItems = payload.results;
+        }
+        state.cart = normalizeCartItems(cartItems);
         localStorage.setItem('gs_cart', JSON.stringify(state.cart));
       })
       .addCase(fetchCart.rejected, (state, action) => {
@@ -239,17 +264,41 @@ const cartSlice = createSlice({
       })
       // Server-side Cart Actions
       .addCase(addToCartServer.fulfilled, (state, action) => {
-        if (Array.isArray(action.payload)) {
-          state.cart = action.payload;
+        const payload = action.payload;
+        let cartItems = state.cart;
+        if (Array.isArray(payload)) {
+          cartItems = payload;
+        } else if (payload?.cart && Array.isArray(payload.cart)) {
+          cartItems = payload.cart;
+        } else if (payload?.items && Array.isArray(payload.items)) {
+          cartItems = payload.items;
+        } else if (payload?.data && Array.isArray(payload.data)) {
+          cartItems = payload.data;
+        } else if (payload?.cart?.items && Array.isArray(payload.cart.items)) {
+          cartItems = payload.cart.items;
+        } else if (payload?.results && Array.isArray(payload.results)) {
+          cartItems = payload.results;
         }
+        state.cart = normalizeCartItems(cartItems);
         localStorage.setItem('gs_cart', JSON.stringify(state.cart));
       })
       .addCase(updateQuantityServer.fulfilled, (state, action) => {
-        // If API returns item or cart, update accordingly. 
-        // For simplicity, just reload the cart or use returned cart if available.
-        if (Array.isArray(action.payload)) {
-          state.cart = action.payload;
+        const payload = action.payload;
+        let cartItems = state.cart;
+        if (Array.isArray(payload)) {
+          cartItems = payload;
+        } else if (payload?.cart && Array.isArray(payload.cart)) {
+          cartItems = payload.cart;
+        } else if (payload?.items && Array.isArray(payload.items)) {
+          cartItems = payload.items;
+        } else if (payload?.data && Array.isArray(payload.data)) {
+          cartItems = payload.data;
+        } else if (payload?.cart?.items && Array.isArray(payload.cart.items)) {
+          cartItems = payload.cart.items;
+        } else if (payload?.results && Array.isArray(payload.results)) {
+          cartItems = payload.results;
         }
+        state.cart = normalizeCartItems(cartItems);
         localStorage.setItem('gs_cart', JSON.stringify(state.cart));
       })
       .addCase(removeFromCartServer.fulfilled, (state, action) => {
@@ -264,12 +313,22 @@ const cartSlice = createSlice({
       // Order Thunks
       .addCase(fetchOrders.fulfilled, (state, action) => {
         const raw = action.payload;
-        state.orders = Array.isArray(raw) ? raw : (raw?.orders || raw?.data || []);
+        const orders = Array.isArray(raw) ? raw : (raw?.orders || raw?.data || raw?.results || []);
+        state.orders = Array.isArray(orders) ? orders.map((o: any) => ({
+          ...o,
+          total: o.total ?? o.totalAmount ?? 0,
+          date: o.date ?? (o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '')
+        })) : [];
       })
       .addCase(createOrderServer.fulfilled, (state, action) => {
         const order = action.payload?.order || action.payload;
         if (order) {
-          state.orders.unshift(order);
+          const normalizedOrder = {
+            ...order,
+            total: order.total ?? order.totalAmount ?? 0,
+            date: order.date ?? (order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }))
+          };
+          state.orders.unshift(normalizedOrder);
         }
         // Cart is cleared server-side; clear locally too
         state.cart = [];

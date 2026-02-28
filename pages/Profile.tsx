@@ -66,6 +66,7 @@ const Profile: React.FC = () => {
     label: '',
     fullName: '',
     mobile: '',
+    altMobile: '',
     village: '',
     street: '',
     city: '',
@@ -136,6 +137,8 @@ const Profile: React.FC = () => {
   // markAsDelivered is a legacy local-only function, no longer used with backend orders
   const markAsDelivered = (_orderId: string) => { };
 
+  const [orderTab, setOrderTab] = useState<'upcoming' | 'delivered'>('upcoming');
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -179,7 +182,7 @@ const Profile: React.FC = () => {
     }
     setIsAddressModalOpen(false);
     setEditingAddress(null);
-    setAddressForm({ label: '', fullName: '', mobile: '', village: '', street: '', city: '', pincode: '', country: 'India', isDefault: false });
+    setAddressForm({ label: '', fullName: '', mobile: '', altMobile: '', village: '', street: '', city: '', pincode: '', country: 'India', isDefault: false });
   };
 
   const handleDeleteAddress = async (id: string) => {
@@ -282,139 +285,195 @@ const Profile: React.FC = () => {
 
         <div className="flex-grow">
           {activeTab === 'orders' && (
-            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {/* Order Tabs */}
+              {orders.length > 0 && (
+                <div className="flex space-x-8 border-b border-gray-100 mb-8">
+                  <button
+                    onClick={() => setOrderTab('upcoming')}
+                    className={`pb-4 text-[11px] font-black uppercase tracking-[0.2em] relative transition-colors ${orderTab === 'upcoming' ? 'text-black' : 'text-gray-400 hover:text-black'}`}
+                  >
+                    Upcoming Orders
+                    {orderTab === 'upcoming' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-black"></span>}
+                  </button>
+                  <button
+                    onClick={() => setOrderTab('delivered')}
+                    className={`pb-4 text-[11px] font-black uppercase tracking-[0.2em] relative transition-colors ${orderTab === 'delivered' ? 'text-black' : 'text-gray-400 hover:text-black'}`}
+                  >
+                    Post History
+                    {orderTab === 'delivered' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-black"></span>}
+                  </button>
+                </div>
+              )}
+
               {orders.length > 0 ? (
                 <div className="space-y-8">
-                  {orders.map(order => (
-                    <div key={order.id} className="bg-white border border-zinc-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                      <div className="p-6 bg-zinc-50/50 border-b border-zinc-100 flex flex-wrap justify-between items-center gap-4">
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Order Identity</p>
-                          <p className="text-sm font-black tracking-tight">{order.id}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Placed On</p>
-                          <p className="text-sm font-bold">{order.date}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Total Amount</p>
-                          <p className="text-sm font-black">₹{order.total.toLocaleString('en-IN')}</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          {/* Cancel button — disabled if Shipped or later */}
-                          {order.status !== 'Delivered' && order.status !== 'Cancelled' && order.status !== 'Shipped' && order.status !== 'Out for Delivery' && (
-                            <button
-                              onClick={() => {
-                                setSelectedOrderId((order._id || order.id) as string);
-                                setIsCancelModalOpen(true);
-                              }}
-                              className="px-3 py-1 bg-white border border-red-200 text-red-500 text-[8px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white hover:border-red-500 transition-all shadow-sm"
-                            >
-                              Cancel Order
-                            </button>
-                          )}
-                          {(order.status === 'Shipped' || order.status === 'Out for Delivery') && (
-                            <span className="px-3 py-1 text-[8px] font-bold text-zinc-400 uppercase tracking-widest border border-zinc-100 rounded-full">
-                              Cannot Cancel
+                  {orders.filter(order => orderTab === 'upcoming' ? (order.status !== 'Delivered' && order.status !== 'Cancelled') : (order.status === 'Delivered' || order.status === 'Cancelled')).length > 0 ? (
+                    orders.filter(order => orderTab === 'upcoming' ? (order.status !== 'Delivered' && order.status !== 'Cancelled') : (order.status === 'Delivered' || order.status === 'Cancelled')).map(order => (
+                      <div key={order.id} className="bg-white border border-zinc-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                        <div className="p-6 bg-zinc-50/50 border-b border-zinc-100 flex flex-wrap justify-between items-center gap-4">
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Order Identity</p>
+                            <p className="text-sm font-black tracking-tight">{order.orderId || order.id || order._id}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Placed On</p>
+                            <p className="text-sm font-bold">{order.date}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Total Amount</p>
+                            <p className="text-sm font-black">₹{(order.total || 0).toLocaleString('en-IN')}</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {/* Cancel button — disabled if Shipped or later */}
+                            {order.status !== 'Delivered' && order.status !== 'Cancelled' && order.status !== 'Shipped' && order.status !== 'Out for Delivery' && (
+                              <button
+                                onClick={() => {
+                                  setSelectedOrderId((order._id || order.id) as string);
+                                  setIsCancelModalOpen(true);
+                                }}
+                                className="px-3 py-1 bg-white border border-red-200 text-red-500 text-[8px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white hover:border-red-500 transition-all shadow-sm"
+                              >
+                                Cancel Order
+                              </button>
+                            )}
+                            {(order.status === 'Shipped' || order.status === 'Out for Delivery') && (
+                              <span className="px-3 py-1 text-[8px] font-bold text-zinc-400 uppercase tracking-widest border border-zinc-100 rounded-full">
+                                Cannot Cancel
+                              </span>
+                            )}
+                            <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-[0.2em] ${order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
+                              order.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                                'bg-black text-white'
+                              }`}>
+                              {order.status}
                             </span>
-                          )}
-                          <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-[0.2em] ${order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
-                            order.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
-                              'bg-black text-white'
-                            }`}>
-                            {order.status}
-                          </span>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="p-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                          <div className="space-y-6">
-                            {order.items.map((item, idx) => {
-                              const product = catalog.find(p => p.id === item.productId);
-                              return (
-                                <div key={idx} className="flex gap-4 group">
-                                  <div className="w-20 aspect-[3/4] bg-zinc-100 rounded-lg overflow-hidden flex-shrink-0">
-                                    <img src={product?.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={product?.name} />
+                        <div className="p-6">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                            <div className="space-y-6">
+                              {order.items.map((item: any, idx) => {
+                                // item.product contains the fully populated product object 
+                                const product = item.product;
+                                const imageUrl = product?.images?.[0] || '';
+
+                                return (
+                                  <div key={idx} className="flex gap-4 group">
+                                    <div className="w-20 aspect-[3/4] bg-zinc-100 rounded-lg overflow-hidden flex-shrink-0">
+                                      {imageUrl ? (
+                                        <img src={imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={product?.name} />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-zinc-300"><i className="fa-solid fa-image"></i></div>
+                                      )}
+                                    </div>
+                                    <div className="flex-grow space-y-1">
+                                      <h4 className="text-sm font-black tracking-tight group-hover:text-vogue-600 transition-colors uppercase">{product?.name || 'Unknown Product'}</h4>
+                                      <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Dimension: {item.selectedSize} | Qty: {item.quantity}</p>
+                                      <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Color: <span className="inline-block w-3 h-3 rounded-full border border-gray-200 ml-1 align-middle" style={{ backgroundColor: item.selectedColor }}></span></p>
+                                      <p className="text-xs font-serif font-bold mt-2">₹{(item.priceAtPurchase || product?.price || 0).toLocaleString('en-IN')}</p>
+
+                                      {order.status === 'Delivered' && (
+                                        <div className="flex flex-wrap gap-4 mt-4">
+                                          <button onClick={() => navigate(`/product/${product?._id || product?.id}`)} className="text-[9px] font-black uppercase tracking-widest underline underline-offset-4 hover:text-black">Write Review</button>
+
+                                          {/* WhatsApp Share */}
+                                          <button onClick={() => {
+                                            const text = `I just received my ${product?.name} from GS Garments! The quality is amazing.`;
+                                            const url = window.location.origin + `/product/${product?._id || product?.id}`;
+                                            window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`, '_blank');
+                                          }} className="text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-emerald-500 flex items-center gap-1.5 transition-colors">
+                                            <i className="fa-brands fa-whatsapp text-xs"></i> WhatsApp
+                                          </button>
+
+                                          {/* Twitter Share */}
+                                          <button onClick={() => {
+                                            const text = `I just received my ${product?.name} from GS Garments! #Fashion #GSGarments`;
+                                            const url = window.location.origin + `/product/${product?._id || product?.id}`;
+                                            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+                                          }} className="text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-sky-500 flex items-center gap-1.5 transition-colors">
+                                            <i className="fa-brands fa-twitter text-xs"></i> Twitter
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                  <div className="flex-grow space-y-1">
-                                    <h4 className="text-sm font-black tracking-tight group-hover:text-vogue-600 transition-colors uppercase">{product?.name}</h4>
-                                    <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Dimension: {item.selectedSize} | Qty: {item.quantity}</p>
-                                    <p className="text-xs font-serif font-bold mt-2">₹{(item.priceAtPurchase || product?.price || 0).toLocaleString('en-IN')}</p>
+                                );
+                              })}
+                            </div>
 
-                                    {order.status === 'Delivered' && (
-                                      <div className="flex flex-wrap gap-4 mt-4">
-                                        <button onClick={() => navigate(`/product/${item.productId}`)} className="text-[9px] font-black uppercase tracking-widest underline underline-offset-4 hover:text-black">Write Review</button>
-
-                                        {/* WhatsApp Share */}
-                                        <button onClick={() => {
-                                          const text = `I just received my ${product?.name} from GS Garments! The quality is amazing.`;
-                                          const url = window.location.origin + `/product/${item.productId}`;
-                                          window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`, '_blank');
-                                        }} className="text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-emerald-500 flex items-center gap-1.5 transition-colors">
-                                          <i className="fa-brands fa-whatsapp text-xs"></i> WhatsApp
-                                        </button>
-
-                                        {/* Twitter Share */}
-                                        <button onClick={() => {
-                                          const text = `I just received my ${product?.name} from GS Garments! #Fashion #GSGarments`;
-                                          const url = window.location.origin + `/product/${item.productId}`;
-                                          window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
-                                        }} className="text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-sky-500 flex items-center gap-1.5 transition-colors">
-                                          <i className="fa-brands fa-twitter text-xs"></i> Twitter
-                                        </button>
+                            <div className="bg-zinc-50/30 p-8 rounded-2xl">
+                              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] mb-8 text-black flex items-center gap-3">
+                                Tracking Progress
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                              </h4>
+                              <div className="space-y-8 relative">
+                                {(!order.trackingSteps || order.trackingSteps.length === 0) ? (
+                                  <div className="text-[10px] uppercase tracking-widest text-zinc-500">
+                                    <p className="mb-2 font-bold text-black border-l-2 border-black pl-3 py-1 bg-zinc-100">Order Placed Successfully</p>
+                                    <p className="pl-4">Your order is currently being processed. Tracking details will be updated here shortly.</p>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="absolute left-1.5 top-2 bottom-2 w-[1px] bg-zinc-200"></div>
+                                    {order.trackingSteps.map((step, idx) => (
+                                      <div key={idx} className="relative pl-8 group">
+                                        <div className={`absolute left-0 top-1 w-3 h-3 rounded-full border-2 bg-white transition-all duration-500 ${step.isCompleted ? 'bg-black border-black scale-110' : 'border-zinc-200 group-hover:border-zinc-400'}`}></div>
+                                        <div className="space-y-1">
+                                          <p className={`text-[10px] font-black uppercase tracking-widest ${step.isCompleted ? 'text-black' : 'text-zinc-400'}`}>{step.status}</p>
+                                          <p className="text-[9px] text-zinc-500 leading-relaxed font-medium">{step.description}</p>
+                                          {step.date && <p className="text-[8px] text-zinc-400 font-bold uppercase mt-1 italic">{step.date}</p>}
+                                        </div>
                                       </div>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-
-                          <div className="bg-zinc-50/30 p-8 rounded-2xl">
-                            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] mb-8 text-black flex items-center gap-3">
-                              Tracking Progress
-                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            </h4>
-                            <div className="space-y-8 relative">
-                              <div className="absolute left-1.5 top-2 bottom-2 w-[1px] bg-zinc-200"></div>
-                              {order.trackingSteps.map((step, idx) => (
-                                <div key={idx} className="relative pl-8 group">
-                                  <div className={`absolute left-0 top-1 w-3 h-3 rounded-full border-2 bg-white transition-all duration-500 ${step.isCompleted ? 'bg-black border-black scale-110' : 'border-zinc-200 group-hover:border-zinc-400'}`}></div>
-                                  <div className="space-y-1">
-                                    <p className={`text-[10px] font-black uppercase tracking-widest ${step.isCompleted ? 'text-black' : 'text-zinc-400'}`}>{step.status}</p>
-                                    <p className="text-[9px] text-zinc-500 leading-relaxed font-medium">{step.description}</p>
-                                    {step.date && <p className="text-[8px] text-zinc-400 font-bold uppercase mt-1 italic">{step.date}</p>}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-
-                            <div className="mt-10 pt-8 border-t border-zinc-100">
-                              <div className="flex justify-between items-center mb-4">
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Estimated Arrival</span>
-                                <span className="text-sm font-black tracking-tighter">{order.deliveryDate}</span>
+                                    ))}
+                                  </>
+                                )}
                               </div>
-                              <p className="text-[9px] text-zinc-400 leading-relaxed italic">
-                                {order.type === 'cart'
-                                  ? "Note: This is a collective shipment. All items in your curated bag will be delivered together."
-                                  : "Note: This is a fast-track single shipment with priority fulfillment."
-                                }
-                              </p>
-                              <div className="mt-8">
-                                <button className="w-full py-4 border-2 border-black text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all rounded-full shadow-lg">
-                                  Contact Concierge
-                                </button>
-                                <button className="w-full mt-3 py-4 text-[9px] font-bold uppercase tracking-widest text-zinc-400 hover:text-black">
-                                  Download Invoice (PDF)
-                                </button>
+
+                              <div className="mt-10 pt-8 border-t border-zinc-100">
+                                {order.deliveryDate ? (
+                                  <div className="flex justify-between items-center mb-4">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Estimated Arrival</span>
+                                    <span className="text-sm font-black tracking-tighter">{order.deliveryDate}</span>
+                                  </div>
+                                ) : null}
+                                {order.shippingAddress && (
+                                  <div className="mb-4 text-left">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block mb-2">Shipping Details</span>
+                                    <span className="text-[11px] font-bold block">{order.shippingAddress.fullName}</span>
+                                    <p className="text-[10px] text-zinc-500 leading-relaxed">
+                                      {order.shippingAddress.street}<br />
+                                      {order.shippingAddress.city}, {order.shippingAddress.pincode}
+                                    </p>
+                                    <p className="text-[10px] text-zinc-500 font-bold mt-1">Mobile: {order.shippingAddress.mobile} {order.shippingAddress.altMobile ? `/ ${order.shippingAddress.altMobile}` : ''}</p>
+                                  </div>
+                                )}
+                                <p className="text-[9px] text-zinc-400 leading-relaxed italic border-t border-zinc-100 pt-3">
+                                  {order.type === 'cart'
+                                    ? "Note: This is a collective shipment. All items in your curated bag will be delivered together."
+                                    : "Note: This is a fast-track single shipment with priority fulfillment."
+                                  }
+                                </p>
+                                <div className="mt-8">
+                                  <button className="w-full py-4 border-2 border-black text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all rounded-full shadow-lg">
+                                    Contact Concierge
+                                  </button>
+                                  <button className="w-full mt-3 py-4 text-[9px] font-bold uppercase tracking-widest text-zinc-400 hover:text-black">
+                                    Download Invoice (PDF)
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
                       </div>
+                    ))) : (
+                    <div className="py-20 text-center border-2 border-dashed border-gray-100 rounded-sm">
+                      <i className="fa-solid fa-box-open text-4xl text-gray-200 mb-4"></i>
+                      <p className="text-gray-400 text-sm font-light uppercase tracking-widest">No {orderTab} orders found.</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               ) : (
                 <div className="py-20 text-center border-2 border-dashed border-gray-100 rounded-sm">
@@ -457,7 +516,18 @@ const Profile: React.FC = () => {
                 <button
                   onClick={() => {
                     setEditingAddress(null);
-                    setAddressForm({ label: '', fullName: '', mobile: '', village: '', street: '', city: '', pincode: '', country: 'India', isDefault: false });
+                    setAddressForm({
+                      label: '',
+                      fullName: user?.user_metadata?.full_name || user?.fullName || '',
+                      mobile: user?.user_metadata?.mobile || user?.mobile || '',
+                      altMobile: '',
+                      village: '',
+                      street: '',
+                      city: '',
+                      pincode: '',
+                      country: 'India',
+                      isDefault: addresses.length === 0
+                    });
                     setIsAddressModalOpen(true);
                   }}
                   className="bg-black text-white px-6 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 transition-all shadow-lg active:scale-95"
@@ -595,251 +665,279 @@ const Profile: React.FC = () => {
       </div>
 
       {/* Address Modal */}
-      {isAddressModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsAddressModalOpen(false)}></div>
-          <div className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="p-8 border-b border-zinc-100 flex justify-between items-center">
-              <h3 className="text-xl font-serif font-bold">{editingAddress ? 'Edit Address' : 'Add New Address'}</h3>
-              <button onClick={() => setIsAddressModalOpen(false)} className="text-zinc-400 hover:text-black">
-                <i className="fa-solid fa-xmark text-xl"></i>
-              </button>
-            </div>
-            <form onSubmit={handleSaveAddress} className="p-8 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Label (e.g., Home)</label>
-                  <input
-                    required
-                    type="text"
-                    value={addressForm.label}
-                    onChange={e => setAddressForm({ ...addressForm, label: e.target.value })}
-                    className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Mobile Number</label>
-                  <input
-                    required
-                    type="tel"
-                    value={addressForm.mobile}
-                    onChange={e => setAddressForm({ ...addressForm, mobile: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                    className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
-                    placeholder="10-digit number"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Street Address</label>
-                  <input
-                    required
-                    type="text"
-                    value={addressForm.street}
-                    onChange={e => setAddressForm({ ...addressForm, street: e.target.value })}
-                    className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Village / Moore</label>
-                  <input
-                    type="text"
-                    value={addressForm.village}
-                    onChange={e => setAddressForm({ ...addressForm, village: e.target.value })}
-                    className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">City</label>
-                  <input
-                    required
-                    type="text"
-                    value={addressForm.city}
-                    onChange={e => setAddressForm({ ...addressForm, city: e.target.value })}
-                    className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Pincode</label>
-                  <input
-                    required
-                    type="text"
-                    value={addressForm.pincode}
-                    onChange={e => setAddressForm({ ...addressForm, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
-                    className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Country</label>
-                  <input
-                    required
-                    type="text"
-                    value={addressForm.country}
-                    onChange={e => setAddressForm({ ...addressForm, country: e.target.value })}
-                    className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
-                    defaultValue="India"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 pt-4">
-                <input
-                  type="checkbox"
-                  id="defaultAddress"
-                  checked={addressForm.isDefault}
-                  onChange={e => setAddressForm({ ...addressForm, isDefault: e.target.checked })}
-                  className="w-4 h-4 rounded accent-black"
-                />
-                <label htmlFor="defaultAddress" className="text-sm font-medium text-zinc-600">Set as default shipping address</label>
-              </div>
-              <div className="pt-8">
-                <button type="submit" className="w-full bg-black text-white py-5 text-[10px] font-black uppercase tracking-widest hover:bg-zinc-800 transition-all shadow-xl active:scale-95">
-                  Securely Save Destination
+      {
+        isAddressModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsAddressModalOpen(false)}></div>
+            <div className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+              <div className="p-8 border-b border-zinc-100 flex justify-between items-center">
+                <h3 className="text-xl font-serif font-bold">{editingAddress ? 'Edit Address' : 'Add New Address'}</h3>
+                <button onClick={() => setIsAddressModalOpen(false)} className="text-zinc-400 hover:text-black">
+                  <i className="fa-solid fa-xmark text-xl"></i>
                 </button>
               </div>
-            </form>
+              <form onSubmit={handleSaveAddress} className="p-8 space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Label (e.g., Home)</label>
+                    <input
+                      required
+                      type="text"
+                      value={addressForm.label}
+                      onChange={e => setAddressForm({ ...addressForm, label: e.target.value })}
+                      className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Mobile Number</label>
+                    <input
+                      required
+                      type="tel"
+                      value={addressForm.mobile}
+                      onChange={e => setAddressForm({ ...addressForm, mobile: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                      className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
+                      placeholder="10-digit number"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Alternative Mobile (Optional)</label>
+                    <input
+                      type="tel"
+                      value={addressForm.altMobile || ''}
+                      onChange={e => setAddressForm({ ...addressForm, altMobile: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                      className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
+                      placeholder="10-digit number"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Full Name</label>
+                    <input
+                      required
+                      type="text"
+                      value={addressForm.fullName}
+                      onChange={e => setAddressForm({ ...addressForm, fullName: e.target.value })}
+                      className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Street Address</label>
+                    <input
+                      required
+                      type="text"
+                      value={addressForm.street}
+                      onChange={e => setAddressForm({ ...addressForm, street: e.target.value })}
+                      className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Village / Moore</label>
+                    <input
+                      type="text"
+                      value={addressForm.village}
+                      onChange={e => setAddressForm({ ...addressForm, village: e.target.value })}
+                      className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">City</label>
+                    <input
+                      required
+                      type="text"
+                      value={addressForm.city}
+                      onChange={e => setAddressForm({ ...addressForm, city: e.target.value })}
+                      className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Pincode</label>
+                    <input
+                      required
+                      type="text"
+                      value={addressForm.pincode}
+                      onChange={e => setAddressForm({ ...addressForm, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                      className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Country</label>
+                    <input
+                      required
+                      type="text"
+                      value={addressForm.country}
+                      onChange={e => setAddressForm({ ...addressForm, country: e.target.value })}
+                      className="w-full border-b-2 border-zinc-100 focus:border-black outline-none py-2 text-sm transition-colors"
+                      defaultValue="India"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3 pt-4">
+                  <input
+                    type="checkbox"
+                    id="defaultAddress"
+                    checked={addressForm.isDefault}
+                    onChange={e => setAddressForm({ ...addressForm, isDefault: e.target.checked })}
+                    className="w-4 h-4 rounded accent-black"
+                  />
+                  <label htmlFor="defaultAddress" className="text-sm font-medium text-zinc-600">Set as default shipping address</label>
+                </div>
+                <div className="pt-8">
+                  <button type="submit" className="w-full bg-black text-white py-5 text-[10px] font-black uppercase tracking-widest hover:bg-zinc-800 transition-all shadow-xl active:scale-95">
+                    Securely Save Destination
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Cancellation Reason Modal */}
-      {isCancelModalOpen && (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-300"
-            onClick={() => setIsCancelModalOpen(false)}
-          ></div>
-          <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-zinc-100">
-            <div className="p-8 text-center">
-              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i className="fa-solid fa-circle-exclamation text-red-500 text-xl"></i>
-              </div>
-              <h3 className="text-xl font-serif font-bold mb-2">Cancel Your Order</h3>
-              <p className="text-xs text-zinc-500 mb-8 uppercase tracking-widest font-bold">
-                Tell us why you're cancelling
-              </p>
+      {
+        isCancelModalOpen && (
+          <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-300"
+              onClick={() => setIsCancelModalOpen(false)}
+            ></div>
+            <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-zinc-100">
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <i className="fa-solid fa-circle-exclamation text-red-500 text-xl"></i>
+                </div>
+                <h3 className="text-xl font-serif font-bold mb-2">Cancel Your Order</h3>
+                <p className="text-xs text-zinc-500 mb-8 uppercase tracking-widest font-bold">
+                  Tell us why you're cancelling
+                </p>
 
-              <textarea
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
-                placeholder="Reason for cancellation (optional)"
-                className="w-full h-32 p-4 bg-zinc-50 border border-zinc-100 rounded-2xl mb-6 text-sm focus:border-black outline-none transition-all resize-none font-medium"
-              ></textarea>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder="Reason for cancellation (optional)"
+                  className="w-full h-32 p-4 bg-zinc-50 border border-zinc-100 rounded-2xl mb-6 text-sm focus:border-black outline-none transition-all resize-none font-medium"
+                ></textarea>
 
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={async () => {
-                    if (selectedOrderId) {
-                      try {
-                        await dispatch(cancelOrderServer(selectedOrderId)).unwrap();
-                        showToast('Order Cancelled Successfully', 'success');
-                      } catch (err: any) {
-                        showToast(err || 'Cannot cancel this order.', 'error');
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={async () => {
+                      if (selectedOrderId) {
+                        try {
+                          await dispatch(cancelOrderServer(selectedOrderId)).unwrap();
+                          showToast('Order Cancelled Successfully', 'success');
+                        } catch (err: any) {
+                          showToast(err || 'Cannot cancel this order.', 'error');
+                        }
+                        setIsCancelModalOpen(false);
+                        setCancelReason('');
+                        setSelectedOrderId(null);
                       }
-                      setIsCancelModalOpen(false);
-                      setCancelReason('');
-                      setSelectedOrderId(null);
-                    }
-                  }}
-                  className="w-full bg-red-600 text-white py-4 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-red-700 transition-all rounded-full shadow-lg hvr-grow"
-                >
-                  Confirm Cancellation
-                </button>
-                <button
-                  onClick={() => setIsCancelModalOpen(false)}
-                  className="w-full py-4 text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-black transition-colors"
-                >
-                  Changed My Mind
-                </button>
+                    }}
+                    className="w-full bg-red-600 text-white py-4 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-red-700 transition-all rounded-full shadow-lg hvr-grow"
+                  >
+                    Confirm Cancellation
+                  </button>
+                  <button
+                    onClick={() => setIsCancelModalOpen(false)}
+                    className="w-full py-4 text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-black transition-colors"
+                  >
+                    Changed My Mind
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Platform Feedback Modal */}
-      {isFeedbackModalOpen && (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-zinc-950/90 backdrop-blur-xl animate-in fade-in duration-500"
-            onClick={() => {
-              setIsFeedbackModalOpen(false);
-              setFeedbackSubmitted(false);
-            }}
-          ></div>
-          <div className="relative w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
-            {!feedbackSubmitted ? (
-              <div className="p-12 text-center">
-                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-vogue-500 via-zinc-900 to-vogue-500"></div>
-                <h3 className="text-3xl font-serif font-bold mb-3 tracking-tight">The GS Experience</h3>
-                <p className="text-[10px] text-zinc-400 mb-10 font-black uppercase tracking-[0.3em]">Rate your platform journey</p>
+      {
+        isFeedbackModalOpen && (
+          <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-zinc-950/90 backdrop-blur-xl animate-in fade-in duration-500"
+              onClick={() => {
+                setIsFeedbackModalOpen(false);
+                setFeedbackSubmitted(false);
+              }}
+            ></div>
+            <div className="relative w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
+              {!feedbackSubmitted ? (
+                <div className="p-12 text-center">
+                  <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-vogue-500 via-zinc-900 to-vogue-500"></div>
+                  <h3 className="text-3xl font-serif font-bold mb-3 tracking-tight">The GS Experience</h3>
+                  <p className="text-[10px] text-zinc-400 mb-10 font-black uppercase tracking-[0.3em]">Rate your platform journey</p>
 
-                <div className="flex justify-center gap-4 mb-10">
-                  {[1, 2, 3, 4, 5].map((star) => (
+                  <div className="flex justify-center gap-4 mb-10">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onMouseEnter={() => setPlatformRating(star)}
+                        onClick={() => setPlatformRating(star)}
+                        className="transition-all duration-300 hover:scale-125"
+                      >
+                        <i className={`fa-star text-3xl ${star <= platformRating ? 'fa-solid text-zinc-900' : 'fa-regular text-zinc-200'}`}></i>
+                      </button>
+                    ))}
+                  </div>
+
+                  <textarea
+                    value={platformFeedbackText}
+                    onChange={(e) => setPlatformFeedbackText(e.target.value)}
+                    placeholder="Tell us about your curation experience..."
+                    className="w-full h-40 p-6 bg-zinc-50 border border-zinc-100 rounded-3xl mb-8 text-sm focus:ring-2 focus:ring-zinc-900 focus:bg-white outline-none transition-all resize-none font-medium text-zinc-700"
+                  ></textarea>
+
+                  <div className="flex flex-col gap-4">
                     <button
-                      key={star}
-                      onMouseEnter={() => setPlatformRating(star)}
-                      onClick={() => setPlatformRating(star)}
-                      className="transition-all duration-300 hover:scale-125"
+                      disabled={platformRating === 0}
+                      onClick={() => {
+                        setFeedbackSubmitted(true);
+                        showToast("Feedback Received - Thank You", "success");
+                      }}
+                      className="w-full bg-zinc-900 text-white py-5 text-[10px] font-black uppercase tracking-[0.3em] hover:bg-vogue-600 transition-all rounded-full shadow-2xl disabled:opacity-20 disabled:grayscale"
                     >
-                      <i className={`fa-star text-3xl ${star <= platformRating ? 'fa-solid text-zinc-900' : 'fa-regular text-zinc-200'}`}></i>
+                      Submit My Review
                     </button>
-                  ))}
+                    <button
+                      onClick={() => setIsFeedbackModalOpen(false)}
+                      className="text-[9px] font-black uppercase tracking-widest text-zinc-300 hover:text-zinc-500 transition-colors"
+                    >
+                      Maybe Later
+                    </button>
+                  </div>
                 </div>
-
-                <textarea
-                  value={platformFeedbackText}
-                  onChange={(e) => setPlatformFeedbackText(e.target.value)}
-                  placeholder="Tell us about your curation experience..."
-                  className="w-full h-40 p-6 bg-zinc-50 border border-zinc-100 rounded-3xl mb-8 text-sm focus:ring-2 focus:ring-zinc-900 focus:bg-white outline-none transition-all resize-none font-medium text-zinc-700"
-                ></textarea>
-
-                <div className="flex flex-col gap-4">
+              ) : (
+                <div className="p-16 text-center animate-in zoom-in-90 duration-500">
+                  <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-8">
+                    <i className="fa-solid fa-check text-3xl text-emerald-500"></i>
+                  </div>
+                  <h3 className="text-3xl font-serif font-bold mb-4">Gratitude Sent</h3>
+                  <p className="text-sm text-zinc-500 mb-10 leading-relaxed max-w-xs mx-auto">
+                    Your insights are the foundation of our evolution. Thank you for being part of the collective.
+                  </p>
                   <button
-                    disabled={platformRating === 0}
                     onClick={() => {
-                      setFeedbackSubmitted(true);
-                      showToast("Feedback Received - Thank You", "success");
+                      setIsFeedbackModalOpen(false);
+                      setFeedbackSubmitted(false);
+                      setPlatformRating(0);
+                      setPlatformFeedbackText('');
                     }}
-                    className="w-full bg-zinc-900 text-white py-5 text-[10px] font-black uppercase tracking-[0.3em] hover:bg-vogue-600 transition-all rounded-full shadow-2xl disabled:opacity-20 disabled:grayscale"
+                    className="px-12 py-4 bg-zinc-900 text-white text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-black transition-all shadow-xl"
                   >
-                    Submit My Review
-                  </button>
-                  <button
-                    onClick={() => setIsFeedbackModalOpen(false)}
-                    className="text-[9px] font-black uppercase tracking-widest text-zinc-300 hover:text-zinc-500 transition-colors"
-                  >
-                    Maybe Later
+                    Continue Journey
                   </button>
                 </div>
-              </div>
-            ) : (
-              <div className="p-16 text-center animate-in zoom-in-90 duration-500">
-                <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-8">
-                  <i className="fa-solid fa-check text-3xl text-emerald-500"></i>
-                </div>
-                <h3 className="text-3xl font-serif font-bold mb-4">Gratitude Sent</h3>
-                <p className="text-sm text-zinc-500 mb-10 leading-relaxed max-w-xs mx-auto">
-                  Your insights are the foundation of our evolution. Thank you for being part of the collective.
-                </p>
-                <button
-                  onClick={() => {
-                    setIsFeedbackModalOpen(false);
-                    setFeedbackSubmitted(false);
-                    setPlatformRating(0);
-                    setPlatformFeedbackText('');
-                  }}
-                  className="px-12 py-4 bg-zinc-900 text-white text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-black transition-all shadow-xl"
-                >
-                  Continue Journey
-                </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 

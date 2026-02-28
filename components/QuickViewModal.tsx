@@ -110,10 +110,10 @@ const QuickViewModal: React.FC = () => {
               <h2 className="text-3xl lg:text-4xl font-serif font-bold tracking-tight leading-tight">{quickViewProduct.name}</h2>
               <div className="flex items-center gap-6">
                 <div className="flex flex-col">
-                  <span className="text-2xl font-bold tracking-tighter text-black">₹{quickViewProduct.price.toLocaleString('en-IN')}</span>
+                  <span className="text-2xl font-bold tracking-tighter text-black">₹{(quickViewProduct.price || 0).toLocaleString('en-IN')}</span>
                   {quickViewProduct.originalPrice && (
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-vogue-500 line-through font-light italic font-serif opacity-50">₹{quickViewProduct.originalPrice.toLocaleString('en-IN')}</span>
+                      <span className="text-sm text-vogue-500 line-through font-light italic font-serif opacity-50">₹{(quickViewProduct.originalPrice || 0).toLocaleString('en-IN')}</span>
                     </div>
                   )}
                 </div>
@@ -187,7 +187,7 @@ const QuickViewModal: React.FC = () => {
           <div className="mt-16 space-y-6">
             <div className="flex justify-between items-end border-b border-gray-50 pb-4">
               <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-vogue-500">Subtotal Selection</span>
-              <span className="text-xl font-serif font-bold italic">₹{currentTotal.toLocaleString('en-IN')}</span>
+              <span className="text-xl font-serif font-bold italic">₹{(currentTotal || 0).toLocaleString('en-IN')}</span>
             </div>
 
             <div className="space-y-4">

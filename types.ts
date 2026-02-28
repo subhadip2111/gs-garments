@@ -72,6 +72,7 @@ export interface Address {
   label: string;
   fullName: string;
   mobile: string;
+  altMobile?: string;
   village?: string;
   street: string;
   city: string;
@@ -100,6 +101,7 @@ export interface ComboOffer {
 export interface Order {
   id: string;
   _id?: string;
+  orderId?: string;
   date: string;
   items: CartItem[];
   total: number;
@@ -117,6 +119,7 @@ export interface Order {
   shippingAddress?: {
     fullName: string;
     mobile: string;
+    altMobile?: string;
     street: string;
     village?: string;
     city: string;

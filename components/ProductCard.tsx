@@ -93,7 +93,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             {product.name}
           </h3>
           <div className="flex flex-col items-end">
-            <span className="text-[14px] font-black text-zinc-950 tracking-tighter">₹{product.price.toLocaleString('en-IN')}</span>
+            <span className="text-[14px] font-black text-zinc-950 tracking-tighter">₹{(product.price || 0).toLocaleString('en-IN')}</span>
           </div>
         </div>
 
@@ -108,7 +108,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </span>
           </div>
           {product.originalPrice && (
-            <span className="text-[10px] text-zinc-200 line-through italic font-serif">₹{product.originalPrice.toLocaleString('en-IN')}</span>
+            <span className="text-[10px] text-zinc-200 line-through italic font-serif">₹{(product.originalPrice || 0).toLocaleString('en-IN')}</span>
           )}
         </div>
       </div>

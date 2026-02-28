@@ -34,6 +34,7 @@ const Auth: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    sessionStorage.removeItem('authReturnUrl');
 
     try {
       if (mode === 'signup') {
@@ -67,13 +68,23 @@ const Auth: React.FC = () => {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     setError(null);
+
+    // Save intended destination
+    sessionStorage.setItem('authReturnUrl', from);
+
     try {
       const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin,
+          // redirectTo: window.location.origin,
+          queryParams: {
+            prompt: 'select_account',
+            access_type: 'offline',
+          }
         },
       });
+
+      console.log("window.location.origin--->", window.location.origin)
 
       if (authError) {
         if (authError.message.includes("provider is not enabled")) {

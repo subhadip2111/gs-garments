@@ -20,6 +20,7 @@ export const createOrder = async (payload: {
     shippingAddress?: {
         fullName: string;
         mobile: string;
+        altMobile?: string;
         street: string;
         city: string;
         pincode: string;
