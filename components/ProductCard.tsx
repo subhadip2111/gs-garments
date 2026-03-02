@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Product } from '../types';
 import { useAppDispatch, useAppSelector } from '../store';
 import { toggleWishlistServer } from '../store/cartSlice';
+import { useToast } from '../components/Toast';
 
 interface ProductCardProps {
   product: Product;
@@ -13,6 +14,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const dispatch = useAppDispatch();
   const wishlist = useAppSelector((state) => state.cart.wishlist);
   const user = useAppSelector((state) => state.auth.user);
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -40,7 +42,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       navigate('/auth');
       return;
     }
-    dispatch(toggleWishlistServer(productId));
+    dispatch(toggleWishlistServer(productId)).unwrap()
+      .then(() => {
+        showToast(isWishlisted ? 'Removed from favorites' : 'Added to favorites', 'success');
+      })
+      .catch(() => {
+        showToast('Action failed. Please try again.', 'error');
+      });
   };
 
   const subcategoryName = (product.subcategory && typeof product.subcategory === 'object')
@@ -64,13 +72,22 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           className="w-full h-full object-cover transition-all duration-[1.5s] cubic-bezier(0.23,1,0.32,1) group-hover/img:scale-105"
         />
 
-        {/* Action Buttons - Refined & Minimal */}
-        <div className="absolute top-4 right-4 z-20 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500">
+        {/* Action Buttons - Persistent on Mobile, Hover on Desktop */}
+        <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 md:opacity-0 md:translate-y-2 md:group-hover:opacity-100 md:group-hover:translate-y-0 transition-all duration-500">
           <button
             onClick={handleWishlistToggle}
-            className={`w-9 h-9 flex items-center justify-center rounded-full backdrop-blur-md shadow-lg transition-all ${isWishlisted ? 'bg-black text-white' : 'bg-white/80 text-zinc-900 hover:bg-black hover:text-white'}`}
+            className={`w-10 h-10 md:w-9 md:h-9 flex items-center justify-center rounded-full backdrop-blur-md shadow-lg transition-all ${isWishlisted ? 'bg-black text-white' : 'bg-white/80 text-zinc-900 hover:bg-black hover:text-white'}`}
+            title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
-            <i className={`${isWishlisted ? 'fa-solid' : 'fa-regular'} fa-heart text-[10px]`}></i>
+            <i className={`${isWishlisted ? 'fa-solid' : 'fa-regular'} fa-heart text-[12px] md:text-[10px]`}></i>
+          </button>
+
+          <button
+            onClick={handleNavigateToDetail}
+            className="w-10 h-10 md:w-9 md:h-9 flex md:hidden items-center justify-center rounded-full bg-black text-white shadow-lg transition-all active:scale-95"
+            title="View options & add to bag"
+          >
+            <i className="fa-solid fa-bag-shopping text-[12px]"></i>
           </button>
         </div>
 

@@ -2,23 +2,29 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store';
-import { toggleWishlist, addToCart } from '../store/cartSlice';
+import { toggleWishlistServer, addToCartServer } from '../store/cartSlice';
 
 const Wishlist: React.FC = () => {
     const dispatch = useAppDispatch();
     const wishlist = useAppSelector((state) => state.cart.wishlist);
     const catalog = useAppSelector((state) => state.products.items);
+    const user = useAppSelector((state) => state.auth.user);
     const navigate = useNavigate();
-    const wishlistProducts = catalog.filter(p => wishlist.includes(p.id));
-
+    const wishlistProducts = catalog.filter(p => wishlist.includes(p.id) || wishlist.includes(p._id || ''));
+    console.log(wishlistProducts)
     const handleMoveToCart = (productId: string) => {
-        const product = catalog.find(p => p.id === productId);
+        const product = catalog.find(p => p.id === productId || p._id === productId);
         if (product) {
             // Default to first available size and color
             const defaultSize = product.variants[0]?.sizes[0]?.size || 'One Size';
             const defaultColor = product.variants[0]?.color?.name || 'Default';
-            dispatch(addToCart({ productId: product.id, size: defaultSize, color: defaultColor, quantity: 1 }));
-            dispatch(toggleWishlist(product.id));
+
+            if (user) {
+                dispatch(addToCartServer({ productId: product._id || product.id, size: defaultSize, color: defaultColor, quantity: 1 }));
+                dispatch(toggleWishlistServer(product._id || product.id));
+            } else {
+                navigate('/auth');
+            }
         }
     };
 
@@ -55,8 +61,8 @@ const Wishlist: React.FC = () => {
                                 alt={product?.name || 'Product'}
                             />
                             <button
-                                onClick={() => dispatch(toggleWishlist(product?._id || product?.id || ''))}
-                                className="absolute top-4 right-4 w-10 h-10 bg-white/95 rounded-full flex items-center justify-center text-red-500 shadow-lg hover:scale-110 active:scale-90 transition-all z-10"
+                                onClick={() => dispatch(toggleWishlistServer(product?._id || product?.id || ''))}
+                                className="absolute top-4 right-4 w-10 h-10 bg-white/95 rounded-full flex items-center justify-center text-zinc-950 shadow-lg hover:scale-110 active:scale-90 transition-all z-10"
                                 title="Remove from wishlist"
                             >
                                 <i className="fa-solid fa-heart"></i>

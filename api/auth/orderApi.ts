@@ -33,8 +33,8 @@ export const createOrder = async (payload: {
     return response.data;
 };
 
-export const cancelOrder = async (orderId: string) => {
-    const response = await apiClient.patch(`/orders/${orderId}/cancel`);
+export const cancelOrder = async (orderId: string, reason?: string) => {
+    const response = await apiClient.patch(`/orders/${orderId}/cancel`, { reason });
     return response.data;
 };
 

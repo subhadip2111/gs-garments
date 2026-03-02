@@ -14,6 +14,8 @@ import {
   cancelOrder,
   clearCart,
   recalculateDiscounts,
+  fetchWishlist,
+  fetchCart,
   toggleWishlistServer,
   addToCartServer
 } from './store/cartSlice';
@@ -151,6 +153,10 @@ function AppContent() {
           const response = await getProfileDetails();
           const latestUser = response.user || response.data || response;
           dispatch(setCurrentUser(latestUser));
+
+          // Proactively sync cart and wishlist on login/app-load
+          dispatch(fetchCart());
+          dispatch(fetchWishlist());
         } catch (error) {
           console.error("Failed to fetch latest profile:", error);
         }

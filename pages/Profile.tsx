@@ -137,7 +137,7 @@ const Profile: React.FC = () => {
   // markAsDelivered is a legacy local-only function, no longer used with backend orders
   const markAsDelivered = (_orderId: string) => { };
 
-  const [orderTab, setOrderTab] = useState<'upcoming' | 'delivered'>('upcoming');
+  const [orderTab, setOrderTab] = useState<'active' | 'delivered' | 'cancelled'>('active');
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -290,26 +290,43 @@ const Profile: React.FC = () => {
               {orders.length > 0 && (
                 <div className="flex space-x-8 border-b border-gray-100 mb-8">
                   <button
-                    onClick={() => setOrderTab('upcoming')}
-                    className={`pb-4 text-[11px] font-black uppercase tracking-[0.2em] relative transition-colors ${orderTab === 'upcoming' ? 'text-black' : 'text-gray-400 hover:text-black'}`}
+                    onClick={() => setOrderTab('active')}
+                    className={`pb-4 text-[11px] font-black uppercase tracking-[0.2em] relative transition-colors ${orderTab === 'active' ? 'text-black' : 'text-gray-400 hover:text-black'}`}
                   >
-                    Upcoming Orders
-                    {orderTab === 'upcoming' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-black"></span>}
+                    Active Orders
+                    {orderTab === 'active' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-black"></span>}
                   </button>
                   <button
                     onClick={() => setOrderTab('delivered')}
                     className={`pb-4 text-[11px] font-black uppercase tracking-[0.2em] relative transition-colors ${orderTab === 'delivered' ? 'text-black' : 'text-gray-400 hover:text-black'}`}
                   >
-                    Post History
+                    Delivered
                     {orderTab === 'delivered' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-black"></span>}
+                  </button>
+                  <button
+                    onClick={() => setOrderTab('cancelled')}
+                    className={`pb-4 text-[11px] font-black uppercase tracking-[0.2em] relative transition-colors ${orderTab === 'cancelled' ? 'text-black' : 'text-gray-400 hover:text-black'}`}
+                  >
+                    Cancelled
+                    {orderTab === 'cancelled' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-black"></span>}
                   </button>
                 </div>
               )}
 
               {orders.length > 0 ? (
                 <div className="space-y-8">
-                  {orders.filter(order => orderTab === 'upcoming' ? (order.status !== 'Delivered' && order.status !== 'Cancelled') : (order.status === 'Delivered' || order.status === 'Cancelled')).length > 0 ? (
-                    orders.filter(order => orderTab === 'upcoming' ? (order.status !== 'Delivered' && order.status !== 'Cancelled') : (order.status === 'Delivered' || order.status === 'Cancelled')).map(order => (
+                  {orders.filter(order => {
+                    if (orderTab === 'active') return order.status !== 'Delivered' && order.status !== 'Cancelled';
+                    if (orderTab === 'delivered') return order.status === 'Delivered';
+                    if (orderTab === 'cancelled') return order.status === 'Cancelled';
+                    return false;
+                  }).length > 0 ? (
+                    orders.filter(order => {
+                      if (orderTab === 'active') return order.status !== 'Delivered' && order.status !== 'Cancelled';
+                      if (orderTab === 'delivered') return order.status === 'Delivered';
+                      if (orderTab === 'cancelled') return order.status === 'Cancelled';
+                      return false;
+                    }).map(order => (
                       <div key={order.id} className="bg-white border border-zinc-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                         <div className="p-6 bg-zinc-50/50 border-b border-zinc-100 flex flex-wrap justify-between items-center gap-4">
                           <div className="space-y-1">
@@ -827,7 +844,7 @@ const Profile: React.FC = () => {
                     onClick={async () => {
                       if (selectedOrderId) {
                         try {
-                          await dispatch(cancelOrderServer(selectedOrderId)).unwrap();
+                          await dispatch(cancelOrderServer({ orderId: selectedOrderId, reason: cancelReason })).unwrap();
                           showToast('Order Cancelled Successfully', 'success');
                         } catch (err: any) {
                           showToast(err || 'Cannot cancel this order.', 'error');

@@ -252,7 +252,14 @@ const ProductDetail: React.FC = () => {
       navigate('/auth');
       return;
     }
-    dispatch(toggleWishlistServer(product.id));
+    const isWishlisted = wishlist.includes(product._id || product.id);
+    dispatch(toggleWishlistServer(product._id || product.id)).unwrap()
+      .then(() => {
+        showToast(isWishlisted ? 'Removed from curated favorites' : 'Added to curated favorites', 'success');
+      })
+      .catch(() => {
+        showToast('Unable to update favorites.', 'error');
+      });
   };
 
   const handleAddToCart = () => {
@@ -427,8 +434,8 @@ const ProductDetail: React.FC = () => {
                       </div>
                     </div>
 
-                    <button onClick={(e) => { e.stopPropagation(); dispatch(toggleWishlistServer(product._id || product.id)); }} className={`w-10 h-10 rounded-full backdrop-blur-xl shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-500 ${isWishlisted ? 'bg-black text-white' : 'bg-white/80 text-zinc-900 hover:bg-black hover:text-white'}`}>
-                      <i className={`${isWishlisted ? 'fa-solid text-red-500' : 'fa-regular'} text-sm fa-heart`}></i>
+                    <button onClick={(e) => { e.stopPropagation(); handleWishlistToggle(); }} className={`absolute top-4 right-4 z-20 w-10 h-10 rounded-full backdrop-blur-xl shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-500 ${isWishlisted ? 'bg-black text-white' : 'bg-white/80 text-zinc-900 hover:bg-black hover:text-white'}`}>
+                      <i className={`${isWishlisted ? 'fa-solid' : 'fa-regular'} text-sm fa-heart`}></i>
                     </button>
 
                     {/* Perspective Label */}

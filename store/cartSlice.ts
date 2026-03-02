@@ -35,8 +35,8 @@ export const updateQuantityServer = createAsyncThunk(
 export const removeFromCartServer = createAsyncThunk(
   'cart/removeFromCartServer',
   async (itemId: string) => {
-    await cartApi.removeFromCartApi(itemId);
-    return itemId;
+    const response = await cartApi.removeFromCartApi(itemId);
+    return response.data || response;
   }
 );
 
@@ -74,9 +74,9 @@ export const createOrderServer = createAsyncThunk(
 
 export const cancelOrderServer = createAsyncThunk(
   'cart/cancelOrderServer',
-  async (orderId: string, { rejectWithValue }) => {
+  async ({ orderId, reason }: { orderId: string; reason?: string }, { rejectWithValue }) => {
     try {
-      const response = await orderApi.cancelOrder(orderId);
+      const response = await orderApi.cancelOrder(orderId, reason);
       return { orderId, data: response.data || response };
     } catch (err: any) {
       return rejectWithValue(err?.response?.data?.message || 'Cannot cancel this order.');
@@ -94,24 +94,60 @@ interface CartState {
   error: string | null;
 }
 
+const normalizeWishlistItems = (items: any[]): string[] => {
+  if (!items || !Array.isArray(items)) return [];
+  const ids = items
+    .filter(item => item !== null && item !== undefined && item !== '')
+    .map((item: any) => {
+      // Robustly extract ID from various possible structures
+      const id = item.productId?._id || item.productId?.id || item.productId ||
+        item.product?._id || item.product?.id || item.product ||
+        item.product?._id || // fallback
+        item._id || item.id ||
+        (typeof item === 'string' ? item : null);
+
+      if (!id) return null;
+      return typeof id === 'object' ? (id?._id || id?.id || null) : String(id);
+    })
+    .filter((id): id is string =>
+      typeof id === 'string' &&
+      id.trim() !== '' &&
+      id !== 'undefined' &&
+      id !== 'null' &&
+      id !== '[object Object]'
+    );
+
+  return Array.from(new Set(ids));
+};
+
+const normalizeCartItems = (items: any[]): CartItem[] => {
+  if (!items || !Array.isArray(items)) return [];
+  return items
+    .filter(item => item !== null && item !== undefined)
+    .map(item => {
+      const productId = item.productId?._id || item.productId || item.product?._id || item.product?.id || item.product;
+      if (!productId) return null;
+
+      return {
+        ...item,
+        productId: typeof productId === 'object' ? (productId?._id || productId?.id || null) : String(productId),
+        selectedSize: item.selectedSize || item.size || 'M',
+        selectedColor: item.selectedColor || item.color || 'Standard',
+        quantity: Number(item.quantity) || 1,
+        product: item.product
+      };
+    })
+    .filter((item): item is CartItem => item !== null && !!item.productId && item.productId !== 'undefined');
+};
+
 const initialState: CartState = {
-  cart: storedCart ? JSON.parse(storedCart) : [],
-  wishlist: storedWishlist ? JSON.parse(storedWishlist) : [],
+  cart: storedCart ? normalizeCartItems(JSON.parse(storedCart)) : [],
+  wishlist: storedWishlist ? normalizeWishlistItems(JSON.parse(storedWishlist)) : [],
   orders: storedOrders ? JSON.parse(storedOrders) : [],
   appliedCouponId: null,
   comboDiscount: 0,
   loading: false,
   error: null
-};
-
-const normalizeCartItems = (items: any[]): CartItem[] => {
-  return items.map(item => ({
-    ...item,
-    productId: item.productId || item.product?.id || item.product?._id,
-    selectedSize: item.selectedSize || item.size,
-    selectedColor: item.selectedColor || item.color,
-    product: item.product
-  }));
 };
 
 const cartSlice = createSlice({
@@ -249,16 +285,36 @@ const cartSlice = createSlice({
       })
       // Fetch Wishlist
       .addCase(fetchWishlist.fulfilled, (state, action) => {
-        state.wishlist = action.payload.map((item: any) => item.productId?._id || item.productId || item);
+        const payload = action.payload;
+        let wishlistItems = [];
+        if (Array.isArray(payload)) {
+          wishlistItems = payload;
+        } else if (payload?.wishlist && Array.isArray(payload.wishlist)) {
+          wishlistItems = payload.wishlist;
+        } else if (payload?.data && Array.isArray(payload.data)) {
+          wishlistItems = payload.data;
+        } else if (payload?.results && Array.isArray(payload.results)) {
+          wishlistItems = payload.results;
+        }
+
+        state.wishlist = normalizeWishlistItems(wishlistItems);
         localStorage.setItem('gs_wishlist', JSON.stringify(state.wishlist));
       })
       // Toggle Wishlist
       .addCase(toggleWishlistServer.fulfilled, (state, action) => {
-        const { productId } = action.payload;
-        if (state.wishlist.includes(productId)) {
-          state.wishlist = state.wishlist.filter(id => id !== productId);
+        const { productId, data } = action.payload;
+        // If server returns updated wishlist in data or as top-level array, use it
+        const serverWishlist = data?.wishlist || (Array.isArray(data) ? data : null);
+
+        if (Array.isArray(serverWishlist)) {
+          state.wishlist = normalizeWishlistItems(serverWishlist);
         } else {
-          state.wishlist.push(productId);
+          // Fallback to local toggle if server doesn't return full list
+          if (state.wishlist.includes(productId)) {
+            state.wishlist = state.wishlist.filter(id => id !== productId);
+          } else {
+            state.wishlist.push(productId);
+          }
         }
         localStorage.setItem('gs_wishlist', JSON.stringify(state.wishlist));
       })
@@ -302,8 +358,22 @@ const cartSlice = createSlice({
         localStorage.setItem('gs_cart', JSON.stringify(state.cart));
       })
       .addCase(removeFromCartServer.fulfilled, (state, action) => {
-        const itemId = action.payload;
-        state.cart = state.cart.filter(item => item.id !== itemId && item._id !== itemId);
+        const payload = action.payload;
+        let cartItems = state.cart;
+        if (Array.isArray(payload)) {
+          cartItems = payload;
+        } else if (payload?.cart && Array.isArray(payload.cart)) {
+          cartItems = payload.cart;
+        } else if (payload?.items && Array.isArray(payload.items)) {
+          cartItems = payload.items;
+        } else if (payload?.data && Array.isArray(payload.data)) {
+          cartItems = payload.data;
+        } else if (payload?.cart?.items && Array.isArray(payload.cart.items)) {
+          cartItems = payload.cart.items;
+        } else if (payload?.results && Array.isArray(payload.results)) {
+          cartItems = payload.results;
+        }
+        state.cart = normalizeCartItems(cartItems);
         localStorage.setItem('gs_cart', JSON.stringify(state.cart));
       })
       .addCase(clearCartServer.fulfilled, (state) => {

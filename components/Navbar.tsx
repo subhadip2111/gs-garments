@@ -18,7 +18,7 @@ const Navbar: React.FC = () => {
   const { categories, getSubcategoriesForCategory } = useCategoryData();
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
-
+const wishlistCount = wishlist.length;
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location]);
@@ -115,8 +115,12 @@ const Navbar: React.FC = () => {
           </button>
 
           <Link to="/wishlist" onClick={(e) => handleProtectedNavigation(e, '/wishlist')} className="w-10 h-10 flex items-center justify-center text-zinc-900 hover:scale-110 transition-transform relative">
-            <i className="fa-regular fa-heart text-xl"></i>
-            {wishlist.length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-zinc-900 rounded-full"></span>}
+            <i className={`${wishlistCount > 0 ? 'fa-solid text-zinc-950' : 'fa-regular text-zinc-900'} fa-heart text-xl`}></i>
+            {wishlistCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-zinc-900 text-white text-[9px] w-5 h-5 rounded-full flex items-center justify-center font-black">
+                {wishlistCount}
+              </span>
+            )}
           </Link>
 
           <Link to="/cart" className="w-10 h-10 flex items-center justify-center text-zinc-900 hover:scale-110 transition-transform relative">
@@ -170,6 +174,28 @@ const Navbar: React.FC = () => {
               </div>
 
               <div className="pt-12 border-t border-zinc-100 space-y-6">
+                <Link to="/wishlist" onClick={(e) => handleProtectedNavigation(e, '/wishlist')} className="flex items-center justify-between text-sm font-bold uppercase tracking-widest text-zinc-900">
+                  <span className="flex items-center gap-4">
+                    <i className="fa-regular fa-heart text-lg"></i>
+                    My Wishlist
+                  </span>
+                  {wishlist.length > 0 && (
+                    <span className="bg-zinc-900 text-white text-[10px] px-2 py-0.5 rounded-full font-black">
+                      {wishlist.length}
+                    </span>
+                  )}
+                </Link>
+                <Link to="/cart" className="flex items-center justify-between text-sm font-bold uppercase tracking-widest text-zinc-900">
+                  <span className="flex items-center gap-4">
+                    <i className="fa-solid fa-bag-shopping text-lg"></i>
+                    My Shopping Bag
+                  </span>
+                  {cartCount > 0 && (
+                    <span className="bg-zinc-900 text-white text-[10px] px-2 py-0.5 rounded-full font-black">
+                      {cartCount}
+                    </span>
+                  )}
+                </Link>
                 <Link to="/profile" className="flex items-center gap-4 text-sm font-bold uppercase tracking-widest text-zinc-900">
                   <i className="fa-regular fa-user text-lg"></i>
                   My Account
