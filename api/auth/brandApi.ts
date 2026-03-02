@@ -45,13 +45,13 @@ export const getAllBrands = async (page: number = 1, limit: number = 10) => {
     return response.data;
 };
 
-export const createBrand = async (brandData: { name: string }) => {
+export const createBrand = async (brandData: { name: string; link?: string }) => {
     const response = await apiClient.post(`/brands`, brandData);
     return response.data;
 };
 
-export const updateBrand = async (brandId: string, name: string) => {
-    const response = await apiClient.patch(`/brands/${brandId}`, { name });
+export const updateBrand = async (brandId: string, name: string, link?: string) => {
+    const response = await apiClient.patch(`/brands/${brandId}`, { name, link });
     return response.data;
 };
 

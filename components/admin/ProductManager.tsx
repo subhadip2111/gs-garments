@@ -293,9 +293,9 @@ const ProductManager: React.FC = () => {
 
     const openEdit = (p: AdminProduct) => {
         setEditingProduct(p);
-        const catId = typeof p.category === 'object' ? (p.category?._id || p.category?.id) : p.category;
-        const subId = typeof p.subcategory === 'object' ? (p.subcategory?._id || p.subcategory?.id) : p.subcategory;
-        const brandId = typeof p.brand === 'object' ? ((p.brand as any)?._id || (p.brand as any)?.id) : p.brand;
+        const catId = (p.category && typeof p.category === 'object') ? (p.category?._id || p.category?.id) : p.category;
+        const subId = (p.subcategory && typeof p.subcategory === 'object') ? (p.subcategory?._id || p.subcategory?.id) : p.subcategory;
+        const brandId = (p.brand && typeof p.brand === 'object') ? ((p.brand as any)?._id || (p.brand as any)?.id) : p.brand;
         setForm({
             sku: p.sku || '',
             name: p.name || '',
@@ -366,9 +366,9 @@ const ProductManager: React.FC = () => {
             const payload = {
                 sku: form.sku,
                 name: form.name,
-                brand: typeof form.brand === 'object' ? ((form.brand as any)?._id || (form.brand as any)?.id) : form.brand,
-                category: typeof form.category === 'object' ? (form.category?._id || form.category?.id) : form.category,
-                subcategory: typeof form.subcategory === 'object' ? (form.subcategory?._id || form.subcategory?.id) : form.subcategory,
+                brand: (form.brand && typeof form.brand === 'object') ? ((form.brand as any)?._id || (form.brand as any)?.id) : form.brand,
+                category: (form.category && typeof form.category === 'object') ? (form.category?._id || form.category?.id) : form.category,
+                subcategory: (form.subcategory && typeof form.subcategory === 'object') ? (form.subcategory?._id || form.subcategory?.id) : form.subcategory,
                 price: form.price,
                 originalPrice: form.originalPrice || undefined,
                 description: form.description,
@@ -459,7 +459,7 @@ const ProductManager: React.FC = () => {
     /* ── filter subcategories by selected category ── */
     const filteredSubcategories = form.category
         ? subcategories.filter(s => {
-            const sCat = typeof s.category === 'object' ? (s.category?._id || s.category?.id) : s.category;
+            const sCat = (s.category && typeof s.category === 'object') ? (s.category?._id || s.category?.id) : s.category;
             return sCat === form.category;
         })
         : subcategories;

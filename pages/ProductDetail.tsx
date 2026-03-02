@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { LAUNCH_PROMOS, MOCK_REVIEWS, MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
 import { useAppDispatch, useAppSelector } from '../store';
 import { addToCartServer, toggleWishlistServer } from '../store/cartSlice';
@@ -11,6 +11,7 @@ import { Product, Review } from '../types';
 import Product360View from '../components/Product360View';
 import { getProductById, getAllProducts, getSimilarProducts } from '../api/auth/ProductApi';
 import { setLoadingProducts } from '../store/productSlice';
+import { useToast } from '../components/Toast';
 
 const RatingHistogram: React.FC<{ rating: number; reviewsCount: number }> = ({ rating, reviewsCount }) => {
   const distribution = [70, 15, 8, 5, 2]; // Mocked distribution percentages
@@ -101,9 +102,11 @@ export const SmartOfferWidget: React.FC<{ currentTotal: number }> = ({ currentTo
 };
 
 const ProductDetail: React.FC = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
+  const { showToast } = useToast();
   const wishlist = useAppSelector((state) => state.cart.wishlist);
   const user = useAppSelector((state) => state.auth.user);
   const isLoadingProducts = useAppSelector((state) => state.products.isLoading);
@@ -140,7 +143,7 @@ const ProductDetail: React.FC = () => {
       dispatch(setLoadingProducts(true));
       try {
         const data = await getProductById(id);
-        const prod = data.results || data;
+        const prod = data.data || data.results || data.product || data;
         setProduct(prod);
 
         if (prod) {
@@ -239,6 +242,46 @@ const ProductDetail: React.FC = () => {
     );
   }
 
+  const handleWishlistToggle = () => {
+    if (!user) {
+      sessionStorage.setItem('authReturnUrl', location.pathname);
+      sessionStorage.setItem('pendingAction', JSON.stringify({
+        type: 'WISHLIST_TOGGLE',
+        productId: product.id
+      }));
+      navigate('/auth');
+      return;
+    }
+    dispatch(toggleWishlistServer(product.id));
+  };
+
+  const handleAddToCart = () => {
+    if (!user) {
+      sessionStorage.setItem('authReturnUrl', location.pathname);
+      sessionStorage.setItem('pendingAction', JSON.stringify({
+        type: 'ADD_TO_CART',
+        productId: product.id,
+        color: selectedColor,
+        size: selectedSize,
+        quantity
+      }));
+      navigate('/auth');
+      return;
+    }
+    // Check if both color and size are selected
+    if (!selectedColor || !selectedSize) {
+      showToast('Please select both color and size', 'error');
+      return;
+    }
+
+    dispatch(addToCartServer({
+      productId: product.id,
+      color: selectedColor,
+      size: selectedSize,
+      quantity
+    }));
+  };
+
   const handleBuyNow = () => {
     if (!user) {
       navigate('/auth', { state: { returnUrl: `/product/${product._id || product.id}` } });
@@ -292,9 +335,9 @@ const ProductDetail: React.FC = () => {
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : null;
 
-  const categoryName = typeof product.category === 'object' ? product.category.name : product.category;
-  const categoryId = typeof product.category === 'object' ? (product.category._id || product.category.id) : product.category;
-  const brandName = typeof product.brand === 'object' ? product.brand?.name : (product.brand || 'GS Heritage');
+  const categoryName = (product.category && typeof product.category === 'object') ? (product.category as any).name : product.category;
+  const categoryId = (product.category && typeof product.category === 'object') ? ((product.category as any)._id || (product.category as any).id) : product.category;
+  const brandName = (product.brand && typeof product.brand === 'object') ? (product.brand as any).name : (product.brand || 'GS Heritage');
 
   return (
     <div className="bg-white min-h-screen overflow-x-hidden">
@@ -549,35 +592,91 @@ const ProductDetail: React.FC = () => {
                         );
                       })}
                     </div>
+
+                    {/* Low Stock/Out of Stock Urgency Field */}
+                    {selectedSize && (() => {
+                      const selectedSizeData = availableSizes.find(s => s.size === selectedSize);
+                      if (selectedSizeData) {
+                        if (selectedSizeData.quantity === 0) {
+                          return (
+                            <div className="mt-4 p-4 bg-zinc-100 border border-zinc-200 rounded-xl flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-zinc-400 flex items-center justify-center shadow-md">
+                                  <i className="fa-solid fa-box-open text-white text-xs"></i>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Currently Unavailable</p>
+                                  <p className="text-[11px] font-bold text-zinc-900 italic">This silhouette has been fully archived. Check back for future restocks.</p>
+                                </div>
+                              </div>
+                              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 opacity-50">Sold Out</span>
+                            </div>
+                          );
+                        } else if (selectedSizeData.quantity < 3) {
+                          return (
+                            <div className="mt-4 p-4 bg-red-50 border border-red-100 rounded-xl flex items-center justify-between animate-pulse">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center shadow-lg">
+                                  <i className="fa-solid fa-fire-flame-curved text-white text-xs"></i>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-600">High Demand Alert</p>
+                                  <p className="text-[11px] font-bold text-red-900 italic">Only {selectedSizeData.quantity} exquisite pieces remaining in this silhouette.</p>
+                                </div>
+                              </div>
+                              <span className="text-[10px] font-black uppercase tracking-widest text-red-400 opacity-50">Limited Archive</span>
+                            </div>
+                          );
+                        }
+                      }
+                      return null;
+                    })()}
                   </div>
                 )}
 
                 {/* Primary Actions */}
                 <div className="space-y-6 pt-4">
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <button
-                      onClick={() => {
-                        if (!user) {
-                          navigate('/auth', { state: { returnUrl: `/product/${product._id || product.id}` } });
-                          return;
-                        }
-                        dispatch(addToCartServer({ productId: product._id || product.id, size: selectedSize, color: selectedColor, quantity }));
-                      }}
-                      className="flex-[1.5] group relative overflow-hidden bg-zinc-900 text-white py-3 px-6 text-[10px] font-black uppercase tracking-[0.25em] transition-all duration-700 hover:shadow-[0_12px_24px_-8px_rgba(0,0,0,0.3)] active:scale-[0.98] rounded-full"
-                    >
-                      <div className="relative z-10 flex items-center justify-center gap-3">
-                        <i className="fa-solid fa-bag-shopping text-xs transition-transform group-hover:-translate-y-0.5"></i>
-                        <span>Add to Bag</span>
-                      </div>
-                      <div className="absolute inset-0 bg-gradient-to-r from-zinc-800 to-zinc-900 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-                    </button>
+                    {(() => {
+                      const selectedSizeData = availableSizes.find(s => s.size === selectedSize);
+                      const isOutOfStock = !selectedSizeData || selectedSizeData.quantity === 0;
 
-                    <button
-                      onClick={handleBuyNow}
-                      className="flex-1 group bg-white text-zinc-900 border-2 border-zinc-900 py-3 px-6 text-[10px] font-black uppercase tracking-[0.25em] transition-all duration-700 hover:bg-zinc-900 hover:text-white active:scale-[0.98] rounded-full"
-                    >
-                      <span className="relative z-10">Buy Now</span>
-                    </button>
+                      return (
+                        <>
+                          <button
+                            disabled={isOutOfStock}
+                            onClick={() => {
+                              if (!user) {
+                                navigate('/auth', { state: { returnUrl: `/product/${product._id || product.id}` } });
+                                return;
+                              }
+                              dispatch(addToCartServer({ productId: product._id || product.id, size: selectedSize, color: selectedColor, quantity }));
+                            }}
+                            className={`flex-[1.5] group relative overflow-hidden py-3 px-6 text-[10px] font-black uppercase tracking-[0.25em] transition-all duration-700 active:scale-[0.98] rounded-full ${isOutOfStock
+                              ? 'bg-zinc-200 text-zinc-400 cursor-not-allowed border border-zinc-300'
+                              : 'bg-zinc-900 text-white hover:shadow-[0_12px_24px_-8px_rgba(0,0,0,0.3)]'
+                              }`}
+                          >
+                            <div className="relative z-10 flex items-center justify-center gap-3">
+                              <i className={`fa-solid ${isOutOfStock ? 'fa-circle-xmark' : 'fa-bag-shopping'} text-xs transition-transform group-hover:-translate-y-0.5`}></i>
+                              <span>{isOutOfStock ? 'Out of Stock' : 'Add to Bag'}</span>
+                            </div>
+                            {!isOutOfStock && <div className="absolute inset-0 bg-gradient-to-r from-zinc-800 to-zinc-900 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>}
+                          </button>
+
+                          <button
+                            disabled={isOutOfStock}
+                            onClick={handleBuyNow}
+                            className={`flex-1 group py-3 px-6 text-[10px] font-black uppercase tracking-[0.25em] transition-all duration-700 active:scale-[0.98] rounded-full border-2 ${isOutOfStock
+                              ? 'bg-white text-zinc-300 border-zinc-200 cursor-not-allowed'
+                              : 'bg-white text-zinc-900 border-zinc-900 hover:bg-zinc-900 hover:text-white'
+                              }`}
+                          >
+                            <span className="relative z-10">{isOutOfStock ? 'Sold Out' : 'Buy Now'}</span>
+                          </button>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   <div className="flex items-center justify-center gap-3 py-2 px-6 bg-zinc-50 rounded-full border border-zinc-100 w-fit mx-auto">

@@ -79,7 +79,7 @@ const Cart: React.FC = () => {
               <div className="flex-grow flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between items-start">
-                    <h3 className="text-lg font-medium">{item.product?.name}</h3>
+                    <h3 className="text-lg font-medium">{item?.product?.name || 'Product'}</h3>
                     <button
                       onClick={() => dispatch(removeFromCartServer(item.id || item._id || ''))}
                       className="text-gray-400 hover:text-red-500 transition-colors"

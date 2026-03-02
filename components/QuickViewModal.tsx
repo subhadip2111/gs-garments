@@ -3,13 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../store';
 import { setQuickViewProduct } from '../store/uiSlice';
 import { addToCart } from '../store/cartSlice';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useToast } from '../components/Toast';
 
 const QuickViewModal: React.FC = () => {
   const dispatch = useAppDispatch();
   const quickViewProduct = useAppSelector((state) => state.ui.quickViewProduct);
   const user = useAppSelector((state) => state.auth.user);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { showToast } = useToast();
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -39,8 +42,22 @@ const QuickViewModal: React.FC = () => {
   const handleDecrement = () => setQuantity(q => Math.max(1, q - 1));
 
   const handleAddToCart = () => {
-    // Allow guest adding to bag
+    if (!user) {
+      sessionStorage.setItem('authReturnUrl', location.pathname);
+      sessionStorage.setItem('pendingAction', JSON.stringify({
+        type: 'ADD_TO_CART',
+        productId: quickViewProduct.id,
+        size: selectedSize,
+        color: selectedColor,
+        quantity
+      }));
+      navigate('/auth');
+      handleClose();
+      return;
+    }
+    // Allow guest adding to bag - wait, requirement says MUST login
     dispatch(addToCart({ productId: quickViewProduct.id, size: selectedSize, color: selectedColor, quantity }));
+    showToast('Added to bag successfully');
     handleClose();
   };
 
@@ -97,7 +114,7 @@ const QuickViewModal: React.FC = () => {
           <div className="space-y-10">
             <header className="space-y-4">
               <div className="flex items-center gap-3">
-                <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-vogue-500">{quickViewProduct.subcategory}</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-vogue-500">{(quickViewProduct.subcategory && typeof quickViewProduct.subcategory === 'object') ? (quickViewProduct.subcategory as any).name : quickViewProduct.subcategory}</span>
                 <div className="flex items-center gap-1.5 text-amber-400 text-[9px]">
                   <div className="flex">
                     {[...Array(5)].map((_, i) => (

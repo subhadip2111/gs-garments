@@ -80,7 +80,7 @@ const Navbar: React.FC = () => {
                   to={`/shop?category=${catId}`}
                   className="px-6 h-full flex items-center text-[12px] font-black uppercase tracking-[0.2em] text-zinc-600 hover:text-black transition-colors"
                 >
-                  {cat.name}
+                  {cat?.name || 'Category'}
                 </Link>
 
                 {/* Megamenu — show subcategories */}
@@ -95,7 +95,7 @@ const Navbar: React.FC = () => {
                               to={`/shop?category=${catId}&subcategory=${subId}`}
                               className="text-sm font-semibold text-zinc-800 hover:text-black transition-colors"
                             >
-                              {sub.name}
+                              {sub?.name || 'Subcategory'}
                             </Link>
                           </div>
                         );

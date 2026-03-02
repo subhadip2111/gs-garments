@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Product } from '../types';
 import { useAppDispatch, useAppSelector } from '../store';
 import { toggleWishlistServer } from '../store/cartSlice';
@@ -14,6 +14,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const wishlist = useAppSelector((state) => state.cart.wishlist);
   const user = useAppSelector((state) => state.auth.user);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const productId = product._id || product.id;
   const isWishlisted = wishlist.includes(productId);
@@ -31,15 +32,24 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     e.preventDefault();
     e.stopPropagation();
     if (!user) {
-      navigate('/auth', { state: { from: `/shop` } });
+      sessionStorage.setItem('authReturnUrl', location.pathname);
+      sessionStorage.setItem('pendingAction', JSON.stringify({
+        type: 'WISHLIST_TOGGLE',
+        productId: productId
+      }));
+      navigate('/auth');
       return;
     }
     dispatch(toggleWishlistServer(productId));
   };
 
-  const subcategoryName = typeof product.subcategory === 'object'
-    ? product.subcategory.name
+  const subcategoryName = (product.subcategory && typeof product.subcategory === 'object')
+    ? (product.subcategory as any).name
     : product.subcategory;
+
+  const brandName = (product.brand && typeof product.brand === 'object')
+    ? (product.brand as any).name
+    : (product.brand || 'GS Archive');
 
   return (
     <div
@@ -104,7 +114,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </span>
             <span className="text-[9px] text-zinc-200 mt-[-2px]">·</span>
             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">
-              {typeof product.brand === 'object' ? product.brand.name : product.brand}
+              {brandName}
             </span>
           </div>
           {product.originalPrice && (

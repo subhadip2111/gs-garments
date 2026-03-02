@@ -179,7 +179,7 @@ const Home: React.FC = () => {
     else if (config.filter === 'best-seller') displayProducts = displayProducts.filter(p => p.isBestSeller);
     else if (config.filter === 'category' && config.category) {
       displayProducts = displayProducts.filter(p => {
-        const catId = typeof p.category === 'object' ? p.category._id : p.category;
+        const catId = (p.category && typeof p.category === 'object') ? (p.category as any)._id : p.category;
         return catId === config.category;
       });
     }

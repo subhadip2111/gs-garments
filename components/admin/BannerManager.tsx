@@ -3,6 +3,7 @@ import { Edit2, Trash2, Image, Upload, X, ChevronLeft, ChevronRight, Plus } from
 import AdminModal from './AdminModal';
 import { useToast } from '../Toast';
 import { getALlBanners, addBanner, updateBanner, deleteBanner, uploadBannerImage, uploadsBulkImages } from '@/api/auth/Banner.api';
+import { getAllcategoryList } from '@/api/auth/categoryApi';
 
 /* ── types ── */
 type BannerType = 'banner' | 'slider' | 'brands';
@@ -49,6 +50,7 @@ const INITIAL_FORM = {
 
 const BannerManager: React.FC = () => {
     const [banners, setBanners] = useState<Banner[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
     const [submitting, setSubmitting] = useState(false);
@@ -85,7 +87,19 @@ const BannerManager: React.FC = () => {
         }
     };
 
-    useEffect(() => { fetchBanners(page); }, [page]);
+    const fetchCategories = async () => {
+        try {
+            const data = await getAllcategoryList();
+            setCategories(Array.isArray(data) ? data : (data.results ?? []));
+        } catch (err) {
+            console.error('Failed to fetch categories', err);
+        }
+    };
+
+    useEffect(() => {
+        fetchBanners(page);
+        fetchCategories();
+    }, [page]);
 
     /* ── main image handling ── */
     const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -491,8 +505,22 @@ const BannerManager: React.FC = () => {
                                     <label className={labelCls}>CTA Text</label>
                                     <input type="text" value={form.ctaText} onChange={e => setForm({ ...form, ctaText: e.target.value })} placeholder="e.g. Shop Now" className={inputCls} />
                                 </div>
-                                <div>
-                                    <label className={labelCls}>CTA Link</label>
+                                <div className="space-y-2">
+                                    <label className={labelCls}>CTA Link & Category</label>
+                                    <select
+                                        className={inputCls}
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                setForm({ ...form, ctaLink: `https://gssarees.com/?category=${e.target.value}` });
+                                            }
+                                        }}
+                                        value=""
+                                    >
+                                        <option value="">Select Category for Link</option>
+                                        {categories.map((cat: any) => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))}
+                                    </select>
                                     <input type="text" value={form.ctaLink} onChange={e => setForm({ ...form, ctaLink: e.target.value })} placeholder="https://..." className={inputCls} />
                                 </div>
                             </div>
@@ -501,8 +529,22 @@ const BannerManager: React.FC = () => {
                                     <label className={labelCls}>Secondary CTA Text</label>
                                     <input type="text" value={form.secondaryCtaText} onChange={e => setForm({ ...form, secondaryCtaText: e.target.value })} placeholder="e.g. Learn More" className={inputCls} />
                                 </div>
-                                <div>
-                                    <label className={labelCls}>Secondary CTA Link</label>
+                                <div className="space-y-2">
+                                    <label className={labelCls}>Secondary CTA Link & Category</label>
+                                    <select
+                                        className={inputCls}
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                setForm({ ...form, secondaryCtaLink: `https://gssarees.com/?category=${e.target.value}` });
+                                            }
+                                        }}
+                                        value=""
+                                    >
+                                        <option value="">Select Category for Link</option>
+                                        {categories.map((cat: any) => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))}
+                                    </select>
                                     <input type="text" value={form.secondaryCtaLink} onChange={e => setForm({ ...form, secondaryCtaLink: e.target.value })} placeholder="https://..." className={inputCls} />
                                 </div>
                             </div>
@@ -602,7 +644,21 @@ const BannerManager: React.FC = () => {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">Link</label>
+                                                <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">Category Link</label>
+                                                <select
+                                                    className={`${inputCls} !text-xs mb-2`}
+                                                    onChange={(e) => {
+                                                        if (e.target.value) {
+                                                            updateBrandField(idx, 'link', `https://gssarees.com/?category=${e.target.value}`);
+                                                        }
+                                                    }}
+                                                    value=""
+                                                >
+                                                    <option value="">Select Category</option>
+                                                    {categories.map((cat: any) => (
+                                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                    ))}
+                                                </select>
                                                 <input
                                                     type="text"
                                                     value={brand.link}

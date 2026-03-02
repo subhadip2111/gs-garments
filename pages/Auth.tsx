@@ -1,7 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from '../services/supabase';
+import {
+  auth,
+  googleProvider,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  signInWithPopup,
+  updateProfile,
+  isConfigured
+} from '../services/firebase';
 import { AuthMode } from '../types';
 import { useAppSelector } from '../store';
 import { SocialIcon } from 'react-social-icons'
@@ -37,25 +46,22 @@ const Auth: React.FC = () => {
     sessionStorage.removeItem('authReturnUrl');
 
     try {
+      if (!isConfigured) {
+        throw new Error("Authentication is currently unavailable. Please contact the administrator.");
+      }
+
       if (mode === 'signup') {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { full_name: fullName }
-          }
-        });
-        if (signUpError) throw signUpError;
-        alert("Verification email sent! Please check your inbox to confirm your membership.");
+        const userCredential = await createUserWithEmailAndPassword(auth!, email, password);
+        if (userCredential.user) {
+          await updateProfile(userCredential.user, {
+            displayName: fullName
+          });
+        }
+        alert("Account created successfully! Welcome to the collective.");
       } else if (mode === 'login') {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (signInError) throw signInError;
+        await signInWithEmailAndPassword(auth!, email, password);
       } else if (mode === 'forgot-password') {
-        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email);
-        if (resetError) throw resetError;
+        await sendPasswordResetEmail(auth!, email);
         alert("Password reset instructions sent to your email.");
       }
     } catch (err: any) {
@@ -73,25 +79,11 @@ const Auth: React.FC = () => {
     sessionStorage.setItem('authReturnUrl', from);
 
     try {
-      const { error: authError } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          // redirectTo: window.location.origin,
-          queryParams: {
-            prompt: 'select_account',
-            access_type: 'offline',
-          }
-        },
-      });
-
-      console.log("window.location.origin--->", window.location.origin)
-
-      if (authError) {
-        if (authError.message.includes("provider is not enabled")) {
-          throw new Error("Google Login is not enabled. Please use email/password for the collective.");
-        }
-        throw authError;
+      if (!isConfigured) {
+        throw new Error("Social Login is currently unavailable.");
       }
+
+      await signInWithPopup(auth!, googleProvider!);
     } catch (err: any) {
       setError(err.message || "Could not initialize Google authentication.");
       setGoogleLoading(false);

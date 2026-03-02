@@ -50,12 +50,12 @@ const Wishlist: React.FC = () => {
                     <div key={product.id} className="group flex flex-col h-full bg-white transition-all duration-500">
                         <div className="relative aspect-[3/4] overflow-hidden bg-stone-50 rounded-sm mb-6">
                             <img
-                                src={product.images[0]}
+                                src={product?.images?.[0] || 'https://via.placeholder.com/300x400?text=No+Image'}
                                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                                alt={product.name}
+                                alt={product?.name || 'Product'}
                             />
                             <button
-                                onClick={() => dispatch(toggleWishlist(product.id))}
+                                onClick={() => dispatch(toggleWishlist(product?._id || product?.id || ''))}
                                 className="absolute top-4 right-4 w-10 h-10 bg-white/95 rounded-full flex items-center justify-center text-red-500 shadow-lg hover:scale-110 active:scale-90 transition-all z-10"
                                 title="Remove from wishlist"
                             >
@@ -66,10 +66,10 @@ const Wishlist: React.FC = () => {
 
                         <div className="flex-grow space-y-2">
                             <div className="flex justify-between items-start gap-2">
-                                <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-vogue-500">{typeof product.subcategory === 'object' ? product.subcategory?.name : product.subcategory}</h3>
-                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{product.sku || 'GS-ITEM'}</span>
+                                <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-vogue-500">{(product.subcategory && typeof product.subcategory === 'object') ? (product.subcategory as any).name : product.subcategory}</h3>
+                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{product?.sku || 'GS-ITEM'}</span>
                             </div>
-                            <Link to={`/product/${product.id}`} className="block text-sm font-bold tracking-tight text-gray-900 group-hover:underline line-clamp-2 leading-snug">{product.name}</Link>
+                            <Link to={`/product/${product?._id || product?.id}`} className="block text-sm font-bold tracking-tight text-gray-900 group-hover:underline line-clamp-2 leading-snug">{product?.name || 'Product'}</Link>
                             <div className="pt-2 flex items-center gap-4">
                                 <span className="text-base font-black tracking-tighter text-black">₹{(product.price || 0).toLocaleString('en-IN')}</span>
                                 {product.originalPrice && (

@@ -20,23 +20,23 @@ import {
 } from "lucide-react";
 import { useAppDispatch } from "../store";
 import { logout } from "../store/authSlice";
-import { supabase } from "../services/supabase";
+import { auth, signOut } from "../services/firebase";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useState } from "react";
 
 /* ── nav config ─────────────────────────────────────────────────────────── */
 const NAV_ITEMS = [
-    { path: "/admin/dashboard",    label: "Dashboard",    icon: <LayoutDashboard size={20} />,  group: "general" },
-    { path: "/admin/categories",   label: "Categories",   icon: <Folders size={20} />,          group: "general" },
-    { path: "/admin/subcategories",label: "Subcategories",icon: <Tag size={20} />,              group: "general" },
-    { path: "/admin/products",     label: "Products",     icon: <ShoppingBag size={20} />,      group: "general" },
-    { path: "/admin/banners",      label: "Banners",      icon: <Image size={20} />,            group: "operations" },
-    { path: "/admin/brands",       label: "Brands",       icon: <Star size={20} />,             group: "operations" },
-    { path: "/admin/orders",       label: "Orders",       icon: <ShoppingCart size={20} />,     group: "operations" },
-    { path: "/admin/reviews",      label: "Reviews",      icon: <Star size={20} />,             group: "operations" },
-    { path: "/admin/returns",      label: "Returns",      icon: <RotateCcw size={20} />,        group: "operations" },
-    { path: "/admin/earnings",     label: "Earnings",     icon: <BarChart size={20} />,         group: "operations" },
-    { path: "/admin/profile",      label: "Profile",      icon: <User size={20} />,             group: "operations" },
+    { path: "/admin/dashboard", label: "Dashboard", icon: <LayoutDashboard size={20} />, group: "general" },
+    { path: "/admin/categories", label: "Categories", icon: <Folders size={20} />, group: "general" },
+    { path: "/admin/subcategories", label: "Subcategories", icon: <Tag size={20} />, group: "general" },
+    { path: "/admin/products", label: "Products", icon: <ShoppingBag size={20} />, group: "general" },
+    { path: "/admin/banners", label: "Banners", icon: <Image size={20} />, group: "operations" },
+    { path: "/admin/brands", label: "Brands", icon: <Star size={20} />, group: "operations" },
+    { path: "/admin/orders", label: "Orders", icon: <ShoppingCart size={20} />, group: "operations" },
+    { path: "/admin/reviews", label: "Reviews", icon: <Star size={20} />, group: "operations" },
+    { path: "/admin/returns", label: "Returns", icon: <RotateCcw size={20} />, group: "operations" },
+    { path: "/admin/earnings", label: "Earnings", icon: <BarChart size={20} />, group: "operations" },
+    { path: "/admin/profile", label: "Profile", icon: <User size={20} />, group: "operations" },
 ];
 
 /* ── layout shell ───────────────────────────────────────────────────────── */
@@ -47,7 +47,7 @@ const AdminDashboard: React.FC = () => {
     const location = useLocation();
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
+        await signOut(auth!);
         dispatch(logout());
         navigate("/admin/login");
     };
@@ -56,15 +56,14 @@ const AdminDashboard: React.FC = () => {
 
     const currentLabel = NAV_ITEMS.find(n => isActive(n.path))?.label ?? "Dashboard";
 
-    const NavButton = ({ item }: { item: typeof NAV_ITEMS[0] }) => (
+    const NavButton: React.FC<{ item: typeof NAV_ITEMS[0] }> = ({ item }) => (
         <button
             key={item.path}
             onClick={() => navigate(item.path)}
-            className={`w-full flex items-center ${isSidebarOpen ? "gap-4 px-5" : "justify-center"} py-3 rounded-xl transition-all duration-300 group ${
-                isActive(item.path)
-                    ? "admin-nav-item-active"
-                    : "text-black hover:bg-white/5 hover:text-black"
-            }`}
+            className={`w-full flex items-center ${isSidebarOpen ? "gap-4 px-5" : "justify-center"} py-3 rounded-xl transition-all duration-300 group ${isActive(item.path)
+                ? "admin-nav-item-active"
+                : "text-black hover:bg-white/5 hover:text-black"
+                }`}
         >
             <span className={`shrink-0 transition-all duration-300 group-hover:scale-110 ${isActive(item.path) ? "text-black" : "text-gray-600 group-hover:text-white"}`}>
                 {React.cloneElement(item.icon as React.ReactElement, {
@@ -178,10 +177,10 @@ export const AdminHome: React.FC = () => (
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard title="Total Sales"  value="₹12,45,200" icon={<DollarSign size={18} className="text-black" />} trend="+12.5%" trendType="up" />
-            <StatCard title="Net Orders"   value="156"        icon={<ShoppingCart size={18} className="text-black" />} trend="+8.2%"  trendType="up" />
-            <StatCard title="Inventory"    value="1,204"      icon={<Package size={18} className="text-black" />}      trend="+4.1%"  trendType="up" />
-            <StatCard title="Revenue"      value="₹8,92,000"  icon={<TrendingUp size={18} className="text-black" />}   trend="+15.3%" trendType="up" />
+            <StatCard title="Total Sales" value="₹12,45,200" icon={<DollarSign size={18} className="text-black" />} trend="+12.5%" trendType="up" />
+            <StatCard title="Net Orders" value="156" icon={<ShoppingCart size={18} className="text-black" />} trend="+8.2%" trendType="up" />
+            <StatCard title="Inventory" value="1,204" icon={<Package size={18} className="text-black" />} trend="+4.1%" trendType="up" />
+            <StatCard title="Revenue" value="₹8,92,000" icon={<TrendingUp size={18} className="text-black" />} trend="+15.3%" trendType="up" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

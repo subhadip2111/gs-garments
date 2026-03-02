@@ -3,11 +3,13 @@ import { Edit2, Trash2, Plus, X, Search, ChevronLeft, ChevronRight } from 'lucid
 import AdminModal from './AdminModal';
 import { useToast } from '../Toast';
 import { getAllBrands, createBrand as apiCreateBrand, updateBrand as apiUpdateBrand, deleteBrand as apiDeleteBrand } from '@/api/auth/brandApi';
+import { getAllcategoryList } from '@/api/auth/categoryApi';
 
 interface Brand {
     id: string;
     _id?: string;
     name: string;
+    link?: string;
     createdAt?: string;
 }
 
@@ -21,7 +23,8 @@ const BrandManager: React.FC = () => {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [search, setSearch] = useState('');
-    const [form, setForm] = useState({ name: '' });
+    const [categories, setCategories] = useState<any[]>([]);
+    const [form, setForm] = useState({ name: '', link: '' });
 
     const fetchBrands = async () => {
         setIsLoading(true);
@@ -36,19 +39,29 @@ const BrandManager: React.FC = () => {
         }
     };
 
+    const fetchCategories = async () => {
+        try {
+            const data = await getAllcategoryList();
+            setCategories(Array.isArray(data) ? data : (data.results ?? []));
+        } catch (error) {
+            console.error('Failed to fetch categories', error);
+        }
+    };
+
     useEffect(() => {
         fetchBrands();
+        fetchCategories();
     }, [page]);
 
     const openAddModal = () => {
         setEditingBrand(null);
-        setForm({ name: '' });
+        setForm({ name: '', link: '' });
         setIsModalOpen(true);
     };
 
     const handleEdit = (brand: Brand) => {
         setEditingBrand(brand);
-        setForm({ name: brand.name });
+        setForm({ name: brand.name, link: brand.link || '' });
         setIsModalOpen(true);
     };
 
@@ -62,7 +75,7 @@ const BrandManager: React.FC = () => {
         setSubmitting(true);
         try {
             if (editingBrand) {
-                await apiUpdateBrand(editingBrand.id || editingBrand._id!, form.name);
+                await apiUpdateBrand(editingBrand.id || editingBrand._id!, form.name, form.link);
                 showToast('Brand updated successfully', 'success');
             } else {
                 await apiCreateBrand(form);
@@ -239,6 +252,31 @@ const BrandManager: React.FC = () => {
                                 value={form.name}
                                 onChange={e => setForm({ ...form, name: e.target.value })}
                                 placeholder="e.g. GS Heritage, Royal Silk House"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-bold text-gray-900 outline-none focus:ring-4 focus:ring-black/5 focus:border-black transition-all"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-black/60 mb-2 px-1">Category Link & Dropdown</label>
+                            <select
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-bold text-gray-900 outline-none focus:ring-4 focus:ring-black/5 focus:border-black transition-all mb-2"
+                                onChange={(e) => {
+                                    if (e.target.value) {
+                                        setForm({ ...form, link: `https://gssarees.com/?category=${e.target.value}` });
+                                    }
+                                }}
+                                value=""
+                            >
+                                <option value="">Select Category for Link</option>
+                                {categories.map((cat: any) => (
+                                    <option key={cat.id || cat._id} value={cat.id || cat._id}>{cat.name}</option>
+                                ))}
+                            </select>
+                            <input
+                                type="text"
+                                value={form.link}
+                                onChange={e => setForm({ ...form, link: e.target.value })}
+                                placeholder="https://gssarees.com/?category=..."
                                 className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-bold text-gray-900 outline-none focus:ring-4 focus:ring-black/5 focus:border-black transition-all"
                             />
                         </div>

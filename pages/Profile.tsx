@@ -6,7 +6,7 @@ import { logout, setCurrentUser } from '../store/authSlice';
 import { fetchOrders, cancelOrderServer } from '../store/cartSlice';
 import { useToast } from '../components/Toast';
 import ProductCard from '../components/ProductCard';
-import { supabase } from '../services/supabase';
+import { auth, signOut } from '../services/firebase';
 import { Address } from '../types';
 import { updateProfileDetails } from '@/api/auth/authApi';
 import * as addressApi from '../api/auth/addressApi';
@@ -21,8 +21,8 @@ const Profile: React.FC = () => {
   console.log("user from profile", user)
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    dispatch(logout(null));
+    await signOut(auth!);
+    dispatch(logout());
     // need to add a toast message for logout
     showToast("Logout successfully", "success");
     navigate('/shop');
@@ -94,9 +94,9 @@ const Profile: React.FC = () => {
 
   const wishlistProducts = catalog.filter(p => wishlist.includes(p.id));
 
-  const userName = user?.fullName || user.email.split('@')[0];
+  const userName = user?.fullName || user?.email?.split('@')[0] || 'User';
   const userAvatar =
-    user?.avatar_url ||
+    user?.avatar ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=f9f9f9&color=ff0000`;
 
   const validateMobile = (num: string) => {

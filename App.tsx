@@ -13,7 +13,9 @@ import {
   placeOrder,
   cancelOrder,
   clearCart,
-  recalculateDiscounts
+  recalculateDiscounts,
+  toggleWishlistServer,
+  addToCartServer
 } from './store/cartSlice';
 import {
   setQuickViewProduct,
@@ -22,7 +24,7 @@ import {
 } from './store/uiSlice';
 
 import { Product } from './types';
-import { supabase } from './services/supabase';
+import { auth, onAuthStateChanged, isConfigured } from './services/firebase';
 import { getAllProducts } from './api/auth/ProductApi';
 
 // --- Components ---
@@ -104,12 +106,34 @@ function AppContent() {
   useEffect(() => {
     if (user) {
       const returnUrl = sessionStorage.getItem('authReturnUrl');
+      const pendingActionStr = sessionStorage.getItem('pendingAction');
+
+      if (pendingActionStr) {
+        try {
+          const action = JSON.parse(pendingActionStr);
+          sessionStorage.removeItem('pendingAction');
+
+          if (action.type === 'WISHLIST_TOGGLE') {
+            dispatch(toggleWishlistServer(action.productId));
+          } else if (action.type === 'ADD_TO_CART') {
+            dispatch(addToCartServer({
+              productId: action.productId,
+              color: action.color,
+              size: action.size,
+              quantity: action.quantity
+            }));
+          }
+        } catch (e) {
+          console.error("Failed to parse pending action:", e);
+        }
+      }
+
       if (returnUrl) {
         sessionStorage.removeItem('authReturnUrl');
         navigate(returnUrl, { replace: true });
       }
     }
-  }, [user, navigate]);
+  }, [user, navigate, dispatch]);
 
   // ── Proactive Hash Cleanup ──
   // If the URL contains a legacy hash (e.g., /#/), clean it up immediately.
@@ -136,42 +160,28 @@ function AppContent() {
   }, [accessToken, dispatch]);
 
   useEffect(() => {
-    // Initial session load
-    supabase.auth.getSession().then(({ data, error }) => {
-      if (!error && data?.session) {
-        const supabaseUser = data.session.user;
-        console.log("supabaseUser", supabaseUser)
-      }
-    });
+    if (!isConfigured) return;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      const supabaseUser = session?.user ?? null;
+    const unsubscribe = onAuthStateChanged(auth!, async (firebaseUser) => {
+      if (firebaseUser && !accessToken) {
+        try {
+          const response = await saveSocialLoginUserData({
+            email: firebaseUser.email,
+            fullName: firebaseUser.displayName,
+            avatar: firebaseUser.photoURL,
+            role: "user",
+            socialId: firebaseUser.uid,
+          });
 
-      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && !accessToken) {
-        const saveUserdataAndgetToken = async () => {
-          try {
-            const response = await saveSocialLoginUserData({
-              email: supabaseUser?.email,
-              fullName: supabaseUser?.user_metadata?.full_name,
-              avatar: supabaseUser?.user_metadata?.avatar_url,
-              role: "user",
-              socialId: supabaseUser?.id,
-            });
-
-            const tokens = {
-              accessToken: response.accessToken,
-              refreshToken: response.refreshToken
-            };
-            dispatch(setToken(tokens));
-          } catch (error) {
-            console.log("Error syncing user data:", error);
-          }
-        };
-
-        if (supabaseUser) {
-          saveUserdataAndgetToken();
+          const tokens = {
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken
+          };
+          dispatch(setToken(tokens));
+        } catch (error) {
+          console.log("Error syncing user data:", error);
         }
-      } else if (event === 'SIGNED_OUT') {
+      } else if (!firebaseUser) {
         dispatch(setUser(null));
         dispatch(setToken(null));
       }
@@ -193,7 +203,7 @@ function AppContent() {
     };
 
     fetchProductsData();
-    return () => subscription?.unsubscribe?.();
+    return () => unsubscribe();
   }, [dispatch]);
 
   useEffect(() => {

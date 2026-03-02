@@ -24,7 +24,7 @@ const Checkout: React.FC = () => {
 
   // Helper to get name parts safely
   const getNameParts = () => {
-    // If full_name is directly on user object (standard supabase)
+    // If full_name is directly on user object
     let fullName = user?.user_metadata?.full_name || user?.fullName || '';
     const parts = fullName.trim().split(' ');
     const firstName = parts[0] || '';
@@ -83,12 +83,14 @@ const Checkout: React.FC = () => {
   const itemsToPurchase = buyNowItem ? [buyNowItem] : cart;
 
   const subtotal = itemsToPurchase.reduce((acc, item) => {
-    const product = item.product || catalog.find(p => (p._id || p.id) === item.productId);
+    const productId = item.productId || (item.product as any)?._id || (item.product as any)?.id;
+    const product = item.product || catalog.find(p => (p._id || p.id) === productId);
     return acc + (product?.price || 0) * item.quantity;
   }, 0);
 
   const totalMrp = itemsToPurchase.reduce((acc, item) => {
-    const product = item.product || catalog.find(p => (p._id || p.id) === item.productId);
+    const productId = item.productId || (item.product as any)?._id || (item.product as any)?.id;
+    const product = item.product || catalog.find(p => (p._id || p.id) === productId);
     return acc + (product?.originalPrice || product?.price || 0) * item.quantity;
   }, 0);
 
@@ -148,6 +150,33 @@ const Checkout: React.FC = () => {
   };
 
   const handlePlaceOrder = async () => {
+    // 1. Check Stock Availability
+    for (const item of itemsToPurchase) {
+      const productId = item.productId || (item.product as any)?._id || (item.product as any)?.id;
+      const product = item.product || catalog.find(p => (p._id || p.id) === productId);
+      if (!product) {
+        showToast(`Product not found: ${productId}`, "error");
+        return;
+      }
+
+      const variant = product.variants.find(v => v.color.name === item.selectedColor);
+      if (!variant) {
+        showToast(`Color ${item.selectedColor} not found for ${product.name}`, "error");
+        return;
+      }
+
+      const sizeInfo = variant.sizes.find(s => s.size === item.selectedSize);
+      if (!sizeInfo) {
+        showToast(`Size ${item.selectedSize} not found for ${product.name}`, "error");
+        return;
+      }
+
+      if (sizeInfo.quantity < item.quantity) {
+        showToast(`Only ${sizeInfo.quantity} units available for ${product.name} (Size: ${item.selectedSize}). You requested ${item.quantity}.`, "error");
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       let finalShippingAddress;

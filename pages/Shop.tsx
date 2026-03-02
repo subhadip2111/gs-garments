@@ -100,25 +100,25 @@ const Shop: React.FC = () => {
     let result = [...products];
     if (activeCategory !== 'All') {
       result = result.filter(p => {
-        const catId = typeof p.category === 'object' ? (p.category._id || p.category.id) : p.category;
+        const catId = (p.category && typeof p.category === 'object') ? (p.category._id || p.category.id) : p.category;
         return catId === activeCategory;
       });
     }
     if (activeSubcategory !== 'All') {
       result = result.filter(p => {
-        const subId = typeof p.subcategory === 'object' ? (p.subcategory._id || p.subcategory.id) : p.subcategory;
+        const subId = (p.subcategory && typeof p.subcategory === 'object') ? (p.subcategory._id || p.subcategory.id) : p.subcategory;
         return subId === activeSubcategory;
       });
     }
     if (activeItem !== 'All') {
       result = result.filter(p => {
-        const subName = typeof p.subcategory === 'object' ? p.subcategory.name : p.subcategory;
+        const subName = (p.subcategory && typeof p.subcategory === 'object') ? (p.subcategory as any).name : p.subcategory;
         return subName === activeItem || p.name.toLowerCase().includes(activeItem.toLowerCase());
       });
     }
     if (activeBrand !== 'All') {
       result = result.filter(p => {
-        const brandName = typeof p.brand === 'object' ? p.brand?.name : p.brand;
+        const brandName = (p.brand && typeof p.brand === 'object') ? (p.brand as any).name : p.brand;
         return (brandName || p.name).toLowerCase().includes(activeBrand.toLowerCase());
       });
     }
@@ -126,7 +126,7 @@ const Shop: React.FC = () => {
 
     if (searchQuery) {
       result = result.filter(p => {
-        const bName = typeof p.brand === 'object' ? p.brand?.name : p.brand;
+        const bName = (p.brand && typeof p.brand === 'object') ? (p.brand as any).name : p.brand;
         return p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           (bName || '').toLowerCase().includes(searchQuery.toLowerCase());
       });
@@ -160,8 +160,8 @@ const Shop: React.FC = () => {
   const filterCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     products.forEach(p => {
-      const catId = typeof p.category === 'object' ? (p.category._id || p.category.id) : p.category;
-      const subId = typeof p.subcategory === 'object' ? (p.subcategory._id || p.subcategory.id) : p.subcategory;
+      const catId = (p.category && typeof p.category === 'object') ? (p.category._id || p.category.id) : p.category;
+      const subId = (p.subcategory && typeof p.subcategory === 'object') ? (p.subcategory._id || p.subcategory.id) : p.subcategory;
       if (catId) counts[`cat:${catId}`] = (counts[`cat:${catId}`] || 0) + 1;
       if (subId) counts[`sub:${subId}`] = (counts[`sub:${subId}`] || 0) + 1;
 
@@ -226,7 +226,7 @@ const Shop: React.FC = () => {
 
       <FilterSection title="Price">
         <div className="space-y-3">
-          {[299,499,999,1499, 1999, 2499, 2999].map(price => (
+          {[299, 499, 999, 1499, 1999, 2499, 2999].map(price => (
             <label key={price} className="flex items-center group cursor-pointer">
               <input
                 type="radio"
@@ -303,7 +303,7 @@ const Shop: React.FC = () => {
 
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-16 pb-20 mt-4">
           {/* Myntra-style Sidebar */}
-          <aside className="hidden lg:block w-64 flex-shrink-0 border-r border-zinc-100 pr-8">
+          <aside className="hidden lg:block w-64 flex-shrink-0 border-r border-zinc-100 pr-8 sticky top-32 self-start max-h-[calc(100vh-160px)] overflow-y-auto no-scrollbar">
             <div className="flex items-center justify-between mb-6">
               <span className="text-[14px] font-bold uppercase tracking-widest">Filters</span>
               <button
