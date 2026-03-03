@@ -1,24 +1,38 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store';
-import { toggleWishlistServer, addToCartServer } from '../store/cartSlice';
+import { fetchWishlist, toggleWishlistServer } from '../store/wishlistSlice';
+import { addToCartServer } from '../store/cartSlice';
 
 const Wishlist: React.FC = () => {
     const dispatch = useAppDispatch();
-    const wishlist = useAppSelector((state) => state.cart.wishlist);
+    const wishlist = useAppSelector((state) => state.wishlist.items);
+    const wishlistLoading = useAppSelector((state) => state.wishlist.loading);
     const catalog = useAppSelector((state) => state.products.items);
+    const catalogLoading = useAppSelector((state) => state.products.isLoading);
     const user = useAppSelector((state) => state.auth.user);
     const navigate = useNavigate();
-    const wishlistProducts = catalog.filter(p => wishlist.includes(p.id) || wishlist.includes(p._id || ''));
-    console.log(wishlistProducts)
+
+    // Only fetch from server if we have no items yet (first load or after logout).
+    // When navigating between pages, trust the Redux state — no re-fetch needed.
+    useEffect(() => {
+        if (user && wishlist.length === 0) {
+            dispatch(fetchWishlist());
+        }
+    }, [dispatch, user]);
+
+    // Match wishlisted IDs against the product catalog (handles both _id and id formats)
+    const wishlistProducts = catalog.filter(p => {
+        const pid = p._id || p.id || '';
+        return pid && wishlist.includes(String(pid));
+    });
+
     const handleMoveToCart = (productId: string) => {
         const product = catalog.find(p => p.id === productId || p._id === productId);
         if (product) {
-            // Default to first available size and color
             const defaultSize = product.variants[0]?.sizes[0]?.size || 'One Size';
             const defaultColor = product.variants[0]?.color?.name || 'Default';
-
             if (user) {
                 dispatch(addToCartServer({ productId: product._id || product.id, size: defaultSize, color: defaultColor, quantity: 1 }));
                 dispatch(toggleWishlistServer(product._id || product.id));
@@ -28,7 +42,33 @@ const Wishlist: React.FC = () => {
         }
     };
 
-    if (wishlistProducts.length === 0) {
+    // Show skeleton while wishlist data or catalog is loading
+    const isLoading = (wishlistLoading || catalogLoading) && wishlistProducts.length === 0 && wishlist.length > 0;
+
+    if (isLoading) {
+        return (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                <div className="flex flex-col md:flex-row justify-between items-baseline mb-12 gap-4">
+                    <div>
+                        <h1 className="text-5xl font-serif font-bold tracking-tight mb-2">My Wishlist</h1>
+                        <p className="text-vogue-500 text-[10px] font-black uppercase tracking-[0.4em]">Loading your favorites...</p>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+                    {Array.from({ length: wishlist.length || 3 }).map((_, i) => (
+                        <div key={i} className="flex flex-col h-full animate-pulse">
+                            <div className="aspect-[3/4] bg-gray-100 rounded-sm mb-6"></div>
+                            <div className="h-3 bg-gray-100 rounded w-1/2 mb-3"></div>
+                            <div className="h-4 bg-gray-100 rounded w-3/4 mb-2"></div>
+                            <div className="h-4 bg-gray-100 rounded w-1/3"></div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    if (!isLoading && wishlistProducts.length === 0) {
         return (
             <div className="max-w-7xl mx-auto px-4 py-40 text-center animate-in fade-in duration-700">
                 <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-8">
@@ -53,7 +93,7 @@ const Wishlist: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
                 {wishlistProducts.map(product => (
-                    <div key={product.id} className="group flex flex-col h-full bg-white transition-all duration-500">
+                    <div key={product._id || product.id} className="group flex flex-col h-full bg-white transition-all duration-500">
                         <div className="relative aspect-[3/4] overflow-hidden bg-stone-50 rounded-sm mb-6">
                             <img
                                 src={product?.images?.[0] || 'https://via.placeholder.com/300x400?text=No+Image'}
@@ -85,7 +125,7 @@ const Wishlist: React.FC = () => {
                         </div>
 
                         <button
-                            onClick={() => handleMoveToCart(product.id)}
+                            onClick={() => handleMoveToCart(product._id || product.id)}
                             className="mt-8 w-full bg-white text-black border border-black py-4 text-[10px] font-black uppercase tracking-[0.3em] hover:bg-black hover:text-white transition-all duration-300 shadow-sm hover:shadow-xl active:scale-95 flex items-center justify-center gap-3"
                         >
                             <i className="fa-solid fa-bag-shopping text-[11px]"></i>

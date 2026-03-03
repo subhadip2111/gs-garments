@@ -7,7 +7,7 @@ import { useCategoryData } from '../hooks/useCategoryData';
 
 const Navbar: React.FC = () => {
   const cart = useAppSelector((state) => state.cart.cart);
-  const wishlist = useAppSelector((state) => state.cart.wishlist);
+  const wishlist = useAppSelector((state) => state.wishlist.items);
   const user = useAppSelector((state) => state.auth.user);
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,7 +18,7 @@ const Navbar: React.FC = () => {
   const { categories, getSubcategoriesForCategory } = useCategoryData();
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
-const wishlistCount = wishlist.length;
+  const wishlistCount = wishlist.length;
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location]);

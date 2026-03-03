@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store';
 import { logout, setCurrentUser } from '../store/authSlice';
-import { fetchOrders, cancelOrderServer } from '../store/cartSlice';
+import { fetchOrders, cancelOrderServer, clearCart } from '../store/cartSlice';
+import { clearWishlist } from '../store/wishlistSlice';
 import { useToast } from '../components/Toast';
 import ProductCard from '../components/ProductCard';
 import { auth, signOut } from '../services/firebase';
@@ -15,15 +16,20 @@ const Profile: React.FC = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
   const accessToken = useAppSelector((state) => state.auth.accessToken);
-  const wishlist = useAppSelector((state) => state.cart.wishlist);
+  const wishlist = useAppSelector((state) => state.wishlist.items);
   const catalog = useAppSelector((state) => state.products.items);
   const orders = useAppSelector((state) => state.cart.orders);
   console.log("user from profile", user)
 
   const handleLogout = async () => {
     await signOut(auth!);
+    // Clear all persisted data from localStorage on logout
+    localStorage.removeItem('gs_cart');
+    localStorage.removeItem('gs_wishlist');
+    localStorage.removeItem('gs_orders');
+    dispatch(clearWishlist());
+    dispatch(clearCart());
     dispatch(logout());
-    // need to add a toast message for logout
     showToast("Logout successfully", "success");
     navigate('/shop');
   };

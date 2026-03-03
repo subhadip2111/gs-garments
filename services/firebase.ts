@@ -7,6 +7,8 @@ import {
     createUserWithEmailAndPassword,
     sendPasswordResetEmail,
     signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
     updateProfile,
     onAuthStateChanged,
     signOut
@@ -53,6 +55,9 @@ const initializeSafeFirebase = () => {
     const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({
+        prompt: "select_account"
+    });
 
     return {
         auth,
@@ -69,6 +74,8 @@ export {
     createUserWithEmailAndPassword,
     sendPasswordResetEmail,
     signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
     updateProfile,
     onAuthStateChanged,
     signOut

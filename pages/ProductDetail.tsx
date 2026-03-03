@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { LAUNCH_PROMOS, MOCK_REVIEWS, MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
 import { useAppDispatch, useAppSelector } from '../store';
-import { addToCartServer, toggleWishlistServer } from '../store/cartSlice';
+import { addToCartServer } from '../store/cartSlice';
+import { toggleWishlistServer } from '../store/wishlistSlice';
 import { setSharedProduct } from '../store/uiSlice';
 import ProductCard from '../components/ProductCard';
 import ProductSkeleton from '../components/ProductSkeleton';
@@ -107,7 +108,7 @@ const ProductDetail: React.FC = () => {
   const location = useLocation();
   const dispatch = useAppDispatch();
   const { showToast } = useToast();
-  const wishlist = useAppSelector((state) => state.cart.wishlist);
+  const wishlist = useAppSelector((state) => state.wishlist.items);
   const user = useAppSelector((state) => state.auth.user);
   const isLoadingProducts = useAppSelector((state) => state.products.isLoading);
 

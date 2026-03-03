@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Product } from '../types';
 import { useAppDispatch, useAppSelector } from '../store';
-import { toggleWishlistServer } from '../store/cartSlice';
+import { toggleWishlistServer } from '../store/wishlistSlice';
 import { useToast } from '../components/Toast';
 
 interface ProductCardProps {
@@ -12,7 +12,7 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const dispatch = useAppDispatch();
-  const wishlist = useAppSelector((state) => state.cart.wishlist);
+  const wishlist = useAppSelector((state) => state.wishlist.items);
   const user = useAppSelector((state) => state.auth.user);
   const { showToast } = useToast();
   const navigate = useNavigate();

@@ -2,11 +2,9 @@ import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { CartItem, Order, Product } from '../types';
 import { MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
 import * as cartApi from '../api/auth/cartApi';
-import * as wishlistApi from '../api/auth/wishlistApi';
 import * as orderApi from '../api/auth/orderApi';
 
 const storedCart = localStorage.getItem('gs_cart');
-const storedWishlist = localStorage.getItem('gs_wishlist');
 const storedOrders = localStorage.getItem('gs_orders');
 
 // --- Async Thunks ---
@@ -44,18 +42,7 @@ export const clearCartServer = createAsyncThunk('cart/clearCartServer', async ()
   await cartApi.clearCartApi();
 });
 
-export const fetchWishlist = createAsyncThunk('cart/fetchWishlist', async () => {
-  const response = await wishlistApi.getWishlist();
-  return response.data || response;
-});
 
-export const toggleWishlistServer = createAsyncThunk(
-  'cart/toggleWishlistServer',
-  async (productId: string) => {
-    const response = await wishlistApi.toggleWishlistApi(productId);
-    return { productId, data: response.data || response };
-  }
-);
 
 // --- Order Thunks ---
 
@@ -86,7 +73,6 @@ export const cancelOrderServer = createAsyncThunk(
 
 interface CartState {
   cart: CartItem[];
-  wishlist: string[];
   orders: Order[];
   appliedCouponId: string | null;
   comboDiscount: number;
@@ -94,31 +80,6 @@ interface CartState {
   error: string | null;
 }
 
-const normalizeWishlistItems = (items: any[]): string[] => {
-  if (!items || !Array.isArray(items)) return [];
-  const ids = items
-    .filter(item => item !== null && item !== undefined && item !== '')
-    .map((item: any) => {
-      // Robustly extract ID from various possible structures
-      const id = item.productId?._id || item.productId?.id || item.productId ||
-        item.product?._id || item.product?.id || item.product ||
-        item.product?._id || // fallback
-        item._id || item.id ||
-        (typeof item === 'string' ? item : null);
-
-      if (!id) return null;
-      return typeof id === 'object' ? (id?._id || id?.id || null) : String(id);
-    })
-    .filter((id): id is string =>
-      typeof id === 'string' &&
-      id.trim() !== '' &&
-      id !== 'undefined' &&
-      id !== 'null' &&
-      id !== '[object Object]'
-    );
-
-  return Array.from(new Set(ids));
-};
 
 const normalizeCartItems = (items: any[]): CartItem[] => {
   if (!items || !Array.isArray(items)) return [];
@@ -142,7 +103,6 @@ const normalizeCartItems = (items: any[]): CartItem[] => {
 
 const initialState: CartState = {
   cart: storedCart ? normalizeCartItems(JSON.parse(storedCart)) : [],
-  wishlist: storedWishlist ? normalizeWishlistItems(JSON.parse(storedWishlist)) : [],
   orders: storedOrders ? JSON.parse(storedOrders) : [],
   appliedCouponId: null,
   comboDiscount: 0,
@@ -183,15 +143,6 @@ const cartSlice = createSlice({
         item.quantity = Math.max(1, item.quantity + delta);
         localStorage.setItem('gs_cart', JSON.stringify(state.cart));
       }
-    },
-    toggleWishlist: (state, action: PayloadAction<string>) => {
-      const productId = action.payload;
-      if (state.wishlist.includes(productId)) {
-        state.wishlist = state.wishlist.filter(id => id !== productId);
-      } else {
-        state.wishlist.push(productId);
-      }
-      localStorage.setItem('gs_wishlist', JSON.stringify(state.wishlist));
     },
     clearCart: (state) => {
       state.cart = [];
@@ -282,41 +233,6 @@ const cartSlice = createSlice({
       .addCase(fetchCart.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch cart';
-      })
-      // Fetch Wishlist
-      .addCase(fetchWishlist.fulfilled, (state, action) => {
-        const payload = action.payload;
-        let wishlistItems = [];
-        if (Array.isArray(payload)) {
-          wishlistItems = payload;
-        } else if (payload?.wishlist && Array.isArray(payload.wishlist)) {
-          wishlistItems = payload.wishlist;
-        } else if (payload?.data && Array.isArray(payload.data)) {
-          wishlistItems = payload.data;
-        } else if (payload?.results && Array.isArray(payload.results)) {
-          wishlistItems = payload.results;
-        }
-
-        state.wishlist = normalizeWishlistItems(wishlistItems);
-        localStorage.setItem('gs_wishlist', JSON.stringify(state.wishlist));
-      })
-      // Toggle Wishlist
-      .addCase(toggleWishlistServer.fulfilled, (state, action) => {
-        const { productId, data } = action.payload;
-        // If server returns updated wishlist in data or as top-level array, use it
-        const serverWishlist = data?.wishlist || (Array.isArray(data) ? data : null);
-
-        if (Array.isArray(serverWishlist)) {
-          state.wishlist = normalizeWishlistItems(serverWishlist);
-        } else {
-          // Fallback to local toggle if server doesn't return full list
-          if (state.wishlist.includes(productId)) {
-            state.wishlist = state.wishlist.filter(id => id !== productId);
-          } else {
-            state.wishlist.push(productId);
-          }
-        }
-        localStorage.setItem('gs_wishlist', JSON.stringify(state.wishlist));
       })
       // Server-side Cart Actions
       .addCase(addToCartServer.fulfilled, (state, action) => {
@@ -418,7 +334,6 @@ export const {
   addToCart,
   removeFromCart,
   updateCartQuantity,
-  toggleWishlist,
   placeOrder,
   cancelOrder,
   clearCart,

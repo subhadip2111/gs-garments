@@ -8,6 +8,11 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: 'localhost',
+      headers: {
+        // Allow Firebase Auth popup to communicate back to the opener
+        'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+        'Cross-Origin-Embedder-Policy': 'unsafe-none',
+      },
     },
     plugins: [react()],
     define: {

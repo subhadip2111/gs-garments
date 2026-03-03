@@ -9,16 +9,14 @@ import {
   addToCart,
   removeFromCart,
   updateCartQuantity,
-  toggleWishlist,
   placeOrder,
   cancelOrder,
   clearCart,
   recalculateDiscounts,
-  fetchWishlist,
   fetchCart,
-  toggleWishlistServer,
   addToCartServer
 } from './store/cartSlice';
+import { fetchWishlist, toggleWishlistServer, setWishlistFromUser, clearWishlist } from './store/wishlistSlice';
 import {
   setQuickViewProduct,
   setSharedProduct,
@@ -154,7 +152,12 @@ function AppContent() {
           const latestUser = response.user || response.data || response;
           dispatch(setCurrentUser(latestUser));
 
-          // Proactively sync cart and wishlist on login/app-load
+          // Seed wishlist immediately from user object (instant, no API wait)
+          if (latestUser?.wishlist && Array.isArray(latestUser.wishlist)) {
+            dispatch(setWishlistFromUser(latestUser.wishlist));
+          }
+
+          // Then confirm with server (will overwrite with authoritative data)
           dispatch(fetchCart());
           dispatch(fetchWishlist());
         } catch (error) {

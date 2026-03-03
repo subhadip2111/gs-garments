@@ -6,6 +6,7 @@ import { useDispatch, useSelector, TypedUseSelectorHook } from "react-redux";
 
 import authReducer from "./authSlice";
 import cartReducer from "./cartSlice";
+import wishlistReducer from "./wishlistSlice";
 import productReducer from "./productSlice";
 import uiReducer from "./uiSlice";
 import categoryReducer from "./categorySlice";
@@ -22,6 +23,7 @@ const persistConfig = {
 const rootReducer = combineReducers({
   auth: authReducer,
   cart: cartReducer,
+  wishlist: wishlistReducer,
   products: productReducer,
   ui: uiReducer,
   category: categoryReducer,
