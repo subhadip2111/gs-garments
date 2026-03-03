@@ -511,7 +511,7 @@ const BannerManager: React.FC = () => {
                                         className={inputCls}
                                         onChange={(e) => {
                                             if (e.target.value) {
-                                                setForm({ ...form, ctaLink: `https://gssarees.com/?category=${e.target.value}` });
+                                                setForm({ ...form, ctaLink: `${process.env.VITE_GSAREES_URL}/?category=${e.target.value}` });
                                             }
                                         }}
                                         value=""
@@ -535,7 +535,7 @@ const BannerManager: React.FC = () => {
                                         className={inputCls}
                                         onChange={(e) => {
                                             if (e.target.value) {
-                                                setForm({ ...form, secondaryCtaLink: `https://gssarees.com/?category=${e.target.value}` });
+                                                setForm({ ...form, secondaryCtaLink: `${process.env.VITE_GSAREES_URL}/?category=${e.target.value}` });
                                             }
                                         }}
                                         value=""
@@ -649,7 +649,7 @@ const BannerManager: React.FC = () => {
                                                     className={`${inputCls} !text-xs mb-2`}
                                                     onChange={(e) => {
                                                         if (e.target.value) {
-                                                            updateBrandField(idx, 'link', `https://gssarees.com/?category=${e.target.value}`);
+                                                            updateBrandField(idx, 'link', `${process.env.VITE_GSAREES_URL}/?category=${e.target.value}`);
                                                         }
                                                     }}
                                                     value=""

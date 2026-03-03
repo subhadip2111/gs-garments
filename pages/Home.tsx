@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LAUNCH_PROMOS, HOME_CONFIG } from '../constants';
+import { LAUNCH_PROMOS } from '../constants';
 import ProductCard from '../components/ProductCard';
 import ProductSkeleton from '../components/ProductSkeleton';
 import { useAppSelector, useAppDispatch } from '../store';
 import { BannerConfig, SpotlightConfig, GridConfig, BrandsConfig } from '../types';
 import { getTrendingProducts, getNewArrivals } from '../api/auth/ProductApi';
 import { setProducts, setLoadingProducts } from '../store/productSlice';
+import { getHomeConfig } from '@/api/auth/HomeConfigApi';
+import { fetchBanners } from '@/store/homeConfigSlice';
 
 const Home: React.FC = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
   const products = useAppSelector((state) => state.products.items);
   const isLoadingProducts = useAppSelector((state) => state.products.isLoading);
+  const banners = useAppSelector((state) => state.homeConfig.banners);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   // Fetch critical sections on mount
@@ -24,10 +27,7 @@ const Home: React.FC = () => {
           getTrendingProducts(),
           getNewArrivals()
         ]);
-
-        // Merge into redux store
         const merged = [...(trending.results || trending), ...(arrivals.results || arrivals)];
-        // Deduplicate by ID
         const unique = Array.from(new Map(merged.map(p => [p._id || p.id, p])).values());
         dispatch(setProducts(unique));
       } catch (err) {
@@ -36,7 +36,21 @@ const Home: React.FC = () => {
         dispatch(setLoadingProducts(false));
       }
     };
+
+    const fetchHomeConfigData = async () => {
+      try {
+        const response = await getHomeConfig();
+        const sections = response?.results || response?.data || response;
+        if (Array.isArray(sections)) {
+          dispatch(fetchBanners(sections));
+        }
+      } catch (error) {
+        console.error('Failed to fetch home config', error);
+      }
+    };
+
     fetchHomeData();
+    fetchHomeConfigData();
   }, [dispatch]);
 
   const handleCopy = (code: string) => {
@@ -270,7 +284,7 @@ const Home: React.FC = () => {
   return (
     <div className="animate-in fade-in duration-1000 overflow-hidden">
       <div className="space-y-12 bg-white">
-        {HOME_CONFIG.sections?.map((section, index) => {
+        {banners?.map((section: any, index: number) => {
           switch (section.type) {
             case 'banner': return renderBanner(section as BannerConfig, index);
             case 'spotlight': return renderSpotlight(section as SpotlightConfig, index);

@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
       'process.env.VITE_FIREBASE_APP_ID': JSON.stringify(env.VITE_FIREBASE_APP_ID),
       'process.env.VITE_BACKEND_URL': JSON.stringify(env.VITE_BACKEND_URL),
       'process.env.REDIRECT_URL': JSON.stringify(env.REDIRECT_URL),
-
+      'process.env.VITE_GSAREES_URL': JSON.stringify(env.VITE_GSAREES_URL),
 
     },
     resolve: {
