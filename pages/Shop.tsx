@@ -189,7 +189,7 @@ const Shop: React.FC = () => {
               label={cat.name}
               count={filterCounts[`cat:${catId}`]}
               isChecked={activeCategory === catId}
-              onChange={() => updateParams('category', catId)}
+              onChange={() => updateParams('category', activeCategory === catId ? 'All' : catId)}
             />
           );
         })}
@@ -205,7 +205,7 @@ const Shop: React.FC = () => {
                 label={sub.name}
                 count={filterCounts[`sub:${subId}`]}
                 isChecked={activeSubcategory === subId}
-                onChange={() => updateParams('subcategory', subId)}
+                onChange={() => updateParams('subcategory', activeSubcategory === subId ? 'All' : subId)}
               />
             );
           })}
@@ -219,7 +219,7 @@ const Shop: React.FC = () => {
             label={brand}
             count={filterCounts[`brand:${brand}`]}
             isChecked={activeBrand === brand}
-            onChange={() => updateParams('brand', brand)}
+            onChange={() => updateParams('brand', activeBrand === brand ? 'All' : brand)}
           />
         ))}
       </FilterSection>

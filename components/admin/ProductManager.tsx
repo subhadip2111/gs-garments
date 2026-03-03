@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Plus, Edit2, Trash2, Search, Eye, X, Upload, Ruler, Palette,
     CheckCircle2, ChevronRight, ChevronLeft, Tag, Package, Star,
@@ -86,6 +86,9 @@ const ProductManager: React.FC = () => {
     const [page, setPage] = useState(1);
     const limit = 10;
 
+    // Debounce timer for search
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     // Categories & Subcategories
     const [categories, setCategories] = useState<any[]>([]);
     const [subcategories, setSubcategories] = useState<any[]>([]);
@@ -111,11 +114,15 @@ const ProductManager: React.FC = () => {
     }, []);
 
     /* ── fetch products ── */
-    const fetchProducts = async (pageNum = 1) => {
+    const fetchProducts = useCallback(async (pageNum = 1, keyword = '') => {
         setLoading(true);
         dispatch(setAdminProductsLoading(true));
         try {
-            const data = await getAllProducts({ page: pageNum, limit });
+            const params: any = { page: pageNum, limit };
+            if (keyword.trim()) {
+                params.search = keyword.trim();
+            }
+            const data = await getAllProducts(params);
             const results = Array.isArray(data) ? data : (data.results ?? []);
             dispatch(setAdminProducts(results));
             dispatch(setAdminProductsPagination({
@@ -129,9 +136,22 @@ const ProductManager: React.FC = () => {
             setLoading(false);
             dispatch(setAdminProductsLoading(false));
         }
-    };
+    }, [dispatch, limit, showToast]);
 
-    useEffect(() => { fetchProducts(page); }, [page]);
+    // Fetch on page change
+    useEffect(() => { fetchProducts(page, search); }, [page]);
+
+    // Debounced search: re-fetch when search keyword changes
+    useEffect(() => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+            setPage(1);
+            fetchProducts(1, search);
+        }, 400);
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+    }, [search]);
 
     /* ── image handling ── */
     const handleImageFilesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -415,21 +435,7 @@ const ProductManager: React.FC = () => {
         }
     };
 
-    /* ── filtered+sorted ── */
-    const displayed = [...products]
-        .filter(p =>
-            p.name?.toLowerCase().includes(search.toLowerCase()) ||
-            (p.sku || '').toLowerCase().includes(search.toLowerCase()) ||
-            getBrandName(p.brand).toLowerCase().includes(search.toLowerCase()) ||
-            getCategoryName(p.category).toLowerCase().includes(search.toLowerCase())
-        )
-        .sort((a, b) => {
-            if (sortBy === 'price') return (a.price || 0) - (b.price || 0);
-            if (sortBy === 'stock') return totalStock(b) - totalStock(a);
-            return (a.name || '').localeCompare(b.name || '');
-        });
-
-    /* ── get category/subcategory name helpers ── */
+    /* ── get category/subcategory/brand name helpers ── */
     const getCategoryName = (cat: any) => {
         if (!cat) return '—';
         if (typeof cat === 'string') {
@@ -446,7 +452,6 @@ const ProductManager: React.FC = () => {
         }
         return sub.name || '—';
     };
-
     const getBrandName = (brand: any) => {
         if (!brand) return '—';
         if (typeof brand === 'string') {
@@ -455,6 +460,20 @@ const ProductManager: React.FC = () => {
         }
         return brand.name || '—';
     };
+
+    /* ── filtered+sorted ── */
+    const displayed = [...products]
+        .filter(p =>
+            p.name?.toLowerCase().includes(search.toLowerCase()) ||
+            (p.sku || '').toLowerCase().includes(search.toLowerCase()) ||
+            getBrandName(p.brand).toLowerCase().includes(search.toLowerCase()) ||
+            getCategoryName(p.category).toLowerCase().includes(search.toLowerCase())
+        )
+        .sort((a, b) => {
+            if (sortBy === 'price') return (a.price || 0) - (b.price || 0);
+            if (sortBy === 'stock') return totalStock(b) - totalStock(a);
+            return (a.name || '').localeCompare(b.name || '');
+        });
 
     /* ── filter subcategories by selected category ── */
     const filteredSubcategories = form.category

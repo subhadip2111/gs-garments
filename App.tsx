@@ -190,7 +190,10 @@ function AppContent() {
         } catch (error) {
           console.log("Error syncing user data:", error);
         }
-      } else if (!firebaseUser) {
+      } else if (!firebaseUser && !accessToken) {
+        // Only clear state if there's no existing token.
+        // Admin users login via backend API (not Firebase), so firebaseUser
+        // will be null on refresh — we must NOT wipe their persisted tokens.
         dispatch(setUser(null));
         dispatch(setToken(null));
       }
