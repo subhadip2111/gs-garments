@@ -11,6 +11,7 @@ import { auth, signOut } from '../services/firebase';
 import { Address } from '../types';
 import { updateProfileDetails } from '@/api/auth/authApi';
 import * as addressApi from '../api/auth/addressApi';
+import ReviewModal from '../components/ReviewModal';
 
 const Profile: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -56,6 +57,10 @@ const Profile: React.FC = () => {
     "Delivery time is too long",
     "Need to change shipping address"
   ];
+
+  // Review State
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewProduct, setReviewProduct] = useState<{ id: string; name: string } | null>(null);
 
   // Form State
   const [updating, setUpdating] = useState(false);
@@ -399,7 +404,15 @@ const Profile: React.FC = () => {
 
                                       {order.status === 'Delivered' && (
                                         <div className="flex flex-wrap gap-4 mt-4">
-                                          <button onClick={() => navigate(`/product/${product?._id || product?.id}`)} className="text-[9px] font-black uppercase tracking-widest underline underline-offset-4 hover:text-black">Write Review</button>
+                                          <button
+                                            onClick={() => {
+                                              setReviewProduct({ id: product?._id || product?.id, name: product?.name || 'Product' });
+                                              setIsReviewModalOpen(true);
+                                            }}
+                                            className="text-[9px] font-black uppercase tracking-widest underline underline-offset-4 hover:text-black"
+                                          >
+                                            Write Review
+                                          </button>
 
                                           {/* WhatsApp Share */}
                                           <button onClick={() => {
@@ -960,7 +973,20 @@ const Profile: React.FC = () => {
           </div>
         )
       }
-    </div >
+
+      {/* Product Review Modal */}
+      {reviewProduct && (
+        <ReviewModal
+          isOpen={isReviewModalOpen}
+          onClose={() => setIsReviewModalOpen(false)}
+          productId={reviewProduct.id}
+          productName={reviewProduct.name}
+          onSuccess={() => {
+            dispatch(fetchOrders());
+          }}
+        />
+      )}
+    </div>
   );
 };
 

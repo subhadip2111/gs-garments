@@ -110,3 +110,17 @@ export const uploadsBulkImages = async (images: File[]) => {
     });
     return response.data
 }
+
+export const submitProductReview = async (productId: string, formData: FormData) => {
+    const response = await apiClient.post(`/products/${productId}/reviews`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+    return response.data;
+}
+
+export const getProductReviews = async (productId: string, params?: { page?: number; limit?: number; sortBy?: string }) => {
+    const response = await apiClient.get(`/products/${productId}/reviews`, { params });
+    return response.data;
+}

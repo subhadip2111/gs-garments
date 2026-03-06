@@ -10,12 +10,21 @@ import ProductSkeleton from '../components/ProductSkeleton';
 import ProductDetailSkeleton from '../components/ProductDetailSkeleton';
 import { Product, Review } from '../types';
 import Product360View from '../components/Product360View';
-import { getProductById, getAllProducts, getSimilarProducts } from '../api/auth/ProductApi';
+import { getProductById, getAllProducts, getSimilarProducts, getProductReviews } from '../api/auth/ProductApi';
 import { setLoadingProducts } from '../store/productSlice';
 import { useToast } from '../components/Toast';
 
-const RatingHistogram: React.FC<{ rating: number; reviewsCount: number }> = ({ rating, reviewsCount }) => {
-  const distribution = [70, 15, 8, 5, 2]; // Mocked distribution percentages
+const RatingHistogram: React.FC<{ reviews: any[], totalReviews: number }> = ({ reviews, totalReviews }) => {
+  // Calculate distribution based on available reviews
+  const counts = [0, 0, 0, 0, 0];
+  reviews.forEach(r => {
+    const star = Math.min(5, Math.max(1, Math.round(r.rating || 5)));
+    counts[5 - star]++;
+  });
+
+  const validReviewCount = reviews.length > 0 ? reviews.length : 1;
+  const distribution = counts.map(count => Math.round((count / validReviewCount) * 100));
+
   return (
     <div className="space-y-1 w-full max-w-xs">
       {distribution.map((pct, i) => (
@@ -122,14 +131,15 @@ const ProductDetail: React.FC = () => {
   const [copySuccess, setCopySuccess] = useState(false);
   const [is360Active, setIs360Active] = useState(false);
 
-  // Review State
-  const [reviews, setReviews] = useState<Review[]>(MOCK_REVIEWS);
-  const [isWritingReview, setIsWritingReview] = useState(false);
-  const [newReview, setNewReview] = useState({ rating: 5, comment: '', images: [] as string[] });
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [loadingRelated, setLoadingRelated] = useState(false);
+
+  // Live Review State
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsPagination, setReviewsPagination] = useState({ page: 1, totalPages: 1, totalResults: 0 });
+  const [sortBy, setSortBy] = useState('createdAt:desc');
 
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
-  const [loadingRelated, setLoadingRelated] = useState(false);
 
   // Dynamic Delivery Logic
   const estimatedDeliveryDate = useMemo(() => {
@@ -165,6 +175,28 @@ const ProductDetail: React.FC = () => {
     fetchProduct();
   }, [id, dispatch]);
 
+  useEffect(() => {
+    if (id) fetchReviews(1);
+  }, [id, sortBy]);
+
+  const fetchReviews = async (page: number) => {
+    if (!id) return;
+    setReviewsLoading(true);
+    try {
+      const data = await getProductReviews(id, { page, limit: 10, sortBy });
+      setReviews(data.results || []);
+      setReviewsPagination({
+        page: data.page || 1,
+        totalPages: data.totalPages || 1,
+        totalResults: data.totalResults || 0
+      });
+    } catch (err) {
+      console.error('Failed to fetch reviews', err);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
   // Derive variant-aware helpers
   const selectedVariant = product?.variants.find(v => v.color.name === selectedColor);
   const availableSizes = selectedVariant?.sizes || [];
@@ -188,46 +220,13 @@ const ProductDetail: React.FC = () => {
   };
 
   const handleHelpful = (reviewId: string) => {
-    setReviews(prev => prev.map(r =>
-      r.id === reviewId ? { ...r, helpfulCount: (r.helpfulCount || 0) + 1 } : r
-    ));
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      Array.from(files).forEach((file: File) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setNewReview(prev => ({
-            ...prev,
-            images: [...prev.images, reader.result as string]
-          }));
-        };
-        reader.readAsDataURL(file);
-      });
-    }
+    // Note: Backend endpoint for marking helpful is not specified in the request
+    // Keeping local UI feedback for now or removing if not needed.
   };
 
   const submitReview = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
-    const review: Review = {
-      id: Math.random().toString(36).substr(2, 9),
-      userId: user.id,
-      userName: user.user_metadata?.full_name || user.email.split('@')[0],
-      rating: newReview.rating,
-      comment: newReview.comment,
-      date: new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date()),
-      images: newReview.images,
-      helpfulCount: 0
-    };
-    setReviews([review, ...reviews]);
-    setNewReview({ rating: 5, comment: '', images: [] });
-    setIsWritingReview(false);
+    // This function originally handled the local mock review submission.
+    // Submission is now handled via ReviewModal from the Profile page.
   };
 
   if (isLoadingProducts) {
@@ -809,86 +808,110 @@ const ProductDetail: React.FC = () => {
         </div>
 
         {/* FEEDBACK & REVIEWS - Boutique Aesthetic */}
-        <section className="pt-16 border-t border-zinc-100">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 lg:gap-16 pb-20">
-            <div className="lg:col-span-1 space-y-8">
-              <div className="space-y-4">
-                <span className="text-zinc-300 text-[9px] font-black uppercase tracking-[0.5em]">Clientele Chronicles</span>
-                <h2 className="text-2xl xl:text-3xl font-serif font-bold italic tracking-tight leading-[0.9]">Exceptional <br /> Perspectives.</h2>
-              </div>
+        {reviews.length > 0 && (
+          <section className="pt-16 border-t border-zinc-100">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 lg:gap-16 pb-20">
+              <div className="lg:col-span-1 space-y-8">
+                <div className="space-y-4">
+                  <span className="text-zinc-300 text-[9px] font-black uppercase tracking-[0.5em]">Clientele Chronicles</span>
+                  <h2 className="text-2xl xl:text-3xl font-serif font-bold italic tracking-tight leading-[0.9]">Exceptional <br /> Perspectives.</h2>
+                </div>
 
-              <div className="flex flex-col gap-5">
-                <div className="flex items-center gap-5 border-b border-zinc-100 pb-5">
-                  <span className="text-5xl font-black text-zinc-950 leading-none">{product.rating.toFixed(1)}</span>
-                  <div className="space-y-2">
-                    <div className="flex text-amber-400 text-[10px]">
-                      {[...Array(5)].map((_, i) => (
-                        <i key={i} className={`fa-solid fa-star ${i < Math.floor(product.rating) ? 'text-amber-400' : 'text-zinc-100'}`}></i>
-                      ))}
-                    </div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-300">{reviews.length} Reflections</p>
+                <div className="flex flex-col gap-5">
+                  <div className="flex items-center gap-5 border-b border-zinc-100 pb-5">
+                    {(() => {
+                      const avgRating = reviews.length > 0
+                        ? reviews.reduce((sum, r) => sum + (r.rating || 5), 0) / reviews.length
+                        : product.rating;
+                      return (
+                        <>
+                          <span className="text-5xl font-black text-zinc-950 leading-none">{avgRating.toFixed(1)}</span>
+                          <div className="space-y-2">
+                            <div className="flex text-amber-400 text-[10px]">
+                              {[...Array(5)].map((_, i) => (
+                                <i key={i} className={`fa-solid fa-star ${i < Math.floor(avgRating) ? 'text-amber-400' : 'text-zinc-100'}`}></i>
+                              ))}
+                            </div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-300">{reviewsPagination.totalResults || 0} Reflections</p>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
+                  <RatingHistogram reviews={reviews} totalReviews={reviewsPagination.totalResults} />
                 </div>
-                <RatingHistogram rating={product.rating} reviewsCount={reviews.length} />
+
               </div>
 
-              {/* <button
-                onClick={() => setIsWritingReview(!isWritingReview)}
-                className="w-full bg-zinc-950 text-white py-6 text-[11px] font-black uppercase tracking-[0.4em] hover:bg-zinc-800 transition-all duration-700 shadow-xl rounded-full flex items-center justify-center gap-4 group"
-              >
-                <i className={`fa-solid ${isWritingReview ? 'fa-xmark' : 'fa-pen-nib'} text-xs group-hover:scale-110 transition-transform`}></i>
-                {isWritingReview ? 'Cancel' : 'Write a Review'}
-              </button> */}
-            </div>
+              <div className="lg:col-span-3">
+                {/* Review submission is now handled from the Profile page for delivered orders */}
+                {(!user || !reviews.some(r => r.user?.id === user.id || r.userId === user.id || r.user === user.id)) && (
+                  <div className="bg-zinc-50 border border-dashed border-zinc-200 rounded-3xl p-10 text-center mb-12">
+                    <i className="fa-solid fa-feather-pointed text-3xl text-zinc-300 mb-4"></i>
+                    <h4 className="text-sm font-black uppercase tracking-widest text-zinc-900 mb-2">Verified Purchase Review</h4>
+                    <p className="text-[11px] text-zinc-400 font-medium max-w-xs mx-auto leading-relaxed">To ensure authentic feedback, reviews can be submitted from your <Link to="/profile?tab=orders" className="text-black underline underline-offset-4">Order History</Link> after your items are delivered.</p>
+                  </div>
+                )}
 
-            <div className="lg:col-span-3">
-              {isWritingReview && (
-                <div className="mb-24 p-12 bg-zinc-50/50 border border-zinc-100 rounded-sm animate-in slide-in-from-top duration-1000">
-                  <form onSubmit={submitReview} className="space-y-10 max-w-3xl">
-                    <div className="space-y-6">
-                      <label className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-300 block">Archetype Rating</label>
-                      <div className="flex gap-4">
-                        {[1, 2, 3, 4, 5].map(star => (
-                          <button key={star} type="button" onClick={() => setNewReview(prev => ({ ...prev, rating: star }))} className={`text-2xl transition-all duration-500 hover:scale-125 ${newReview.rating >= star ? 'text-amber-400' : 'text-zinc-100'}`}><i className="fa-solid fa-star"></i></button>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="space-y-6">
-                      <label className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-300 block">Perspective Commentary</label>
-                      <textarea required rows={6} value={newReview.comment} onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))} placeholder="Share your experience with this archival piece..." className="w-full bg-white border border-zinc-100 p-8 text-sm font-serif font-medium italic outline-none focus:border-black transition-all resize-none shadow-sm" />
-                    </div>
-                    <button type="submit" className="bg-black text-white px-20 py-6 text-[11px] font-black uppercase tracking-[0.4em] hover:bg-zinc-800 transition-all shadow-2xl active:scale-95">Catalog Perspective</button>
-                  </form>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
-                {reviews.map(review => (
-                  <div key={review.id} className="space-y-8 animate-in fade-in duration-1000 group">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-2">
-                        <h4 className="text-[14px] font-black uppercase tracking-tight text-zinc-950">{review.userName}</h4>
-                        <div className="flex items-center gap-3">
-                          <span className="text-[10px] text-zinc-300 uppercase font-black tracking-widest">{review.date}</span>
-                          <div className="w-1 h-1 bg-zinc-100 rounded-full"></div>
-                          <span className="text-[8px] text-emerald-500 font-black uppercase tracking-widest">Verified Collector</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+                  {reviews.map(review => (
+                    <div key={review.id} className="space-y-8 animate-in fade-in duration-1000 group">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-2">
+                          <h4 className="text-[14px] font-black uppercase tracking-tight text-zinc-950">{review.userName}</h4>
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] text-zinc-300 uppercase font-black tracking-widest">{review.date}</span>
+                            <div className="w-1 h-1 bg-zinc-100 rounded-full"></div>
+                            <span className="text-[8px] text-emerald-500 font-black uppercase tracking-widest">Verified Collector</span>
+                          </div>
+                        </div>
+                        <div className="flex text-amber-400 text-[10px] pt-1">
+                          {[...Array(5)].map((_, i) => (
+                            <i key={i} className={`fa-solid fa-star ${i < review.rating ? 'text-amber-400' : 'text-zinc-100'}`}></i>
+                          ))}
                         </div>
                       </div>
-                      <div className="flex text-amber-400 text-[10px] pt-1">
-                        {[...Array(5)].map((_, i) => (
-                          <i key={i} className={`fa-solid fa-star ${i < review.rating ? 'text-amber-400' : 'text-zinc-100'}`}></i>
-                        ))}
-                      </div>
+                      <blockquote className="text-[14px] text-zinc-500 font-serif font-medium italic leading-relaxed pl-6 border-l-2 border-zinc-100 group-hover:border-zinc-900 transition-colors duration-700">
+                        "{review.comment}"
+                      </blockquote>
+
+                      {review.images && review.images.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pl-6">
+                          {review.images.map((img: string, idx: number) => (
+                            <div key={idx} className="w-16 h-20 rounded-lg overflow-hidden border border-zinc-100">
+                              <img src={img} className="w-full h-full object-cover" alt={`Review ${idx}`} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <blockquote className="text-[16px] text-zinc-500 font-serif font-medium italic leading-relaxed pl-6 border-l-2 border-zinc-100 group-hover:border-zinc-900 transition-colors duration-700">
-                      "{review.comment}"
-                    </blockquote>
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {reviewsPagination.totalPages > 1 && (
+                  <div className="mt-16 flex items-center gap-4">
+                    <button
+                      disabled={reviewsPagination.page <= 1}
+                      onClick={() => fetchReviews(reviewsPagination.page - 1)}
+                      className="flex-shrink-0 w-12 h-12 rounded-full border border-zinc-100 flex items-center justify-center hover:bg-black hover:text-white transition-all disabled:opacity-20"
+                    >
+                      <i className="fa-solid fa-chevron-left text-[10px]"></i>
+                    </button>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Page {reviewsPagination.page} of {reviewsPagination.totalPages}</span>
+                    <button
+                      disabled={reviewsPagination.page >= reviewsPagination.totalPages}
+                      onClick={() => fetchReviews(reviewsPagination.page + 1)}
+                      className="flex-shrink-0 w-12 h-12 rounded-full border border-zinc-100 flex items-center justify-center hover:bg-black hover:text-white transition-all disabled:opacity-20"
+                    >
+                      <i className="fa-solid fa-chevron-right text-[10px]"></i>
+                    </button>
                   </div>
-                ))}
+                )}
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Similar Collection Section */}
         <section className="pt-32 pb-40 border-t border-zinc-100">

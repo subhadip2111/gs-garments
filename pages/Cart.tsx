@@ -45,7 +45,7 @@ const Cart: React.FC = () => {
 
   const bagDiscount = totalMrp - subtotal;
 
-  const shipping = subtotal > 1000 ? 0 : 150;
+  const shipping = subtotal > 999 ? 0 : 150;
 
   const coupon = MOCK_COUPONS.find(c => c.id === appliedCouponId);
   let couponDiscount = 0;
