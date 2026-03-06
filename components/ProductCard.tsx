@@ -21,8 +21,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const productId = product._id || product.id;
   const isWishlisted = wishlist.includes(productId);
 
-  const discountPercentage = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+  const price = product.variants?.[0]?.sizes?.[0]?.price || product.price || 0;
+  const originalPrice = product.variants?.[0]?.sizes?.[0]?.originalPrice || product.originalPrice;
+
+  const discountPercentage = originalPrice
+    ? Math.round(((originalPrice - price) / originalPrice) * 100)
     : null;
 
   const handleNavigateToDetail = (e: React.MouseEvent) => {
@@ -120,7 +123,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             {product.name}
           </h3>
           <div className="flex flex-col items-end">
-            <span className="text-[14px] font-black text-zinc-950 tracking-tighter">₹{(product.price || 0).toLocaleString('en-IN')}</span>
+            <span className="text-[14px] font-black text-zinc-950 tracking-tighter">₹{(price || 0).toLocaleString('en-IN')}</span>
           </div>
         </div>
 
@@ -134,8 +137,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               {brandName}
             </span>
           </div>
-          {product.originalPrice && (
-            <span className="text-[10px] text-zinc-200 line-through italic font-serif">₹{(product.originalPrice || 0).toLocaleString('en-IN')}</span>
+          {originalPrice && (
+            <span className="text-[10px] text-zinc-200 line-through italic font-serif">₹{(originalPrice || 0).toLocaleString('en-IN')}</span>
           )}
         </div>
       </div>

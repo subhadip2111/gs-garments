@@ -23,20 +23,29 @@ const Cart: React.FC = () => {
     }
   }, [cart, catalog, dispatch]);
 
-  const cartDetails = cart.map(item => {
+  // Pre-compute prices once per cart/catalog change to avoid repeated .find() lookups
+  const cartDetails = React.useMemo(() => cart.map(item => {
     const product = item.product || catalog.find(p => (p._id || p.id) === item.productId);
-    return { ...item, product };
-  });
+    let itemPrice = 0;
+    let itemOriginalPrice = 0;
+    if (product) {
+      const variant = product.variants?.find((v: any) => v.color?.name === item.selectedColor);
+      const sizeObj = variant?.sizes?.find((s: any) => s.size === item.selectedSize);
+      itemPrice = sizeObj?.price || product.variants?.[0]?.sizes?.[0]?.price || product.price || 0;
+      itemOriginalPrice = sizeObj?.originalPrice || product.variants?.[0]?.sizes?.[0]?.originalPrice || product.originalPrice || 0;
+    }
+    return { ...item, product, itemPrice, itemOriginalPrice };
+  }), [cart, catalog]);
 
-  const subtotal = cartDetails.reduce((acc, item) => acc + (item.product?.price || 0) * item.quantity, 0);
+  const subtotal = React.useMemo(() => cartDetails.reduce((acc, item) => acc + item.itemPrice * item.quantity, 0), [cartDetails]);
 
-  const totalMrp = cartDetails.reduce((acc, item) => {
-    return acc + (item.product?.originalPrice || item.product?.price || 0) * item.quantity;
-  }, 0);
+  const totalMrp = React.useMemo(() => cartDetails.reduce((acc, item) => {
+    return acc + (item.itemOriginalPrice || item.itemPrice) * item.quantity;
+  }, 0), [cartDetails]);
 
   const bagDiscount = totalMrp - subtotal;
 
-  const shipping = subtotal > 5000 ? 0 : 150;
+  const shipping = subtotal > 1000 ? 0 : 150;
 
   const coupon = MOCK_COUPONS.find(c => c.id === appliedCouponId);
   let couponDiscount = 0;
@@ -49,7 +58,6 @@ const Cart: React.FC = () => {
   }
 
   const finalTotal = subtotal + shipping - comboDiscount - couponDiscount;
-  console.log("items", cartDetails)
   if (cart.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-40 text-center">
@@ -89,10 +97,10 @@ const Cart: React.FC = () => {
                   </div>
                   <p className="text-sm text-gray-500 mt-1">{item.product?.category && (typeof item.product.category === 'object' ? item.product.category.name : item.product.category)} • {item.product?.subcategory && (typeof item.product.subcategory === 'object' ? item.product.subcategory.name : item.product.subcategory)}</p>
 
-                  {item.product?.originalPrice && (
+                  {item.itemOriginalPrice > item.itemPrice && (
                     <div className="mt-2 flex items-center gap-3">
                       <span className="text-[9px] font-black bg-red-600 text-white px-2 py-0.5 uppercase tracking-widest">Offer Applied</span>
-                      <span className="text-xs text-gray-300 line-through italic">₹{(item.product.originalPrice || 0).toLocaleString('en-IN')}</span>
+                      <span className="text-xs text-gray-300 line-through italic">₹{(item.itemOriginalPrice || 0).toLocaleString('en-IN')}</span>
                     </div>
                   )}
 
@@ -118,10 +126,10 @@ const Cart: React.FC = () => {
                     </button>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-bold">₹{((item.product?.price || 0) * item.quantity).toLocaleString('en-IN')}</p>
-                    {item.product?.originalPrice && (
+                    <p className="text-lg font-bold">₹{(item.itemPrice * item.quantity).toLocaleString('en-IN')}</p>
+                    {item.itemOriginalPrice > item.itemPrice && (
                       <p className="text-[9px] font-bold text-red-600 uppercase tracking-widest">
-                        Saved ₹{(((item.product.originalPrice - item.product.price) * item.quantity) || 0).toLocaleString('en-IN')}
+                        Saved ₹{(((item.itemOriginalPrice - item.itemPrice) * item.quantity) || 0).toLocaleString('en-IN')}
                       </p>
                     )}
                   </div>

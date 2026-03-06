@@ -23,11 +23,11 @@ const EMPTY_FORM = {
     brand: '',
     category: '',
     subcategory: '',
-    price: 0,
-    originalPrice: 0,
+    // price: 0,
+    // originalPrice: 0,
     description: '',
     images: [] as string[],
-    variants: [] as { color: { name: string; hex: string; images: string[] }; sizes: { size: string; quantity: number }[] }[],
+    variants: [] as { color: { name: string; hex: string; images: string[] }; sizes: { size: string; quantity: number, price: number, originalPrice: number }[] }[],
     fabric: '',
     specifications: [] as string[],
     materialAndCare: [] as string[],
@@ -216,13 +216,25 @@ const ProductManager: React.FC = () => {
         ...prev, variants: prev.variants.map((v, i) => {
             if (i !== variantIdx) return v;
             const has = v.sizes.find(s => s.size === size);
-            return { ...v, sizes: has ? v.sizes.filter(s => s.size !== size) : [...v.sizes, { size, quantity: 0 }] };
+            return { ...v, sizes: has ? v.sizes.filter(s => s.size !== size) : [...v.sizes, { size, quantity: 0, price: 0, originalPrice: 0 }] };
         })
     }));
     const updateVariantStock = (variantIdx: number, size: string, quantity: number) => setForm(prev => ({
         ...prev, variants: prev.variants.map((v, i) => {
             if (i !== variantIdx) return v;
             return { ...v, sizes: v.sizes.map(s => s.size === size ? { ...s, quantity } : s) };
+        })
+    }));
+    const updateVariantSizePrice = (variantIdx: number, size: string, price: number) => setForm(prev => ({
+        ...prev, variants: prev.variants.map((v, i) => {
+            if (i !== variantIdx) return v;
+            return { ...v, sizes: v.sizes.map(s => s.size === size ? { ...s, price } : s) };
+        })
+    }));
+    const updateVariantSizeOriginalPrice = (variantIdx: number, size: string, originalPrice: number) => setForm(prev => ({
+        ...prev, variants: prev.variants.map((v, i) => {
+            if (i !== variantIdx) return v;
+            return { ...v, sizes: v.sizes.map(s => s.size === size ? { ...s, originalPrice } : s) };
         })
     }));
 
@@ -322,8 +334,8 @@ const ProductManager: React.FC = () => {
             brand: brandId || '',
             category: catId || '',
             subcategory: subId || '',
-            price: p.price || 0,
-            originalPrice: p.originalPrice || 0,
+            // price: p.price || 0,
+            // originalPrice: p.originalPrice || 0,
             description: p.description || '',
             images: p.images || [],
             variants: ((p as any).variants || []).map((v: any) => ({ ...v, color: { ...v.color, images: v.color?.images || [] } })),
@@ -348,7 +360,7 @@ const ProductManager: React.FC = () => {
         if (!form.sku.trim()) { showToast('SKU is required', 'error'); return; }
         if (!form.category) { showToast('Category is required', 'error'); return; }
         if (!form.subcategory) { showToast('Subcategory is required', 'error'); return; }
-        if (!form.price || form.price <= 0) { showToast('Price must be greater than 0', 'error'); return; }
+        if (!form.variants.length || !form.variants.some(v => v.sizes.length > 0)) { showToast('At least one variant with sizes is required', 'error'); return; }
         if (!form.description.trim()) { showToast('Description is required', 'error'); return; }
 
         setSubmitting(true);
@@ -380,7 +392,7 @@ const ProductManager: React.FC = () => {
                 .filter(v => v.sizes.length > 0)
                 .map((v, idx) => ({
                     color: { name: v.color?.name?.trim() || v.color?.hex || 'Unnamed', hex: v.color?.hex || '#000000', images: variantImageUrls[idx] || [] },
-                    sizes: v.sizes.map(s => ({ size: s.size, quantity: s.quantity })),
+                    sizes: v.sizes.map(s => ({ size: s.size, quantity: s.quantity, price: s.price, originalPrice: s.originalPrice || undefined })),
                 }));
 
             const payload = {
@@ -389,8 +401,7 @@ const ProductManager: React.FC = () => {
                 brand: (form.brand && typeof form.brand === 'object') ? ((form.brand as any)?._id || (form.brand as any)?.id) : form.brand,
                 category: (form.category && typeof form.category === 'object') ? (form.category?._id || form.category?.id) : form.category,
                 subcategory: (form.subcategory && typeof form.subcategory === 'object') ? (form.subcategory?._id || form.subcategory?.id) : form.subcategory,
-                price: form.price,
-                originalPrice: form.originalPrice || undefined,
+
                 description: form.description,
                 images: imageUrls,
                 variants: cleanedVariants,
@@ -470,7 +481,7 @@ const ProductManager: React.FC = () => {
             getCategoryName(p.category).toLowerCase().includes(search.toLowerCase())
         )
         .sort((a, b) => {
-            if (sortBy === 'price') return (a.price || 0) - (b.price || 0);
+            if (sortBy === 'price') return (a.variants?.[0]?.sizes?.[0]?.price || 0) - (b.variants?.[0]?.sizes?.[0]?.price || 0);
             if (sortBy === 'stock') return totalStock(b) - totalStock(a);
             return (a.name || '').localeCompare(b.name || '');
         });
@@ -593,30 +604,7 @@ const ProductManager: React.FC = () => {
             case 2:
                 return (
                     <div className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
-                            <DrawerField label="Selling Price (₹) " required>
-                                <div className="relative">
-                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 font-black text-black/40 font-serif">₹</span>
-                                    <input type="number" value={form.price || ''} onChange={e => setForm({ ...form, price: parseFloat(e.target.value) || 0 })}
-                                        className="drawer-input pl-8" />
-                                </div>
-                            </DrawerField>
-                            <DrawerField label="MRP / Original (₹)">
-                                <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-black/30 font-serif">₹</span>
-                                    <input type="number" value={form.originalPrice || ''} onChange={e => setForm({ ...form, originalPrice: parseFloat(e.target.value) || 0 })}
-                                        className="drawer-input pl-8" />
-                                </div>
-                            </DrawerField>
-                        </div>
-                        {form.price && form.originalPrice && form.originalPrice > form.price ? (
-                            <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-100 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest">
-                                <TrendingUp size={12} strokeWidth={3} />
-                                {Math.round(((form.originalPrice - form.price) / form.originalPrice) * 100)}% discount applied
-                            </div>
-                        ) : null}
-
-                        {/* Variants (Color → Sizes → Stock) */}
+                        {/* Variants (Color → Sizes → Stock + Price) */}
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-4 flex items-center gap-1.5">
                                 <Palette size={12} /> Color Variants
@@ -665,19 +653,43 @@ const ProductManager: React.FC = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Stock per size */}
+                                            {/* Stock + Price per size */}
                                             {variant.sizes.length > 0 && (
                                                 <div className="border-t border-gray-100 pt-4">
-                                                    <p className="text-[9px] font-black uppercase tracking-widest text-black/40 mb-3">Stock by size</p>
-                                                    <div className="grid grid-cols-2 gap-3">
+                                                    <p className="text-[9px] font-black uppercase tracking-widest text-black/40 mb-3">Stock & Pricing by size</p>
+                                                    <div className="space-y-3">
                                                         {variant.sizes.map(vs => (
-                                                            <div key={vs.size} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100">
-                                                                <span className="text-[10px] font-black uppercase tracking-widest text-black w-14">{vs.size}</span>
-                                                                <input type="number" min={0} value={vs.quantity || ''}
-                                                                    onChange={(e) => updateVariantStock(vIdx, vs.size, parseInt(e.target.value) || 0)}
-                                                                    className="w-16 p-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-center font-black outline-none focus:ring-2 focus:ring-black/5 focus:border-black" />
-                                                                <div className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${vs.quantity > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-400 border-rose-100'}`}>
-                                                                    {vs.quantity > 0 ? 'In Stock' : 'Out'}
+                                                            <div key={vs.size} className="p-3 bg-white rounded-xl border border-gray-100 space-y-2">
+                                                                <div className="flex items-center gap-3">
+                                                                    <span className="text-[10px] font-black uppercase tracking-widest text-black w-14">{vs.size}</span>
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="text-[8px] font-bold text-black/40">Qty</span>
+                                                                        <input type="number" min={0} value={vs.quantity || ''}
+                                                                            onChange={(e) => updateVariantStock(vIdx, vs.size, parseInt(e.target.value) || 0)}
+                                                                            className="w-16 p-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-center font-black outline-none focus:ring-2 focus:ring-black/5 focus:border-black" />
+                                                                    </div>
+                                                                    <div className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${vs.quantity > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-400 border-rose-100'}`}>
+                                                                        {vs.quantity > 0 ? 'In Stock' : 'Out'}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-3 pl-14">
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="text-[8px] font-bold text-black/40">Price ₹</span>
+                                                                        <input type="number" min={0} value={vs.price || ''}
+                                                                            onChange={(e) => updateVariantSizePrice(vIdx, vs.size, parseFloat(e.target.value) || 0)}
+                                                                            className="w-24 p-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-center font-black outline-none focus:ring-2 focus:ring-black/5 focus:border-black" />
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="text-[8px] font-bold text-black/30">MRP ₹</span>
+                                                                        <input type="number" min={0} value={vs.originalPrice || ''}
+                                                                            onChange={(e) => updateVariantSizeOriginalPrice(vIdx, vs.size, parseFloat(e.target.value) || 0)}
+                                                                            className="w-24 p-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-center font-black outline-none focus:ring-2 focus:ring-black/5 focus:border-black" />
+                                                                    </div>
+                                                                    {vs.price > 0 && vs.originalPrice && vs.originalPrice > vs.price && (
+                                                                        <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                                                                            {Math.round(((vs.originalPrice - vs.price) / vs.originalPrice) * 100)}% off
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -935,7 +947,7 @@ const ProductManager: React.FC = () => {
                                     <div className="p-4 space-y-2">
                                         <p className="font-black text-gray-900 text-sm tracking-tight line-clamp-1">{prod.name}</p>
                                         <div className="flex items-center justify-between">
-                                            <span className="font-black text-base text-gray-900 italic font-serif">₹{(prod.price || 0).toLocaleString('en-IN')}</span>
+                                            <span className="font-black text-base text-gray-900 italic font-serif">₹{(prod.variants?.[0]?.sizes?.[0]?.price || 0).toLocaleString('en-IN')}</span>
                                             <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${stock > 0 ? 'bg-gray-50 text-black border-gray-100' : 'bg-rose-50 text-rose-500 border-rose-100'}`}>
                                                 {stock > 0 ? `${stock} left` : 'Out'}
                                             </span>
@@ -988,8 +1000,8 @@ const ProductManager: React.FC = () => {
                                                 <span className="px-2 py-1 bg-gray-100 text-black/60 rounded-full text-[9px] font-black uppercase tracking-widest">{getBrandName(prod.brand)}</span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <p className="font-black text-gray-900 font-serif italic">₹{(prod.price || 0).toLocaleString('en-IN')}</p>
-                                                {prod.originalPrice && <p className="text-[9px] text-black/30 line-through font-bold tracking-widest">₹{(prod.originalPrice || 0).toLocaleString('en-IN')}</p>}
+                                                <p className="font-black text-gray-900 font-serif italic">₹{(prod.variants?.[0]?.sizes?.[0]?.price || 0).toLocaleString('en-IN')}</p>
+                                                {prod.variants?.[0]?.sizes?.[0]?.originalPrice && <p className="text-[9px] text-black/30 line-through font-bold tracking-widest">₹{(prod.variants?.[0]?.sizes?.[0]?.originalPrice || 0).toLocaleString('en-IN')}</p>}
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${stock > 0 ? 'bg-gray-50 text-black border-gray-100' : 'bg-rose-50 text-rose-500 border-rose-100'}`}>
@@ -1120,8 +1132,10 @@ const ProductManager: React.FC = () => {
                 {viewingProduct && (() => {
                     const vp = viewingProduct;
                     const stock = totalStock(vp);
-                    const discount = vp.originalPrice && vp.originalPrice > vp.price
-                        ? Math.round(((vp.originalPrice - vp.price) / vp.originalPrice) * 100)
+                    const firstPrice = vp.variants?.[0]?.sizes?.[0]?.price || 0;
+                    const firstOriginal = vp.variants?.[0]?.sizes?.[0]?.originalPrice || 0;
+                    const discount = firstOriginal && firstOriginal > firstPrice
+                        ? Math.round(((firstOriginal - firstPrice) / firstOriginal) * 100)
                         : 0;
                     return (
                         <div className="space-y-6 max-h-[75vh] overflow-y-auto pr-1">
@@ -1178,10 +1192,10 @@ const ProductManager: React.FC = () => {
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 <div className="p-4 bg-black rounded-xl col-span-2 md:col-span-1">
                                     <p className="text-[9px] text-white/40 uppercase font-black tracking-widest mb-1">Price</p>
-                                    <p className="text-2xl font-black text-white tracking-tight font-serif italic">₹{(vp.price || 0).toLocaleString('en-IN')}</p>
-                                    {vp.originalPrice && vp.originalPrice > vp.price && (
+                                    <p className="text-2xl font-black text-white tracking-tight font-serif italic">₹{(firstPrice || 0).toLocaleString('en-IN')}</p>
+                                    {firstOriginal > 0 && firstOriginal > firstPrice && (
                                         <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-xs text-white/30 line-through font-serif">₹{(vp.originalPrice || 0).toLocaleString('en-IN')}</span>
+                                            <span className="text-xs text-white/30 line-through font-serif">₹{(firstOriginal || 0).toLocaleString('en-IN')}</span>
                                             <span className="px-1.5 py-0.5 bg-emerald-500 text-white rounded text-[9px] font-black">{discount}% OFF</span>
                                         </div>
                                     )}
@@ -1249,8 +1263,12 @@ const ProductManager: React.FC = () => {
                                                         {(variant.sizes || []).map((vs: any) => (
                                                             <div key={vs.size} className="bg-white p-2.5 rounded-lg border border-gray-100 text-center">
                                                                 <span className="text-[10px] font-black uppercase tracking-widest text-black block">{vs.size}</span>
-                                                                <span className={`text-lg font-black block mt-0.5 ${vs.quantity > 0 ? 'text-black' : 'text-rose-400'}`}>
-                                                                    {vs.quantity}
+                                                                <span className="text-xs font-black text-black/70 block mt-0.5">₹{(vs.price || 0).toLocaleString('en-IN')}</span>
+                                                                {vs.originalPrice > 0 && vs.originalPrice > vs.price && (
+                                                                    <span className="text-[8px] text-black/30 line-through block">₹{(vs.originalPrice || 0).toLocaleString('en-IN')}</span>
+                                                                )}
+                                                                <span className={`text-sm font-black block mt-0.5 ${vs.quantity > 0 ? 'text-black' : 'text-rose-400'}`}>
+                                                                    {vs.quantity} pcs
                                                                 </span>
                                                                 <div className="w-full bg-gray-100 rounded-full h-1 mt-1.5">
                                                                     <div className={`h-1 rounded-full transition-all ${vs.quantity > 10 ? 'bg-emerald-500' : vs.quantity > 0 ? 'bg-amber-500' : 'bg-rose-400'}`}

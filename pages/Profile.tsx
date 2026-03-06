@@ -479,9 +479,9 @@ const Profile: React.FC = () => {
                                   }
                                 </p>
                                 <div className="mt-8">
-                                  <button className="w-full py-4 border-2 border-black text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all rounded-full shadow-lg">
+                                  {/* <button className="w-full py-4 border-2 border-black text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all rounded-full shadow-lg">
                                     Contact Concierge
-                                  </button>
+                                  </button> */}
                                   <button className="w-full mt-3 py-4 text-[9px] font-bold uppercase tracking-widest text-zinc-400 hover:text-black">
                                     Download Invoice (PDF)
                                   </button>

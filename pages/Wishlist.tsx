@@ -117,9 +117,9 @@ const Wishlist: React.FC = () => {
                             </div>
                             <Link to={`/product/${product?._id || product?.id}`} className="block text-sm font-bold tracking-tight text-gray-900 group-hover:underline line-clamp-2 leading-snug">{product?.name || 'Product'}</Link>
                             <div className="pt-2 flex items-center gap-4">
-                                <span className="text-base font-black tracking-tighter text-black">₹{(product.price || 0).toLocaleString('en-IN')}</span>
-                                {product.originalPrice && (
-                                    <span className="text-xs text-gray-300 line-through italic font-light">₹{(product.originalPrice || 0).toLocaleString('en-IN')}</span>
+                                <span className="text-base font-black tracking-tighter text-black">₹{(product.variants?.[0]?.sizes?.[0]?.price || product.price || 0).toLocaleString('en-IN')}</span>
+                                {(product.variants?.[0]?.sizes?.[0]?.originalPrice || product.originalPrice) && (
+                                    <span className="text-xs text-gray-300 line-through italic font-light">₹{(product.variants?.[0]?.sizes?.[0]?.originalPrice || product.originalPrice || 0).toLocaleString('en-IN')}</span>
                                 )}
                             </div>
                         </div>

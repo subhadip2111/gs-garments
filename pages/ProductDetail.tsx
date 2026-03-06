@@ -306,7 +306,7 @@ const ProductDetail: React.FC = () => {
           selectedSize,
           selectedColor: selectedColor || 'Default',
           quantity: 1,
-          priceAtPurchase: product.price
+          priceAtPurchase: availableSizes.find(s => s.size === selectedSize)?.price || product.variants?.[0]?.sizes?.[0]?.price || product.price || 0
         }
       }
     });
@@ -339,8 +339,11 @@ const ProductDetail: React.FC = () => {
   };
 
   const isWishlisted = wishlist.includes(product._id || product.id);
-  const discountPercentage = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+  const selectedSizeObj = availableSizes.find(s => s.size === selectedSize);
+  const currentPrice = selectedSizeObj?.price || product.variants?.[0]?.sizes?.[0]?.price || product.price || 0;
+  const currentOriginalPrice = selectedSizeObj?.originalPrice || product.variants?.[0]?.sizes?.[0]?.originalPrice || product.originalPrice;
+  const discountPercentage = currentOriginalPrice && currentOriginalPrice > currentPrice
+    ? Math.round(((currentOriginalPrice - currentPrice) / currentOriginalPrice) * 100)
     : null;
 
   const categoryName = (product.category && typeof product.category === 'object') ? (product.category as any).name : product.category;
@@ -488,9 +491,9 @@ const ProductDetail: React.FC = () => {
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 mb-2">Acquisition Price</span>
                     <div className="flex items-baseline gap-4">
-                      <span className="text-2xl sm:text-3xl font-black tracking-tighter text-zinc-950">₹{(product.price || 0).toLocaleString('en-IN')}</span>
-                      {product.originalPrice && (
-                        <span className="text-base text-zinc-400 line-through italic font-serif opacity-60 font-medium">₹{(product.originalPrice || 0).toLocaleString('en-IN')}</span>
+                      <span className="text-2xl sm:text-3xl font-black tracking-tighter text-zinc-950">₹{(currentPrice || 0).toLocaleString('en-IN')}</span>
+                      {currentOriginalPrice && currentOriginalPrice > currentPrice && (
+                        <span className="text-base text-zinc-400 line-through italic font-serif opacity-60 font-medium">₹{(currentOriginalPrice || 0).toLocaleString('en-IN')}</span>
                       )}
                     </div>
                   </div>
@@ -526,7 +529,7 @@ const ProductDetail: React.FC = () => {
                 </div>
               </header>
 
-              <SmartOfferWidget currentTotal={product.price} />
+              <SmartOfferWidget currentTotal={currentPrice} />
 
               {/* Selector Interface */}
               <div className="space-y-8">

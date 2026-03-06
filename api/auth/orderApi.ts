@@ -40,8 +40,8 @@ export const cancelOrder = async (orderId: string, reason?: string) => {
 
 // ----- Admin APIs -----
 
-export const getAllOrders = async (params?: { status?: string; user?: string }) => {
-    const response = await apiClient.get('/orders', { params });
+export const getAllOrders = async (params?: { status?: string; user?: string; page?: number; limit?: number; sortBy?: string }) => {
+    const response = await apiClient.get('/admin/orders', { params });
     return response.data;
 };
 
@@ -51,6 +51,6 @@ export const getOrderStats = async () => {
 };
 
 export const updateOrderStatus = async (orderId: string, payload: { status: string; deliveryDate?: string }) => {
-    const response = await apiClient.patch(`/orders/${orderId}`, payload);
+    const response = await apiClient.patch(`/admin/orders/${orderId}/status`, payload);
     return response.data;
 };

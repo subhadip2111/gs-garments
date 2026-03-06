@@ -85,17 +85,24 @@ const Checkout: React.FC = () => {
   const subtotal = itemsToPurchase.reduce((acc, item) => {
     const productId = item.productId || (item.product as any)?._id || (item.product as any)?.id;
     const product = item.product || catalog.find(p => (p._id || p.id) === productId);
-    return acc + (product?.price || 0) * item.quantity;
+    const variant = product?.variants?.find((v: any) => v.color?.name === item.selectedColor);
+    const sizeObj = variant?.sizes?.find((s: any) => s.size === item.selectedSize);
+    const itemPrice = sizeObj?.price || product?.variants?.[0]?.sizes?.[0]?.price || 0;
+    return acc + itemPrice * item.quantity;
   }, 0);
 
   const totalMrp = itemsToPurchase.reduce((acc, item) => {
     const productId = item.productId || (item.product as any)?._id || (item.product as any)?.id;
     const product = item.product || catalog.find(p => (p._id || p.id) === productId);
-    return acc + (product?.originalPrice || product?.price || 0) * item.quantity;
+    const variant = product?.variants?.find((v: any) => v.color?.name === item.selectedColor);
+    const sizeObj = variant?.sizes?.find((s: any) => s.size === item.selectedSize);
+    const itemPrice = sizeObj?.price || product?.variants?.[0]?.sizes?.[0]?.price || 0;
+    const itemOriginalPrice = sizeObj?.originalPrice || product?.variants?.[0]?.sizes?.[0]?.originalPrice || 0;
+    return acc + (itemOriginalPrice || itemPrice) * item.quantity;
   }, 0);
 
   const bagDiscount = totalMrp - subtotal;
-  const shipping = subtotal > 5000 ? 0 : 150;
+  const shipping = subtotal > 999 ? 0 : 150;
 
   const coupon = MOCK_COUPONS.find(c => c.id === appliedCouponId);
   let couponDiscount = 0;
@@ -166,6 +173,7 @@ const Checkout: React.FC = () => {
       }
 
       const sizeInfo = variant.sizes.find(s => s.size === item.selectedSize);
+      console.log("sizeInfo", sizeInfo)
       if (!sizeInfo) {
         showToast(`Size ${item.selectedSize} not found for ${product.name}`, "error");
         return;
@@ -547,10 +555,13 @@ const Checkout: React.FC = () => {
             <div className="space-y-4 mb-8">
               {itemsToPurchase.map(item => {
                 const product = item.product || catalog.find(p => (p._id || p.id) === item.productId);
+                const variant = product?.variants?.find((v: any) => v.color?.name === item.selectedColor);
+                const sizeObj = variant?.sizes?.find((s: any) => s.size === item.selectedSize);
+                const itemPrice = sizeObj?.price || product?.variants?.[0]?.sizes?.[0]?.price || 0;
                 return (
-                  <div key={`${item.productId} -${item.selectedSize} `} className="flex justify-between text-sm">
+                  <div key={`${item.productId}-${item.selectedSize}`} className="flex justify-between text-sm">
                     <span className="text-gray-500">{product?.name} x{item.quantity}</span>
-                    <span className="font-semibold">₹{(((product?.price || 0) * item.quantity) || 0).toLocaleString('en-IN')}</span>
+                    <span className="font-semibold">₹{((itemPrice * item.quantity) || 0).toLocaleString('en-IN')}</span>
                   </div>
                 );
               })}
@@ -558,7 +569,7 @@ const Checkout: React.FC = () => {
 
             <div className="space-y-4 pt-6 border-t border-gray-100">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500 font-medium">Total MRP</span>
+                <span className="text-gray-500 font-medium">MRP Price</span>
                 <span className="font-bold text-zinc-400 line-through">₹{(totalMrp || 0).toLocaleString('en-IN')}</span>
               </div>
 

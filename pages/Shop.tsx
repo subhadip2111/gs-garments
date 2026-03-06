@@ -45,6 +45,7 @@ const CheckboxOption = ({ label, count, isChecked, onChange }: { label: string, 
 const Shop: React.FC = () => {
   const dispatch = useAppDispatch();
   const products = useAppSelector((state) => state.products.items);
+  console.log("product", products)
   const isLoadingProducts = useAppSelector((state) => state.products.isLoading);
   const [searchParams, setSearchParams] = useSearchParams();
   const [openSections, setOpenSections] = useState<string[]>(['category']);
@@ -122,7 +123,7 @@ const Shop: React.FC = () => {
         return (brandName || p.name).toLowerCase().includes(activeBrand.toLowerCase());
       });
     }
-    result = result.filter(p => p.price <= activePriceMax);
+     result = result.filter(p => (p.variants?.[0]?.sizes?.[0]?.price || p.price || 0) <= activePriceMax);
 
     if (searchQuery) {
       result = result.filter(p => {
@@ -132,8 +133,8 @@ const Shop: React.FC = () => {
       });
     }
 
-    if (activeSort === 'price-low') result.sort((a, b) => a.price - b.price);
-    if (activeSort === 'price-high') result.sort((a, b) => b.price - a.price);
+    if (activeSort === 'price-low') result.sort((a, b) => (a.variants?.[0]?.sizes?.[0]?.price || a.price || 0) - (b.variants?.[0]?.sizes?.[0]?.price || b.price || 0));
+    if (activeSort === 'price-high') result.sort((a, b) => (b.variants?.[0]?.sizes?.[0]?.price || b.price || 0) - (a.variants?.[0]?.sizes?.[0]?.price || a.price || 0));
     if (activeSort === 'popular') result.sort((a, b) => b.rating - a.rating);
     if (activeSort === 'newest') result.reverse();
     return result;
@@ -246,7 +247,6 @@ const Shop: React.FC = () => {
   );
 
   const [activeMobileFilterTab, setActiveMobileFilterTab] = useState('category');
-
   return (
     <div className="bg-white min-h-screen font-sans">
       <div className="max-w-[1920px] mx-auto px-4 sm:px-12 lg:px-20">

@@ -2,6 +2,8 @@
 export interface VariantSize {
   size: string;
   quantity: number;
+  price: number;
+  originalPrice?: number;
 }
 
 export interface ProductVariant {
@@ -17,7 +19,7 @@ export interface Product {
   brand?: string | { id: string; name: string; _id?: string };
   category: string | { id: string; name: string; _id?: string };
   subcategory: string | { id: string; name: string; category?: string; _id?: string };
-  price: number;
+  price?: number;
   originalPrice?: number;
   description: string;
   images: string[];

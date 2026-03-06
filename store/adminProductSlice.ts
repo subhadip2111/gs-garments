@@ -8,11 +8,11 @@ interface AdminProduct {
     brand: string;
     category: any;
     subcategory: any;
-    price: number;
+    price?: number;
     originalPrice?: number;
     description: string;
     images: string[];
-    variants: { color: { name: string; hex: string; images: string[] }; sizes: { size: string; quantity: number }[] }[];
+    variants: { color: { name: string; hex: string; images: string[] }; sizes: { size: string; quantity: number; price: number; originalPrice?: number }[] }[];
     fabric?: string;
     specifications: string[];
     materialAndCare?: string[];
