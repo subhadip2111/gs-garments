@@ -348,7 +348,9 @@ const ProductDetail: React.FC = () => {
   const categoryName = (product.category && typeof product.category === 'object') ? (product.category as any).name : product.category;
   const categoryId = (product.category && typeof product.category === 'object') ? ((product.category as any)._id || (product.category as any).id) : product.category;
   const brandName = (product.brand && typeof product.brand === 'object') ? (product.brand as any).name : (product.brand || 'GS Heritage');
-
+  const avgRating = reviews.length > 0
+    ? reviews.reduce((sum, r) => sum + (r.rating || 5), 0) / reviews.length
+    : product.rating;
   return (
     <div className="bg-white min-h-screen overflow-x-hidden">
       {/* Size Guide Modal Overlay */}
@@ -477,10 +479,14 @@ const ProductDetail: React.FC = () => {
                   <div className="flex items-center gap-2 bg-zinc-50 px-3 py-1.5 rounded-lg border border-zinc-100/50">
                     <div className="flex text-amber-400 text-[10px] gap-0.5">
                       {[...Array(5)].map((_, i) => (
-                        <i key={i} className={`fa-solid fa-star ${i < Math.floor(product.rating) ? 'text-amber-400' : 'text-zinc-200'}`}></i>
+                        <i key={i} className={`fa-solid fa-star ${i < Math.floor(avgRating) ? 'text-amber-400' : 'text-zinc-200'}`}></i>
                       ))}
                     </div>
-                    <span className="text-[10px] font-bold text-zinc-500">{product.rating.toFixed(1)}</span>
+
+                    {
+
+                    }
+                    <span className="text-[10px] font-bold text-zinc-500">{avgRating.toFixed(1)}</span>
                     <div className="w-1 h-1 bg-zinc-200 rounded-full"></div>
                     <span className="text-[10px] font-bold text-zinc-400">{reviews.length} Experiences</span>
                   </div>
