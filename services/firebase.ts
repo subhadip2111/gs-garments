@@ -1,5 +1,5 @@
 
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import {
     getAuth,
     GoogleAuthProvider,
@@ -13,12 +13,11 @@ import {
     onAuthStateChanged,
     signOut
 } from "firebase/auth";
+import { getMessaging, getToken, isSupported, Messaging } from "firebase/messaging";
 
 /**
  * Firebase configuration.
- * Note: The service account JSON provided by the user is for the Admin SDK (backend).
- * For the React frontend, we use these environment variables which correspond to the 
- * Firebase Web App configuration.
+ * For the React frontend, we use VITE_ environment variables.
  */
 const firebaseConfig = {
     apiKey: process.env.VITE_FIREBASE_API_KEY || "",
@@ -29,44 +28,97 @@ const firebaseConfig = {
     appId: process.env.VITE_FIREBASE_APP_ID || ""
 };
 
-/**
- * A "Safe" Firebase initialization.
- * Prevents the app from crashing if configuration is missing and logs a warning.
- */
-const initializeSafeFirebase = () => {
-    const isConfigMissing = Object.values(firebaseConfig).some(val => !val || val === "");
+// ── Safe Firebase Initialization ──
+let firebaseApp: FirebaseApp | null = null;
+let isConfigured = false;
 
-    if (isConfigMissing) {
-        console.warn(
-            "Firebase Client Configuration is incomplete. " +
-            "Authentication features will be disabled until VITE_FIREBASE_* environment variables are set."
-        );
+const isConfigMissing = Object.values(firebaseConfig).some(val => !val || val === "");
 
-        // Return a dummy auth object to prevent immediate reference errors
-        // Standard Firebase SDK doesn't support easy "Proxy-fying" like this, 
-        // but we'll export it and consumers should check for validity.
-        return {
-            auth: null,
-            googleProvider: null,
-            isConfigured: false
-        };
+console.log("[Firebase] Config check:", {
+    apiKey: !!firebaseConfig.apiKey,
+    authDomain: !!firebaseConfig.authDomain,
+    projectId: !!firebaseConfig.projectId,
+    storageBucket: !!firebaseConfig.storageBucket,
+    messagingSenderId: !!firebaseConfig.messagingSenderId,
+    appId: !!firebaseConfig.appId,
+    isConfigMissing
+});
+
+if (isConfigMissing) {
+    console.warn(
+        "[Firebase] Client Configuration is incomplete. " +
+        "Authentication and Messaging features will be disabled."
+    );
+} else {
+    firebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    isConfigured = true;
+    console.log("[Firebase] App initialized successfully. isConfigured:", isConfigured);
+}
+
+const auth = isConfigured && firebaseApp ? getAuth(firebaseApp) : null;
+const googleProvider = isConfigured ? (() => {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    return provider;
+})() : null;
+
+// ── FCM Token Request ──
+// This function:
+// 1. Checks if messaging is supported in this browser
+// 2. Requests notification permission from the user
+// 3. Returns the FCM token string (or null if denied/unsupported)
+export const requestNotificationPermission = async (): Promise<string | null> => {
+    console.log("[FCM] requestNotificationPermission called.");
+    console.log("[FCM] isConfigured:", isConfigured, "firebaseApp:", !!firebaseApp);
+    try {
+        if (!isConfigured || !firebaseApp) {
+            console.log("[FCM] Firebase not configured, skipping FCM token request.");
+            return null;
+        }
+
+        const supported = await isSupported();
+        console.log("[FCM] isSupported():", supported);
+        if (!supported) {
+            console.log("[FCM] Firebase Messaging is NOT supported in this browser.");
+            return null;
+        }
+
+        // Ask the user for notification permission
+        console.log("[FCM] Requesting Notification.requestPermission()...");
+        const permission = await Notification.requestPermission();
+        console.log("[FCM] Permission result:", permission);
+        if (permission !== 'granted') {
+            console.log("[FCM] Notification permission denied by user.");
+            return null;
+        }
+
+        // Permission granted — get the FCM token
+        const messaging: Messaging = getMessaging(firebaseApp);
+        const vapidKey = process.env.VITE_FIREBASE_VAPID_KEY;
+        console.log("[FCM] VAPID Key present:", !!vapidKey);
+        console.log("[FCM] VAPID Key value:", vapidKey?.substring(0, 10) + "...");
+
+        if (!vapidKey) {
+            console.warn("[FCM] VITE_FIREBASE_VAPID_KEY is not set. Cannot retrieve FCM token.");
+            return null;
+        }
+
+        console.log("[FCM] Calling getToken()...");
+        const currentToken = await getToken(messaging, { vapidKey });
+        if (currentToken) {
+            console.log("[FCM] ✅ Token retrieved successfully:", currentToken.substring(0, 20) + "...");
+            return currentToken;
+        } else {
+            console.log("[FCM] ❌ No registration token available (getToken returned empty).");
+            return null;
+        }
+    } catch (error) {
+        console.error("[FCM] ❌ Error retrieving FCM token:", error);
+        return null;
     }
-
-    const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const googleProvider = new GoogleAuthProvider();
-    googleProvider.setCustomParameters({
-        prompt: "select_account"
-    });
-
-    return {
-        auth,
-        googleProvider,
-        isConfigured: true
-    };
 };
 
-export const { auth, googleProvider, isConfigured } = initializeSafeFirebase();
+export { auth, googleProvider, isConfigured };
 
 // Export auth methods for easier consumption
 export {

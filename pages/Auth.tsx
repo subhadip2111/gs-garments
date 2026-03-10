@@ -99,6 +99,7 @@ const Auth: React.FC = () => {
       // The sign-in completes successfully, then onAuthStateChanged in App.tsx
       // picks up the Firebase user, syncs with the backend, and sets token+user.
       const result = await signInWithPopup(auth!, googleProvider!);
+      console.log("snbdjfskjdfs-->",result )
       // Success! onAuthStateChanged will be triggered → setToken → profile fetch
       // The useEffect above will navigate away once user+accessToken are in Redux.
       if (!result.user) {

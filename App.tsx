@@ -24,7 +24,7 @@ import {
 } from './store/uiSlice';
 
 import { Product } from './types';
-import { auth, onAuthStateChanged, isConfigured } from './services/firebase';
+import { auth, onAuthStateChanged, isConfigured, requestNotificationPermission } from './services/firebase';
 import { getAllProducts } from './api/auth/ProductApi';
 
 // --- Components ---
@@ -174,13 +174,22 @@ function AppContent() {
     const unsubscribe = onAuthStateChanged(auth!, async (firebaseUser) => {
       if (firebaseUser && !accessToken) {
         try {
+          // Request Push Notification Permission and get FCM Token
+          console.log("[App] Firebase user detected, requesting FCM token...");
+          const fcmToken = await requestNotificationPermission();
+          const fcmTokensArray = fcmToken ? [fcmToken] : [];
+          console.log("[App] FCM token result:", fcmToken ? fcmToken.substring(0, 20) + "..." : "null");
+          console.log("[App] fcmTokens array being sent:", fcmTokensArray.length, "token(s)");
+
           const response = await saveSocialLoginUserData({
             email: firebaseUser.email,
             fullName: firebaseUser.displayName,
             avatar: firebaseUser.photoURL,
             role: "user",
             socialId: firebaseUser.uid,
+            fcmTokens: fcmTokensArray, // Pass the token to the backend
           });
+          console.log("[App] Social login API response received. Tokens set.");
 
           const tokens = {
             accessToken: response.accessToken,
