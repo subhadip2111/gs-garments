@@ -20,6 +20,7 @@ import {
     IndianRupee,
     ArrowUpRight,
     ArrowDownRight,
+    BadgePercent ,
     Loader2,
 } from "lucide-react";
 import { useAppDispatch } from "../store";
@@ -74,6 +75,8 @@ const NAV_ITEMS = [
     { path: "/admin/returns", label: "Returns", icon: <RotateCcw size={20} />, group: "operations" },
     { path: "/admin/earnings", label: "Earnings", icon: <BarChart size={20} />, group: "operations" },
     { path: "/admin/profile", label: "Profile", icon: <User size={20} />, group: "operations" },
+    { path: '/admin/promocodes', label: "Cupons", icon: <BadgePercent size={20} />, group: "operations" },
+    { path: "/admin/users", label: "Users", icon: <User size={20} />, group: "operations" },
 ];
 
 /* ── layout shell ───────────────────────────────────────────────────────── */
@@ -122,6 +125,36 @@ const AdminDashboard: React.FC = () => {
     const general = NAV_ITEMS.filter(n => n.group === "general");
     const operations = NAV_ITEMS.filter(n => n.group === "operations");
 
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+  const [notifications, setNotifications] = useState([
+    { id: 1, title: 'New Order Received', message: 'Order #1234 has been placed successfully.', time: '5m ago', read: false },
+    { id: 2, title: 'Flash Sale Alert', message: '50% off on all winter wear! Grab yours now.', time: '1h ago', read: false },
+    { id: 3, title: 'Item Restocked', message: 'The item "Vintage Leather Jacket" in your wishlist is now back in stock.', time: '2h ago', read: true },
+    { id: 4, title: 'Welcome to GS Archive', message: 'Thank you for signing up! Enjoy a 10% discount on your first order.', time: '1d ago', read: true },
+    { id: 5, title: 'Shipping Update', message: 'Your order #1230 is out for delivery.', time: '2d ago', read: true },
+    { id: 6, title: 'New Collection Live', message: 'Check out our exclusive Fall/Winter collection, now available.', time: '3d ago', read: true },
+    { id: 7, title: 'Review Reminder', message: 'How do you like your recent purchase? Leave a review and earn points!', time: '1w ago', read: true },
+  ]);
+   const ITEMS_PER_PAGE = 3;
+    const [currentPage, setCurrentPage] = useState(1);
+    const totalPages = Math.ceil(notifications.length / ITEMS_PER_PAGE);
+    const paginatedNotifications = notifications.slice(
+      (currentPage - 1) * ITEMS_PER_PAGE,
+      currentPage * ITEMS_PER_PAGE
+    );
+
+  const handleMarkAsRead = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const handleMarkAllAsRead = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+    const notificationCount = notifications.filter(n => !n.read).length;
     return (
         <div className="flex min-h-screen bg-[#F8FAFC] font-sans">
             {/* ── Sidebar ── */}
@@ -189,11 +222,131 @@ const AdminDashboard: React.FC = () => {
                         </div>
                     </div>
 
+{/* adding the notification 
+ */}
+ 
+      
+  {isNotificationsOpen && (
+            <>
+              <div className="fixed inset-0 z-[100]" onClick={() => setIsNotificationsOpen(false)}></div>
+              <div className="absolute top-20 right-4 md:right-12 w-80 bg-white rounded-2xl shadow-2xl border border-zinc-100 z-[110] animate-in slide-in-from-top-2 duration-200 text-left cursor-default">
+                <div className="p-4 border-b border-zinc-100 flex justify-between items-center">
+                  <h3 className="font-serif font-bold text-lg text-zinc-900 m-0">Notifications</h3>
+                  <span className="text-xs font-semibold bg-zinc-100 px-2 py-1 rounded-full text-zinc-600">
+                    {notificationCount} New
+                  </span>
+                </div>
+                <div className="max-h-96 overflow-y-auto">
+                  {paginatedNotifications.length > 0 ? (
+                    <div className="flex flex-col">
+                      {paginatedNotifications.map((notification) => (
+                        <div 
+                          key={notification.id} 
+                          className={`p-4 border-b border-zinc-50 hover:bg-zinc-50 transition-colors ${!notification.read ? 'bg-zinc-50/50' : ''}`}
+                        >
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className={`text-sm tracking-wide m-0 ${!notification.read ? 'font-bold text-zinc-900' : 'font-semibold text-zinc-700'} flex items-center`}>
+                              {!notification.read && <span className="inline-block w-2 h-2 bg-red-500 rounded-full mr-2"></span>}
+                              {notification.title}
+                            </h4>
+                            <span className="text-[10px] whitespace-nowrap text-zinc-400 font-medium ml-2">{notification.time}</span>
+                          </div>
+                          <p className={`text-xs leading-relaxed m-0 ${!notification.read ? 'text-zinc-600' : 'text-zinc-500 ml-4'}`}>
+                            {notification.message}
+                          </p>
+                          {!notification.read && (
+                            <button
+                              onClick={(e) => handleMarkAsRead(e, notification.id)}
+                              className="mt-2 text-[10px] font-bold text-red-500 hover:text-red-700 transition-colors uppercase tracking-wider ml-4"
+                            >
+                              Mark as read
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center text-zinc-500 text-sm">
+                      No notifications yet.
+                    </div>
+                  )}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex justify-between items-center p-3 border-t border-zinc-50 bg-zinc-50/30">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setCurrentPage(prev => Math.max(prev - 1, 1)); }}
+                      disabled={currentPage === 1}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <i className="fa-solid fa-chevron-left text-[10px]"></i>
+                    </button>
+                    <span className="text-xs font-bold text-zinc-500">
+                      {currentPage} / {totalPages}
+                    </span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setCurrentPage(prev => Math.min(prev + 1, totalPages)); }}
+                      disabled={currentPage === totalPages}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <i className="fa-solid fa-chevron-right text-[10px]"></i>
+                    </button>
+                  </div>
+                )}
+
+                <div className="p-4 border-t border-zinc-100">
+                  <button 
+                    onClick={handleMarkAllAsRead}
+                    disabled={notificationCount === 0}
+                    className="w-full block text-center text-xs font-bold uppercase tracking-widest text-zinc-900 hover:text-zinc-500 disabled:opacity-40 disabled:hover:text-zinc-900 transition-colors"
+                  >
+                    Mark all as read
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+
                     <div className="flex items-center gap-6">
+
+
+                            <button
+            onClick={(e) => {
+              e.preventDefault();
+            //   if (!user) {
+            //     navigate('/auth', { state: { from: { pathname: '/notification' } } });
+            //     return;
+            //   }
+              setIsNotificationsOpen(!isNotificationsOpen);
+            }}
+            className="w-10 h-10  ml-80 text-zinc-900 hover:scale-110 transition-transform relative"
+          >
+            <i
+              className={`${notificationCount > 0
+                  ? "fa-solid text-zinc-950"
+                  : "fa-regular text-zinc-900"
+                } fa-bell text-xl`}
+            ></i>
+
+            {notificationCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] w-5 h-5 rounded-full flex items-center justify-center font-black shadow-sm">
+                {notificationCount}
+              </span>
+            )}
+          </button>
+
                         <div className="w-10 h-10 rounded-2xl bg-white border border-gray-100 flex items-center justify-center text-black font-black shadow-sm hover:bg-black hover:text-white transition-all cursor-pointer">
                             AD
                         </div>
+
+
                     </div>
+
+
+
+
                 </header>
 
                 {/* Page content — rendered by child route */}

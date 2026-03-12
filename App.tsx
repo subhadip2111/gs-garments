@@ -81,6 +81,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 import UserLayout from './components/UserLayout';
 import AdminLayout from './components/AdminLayout';
+import CuponManager from './components/admin/CuponsManager';
+import UserManagement from './components/admin/UserManagement';
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const user = useAppSelector((state) => state.auth.user);
@@ -277,6 +279,10 @@ function AppContent() {
             <Route path="/admin/orders" element={<OrderManager />} />
             <Route path="/admin/reviews" element={<ReviewManager />} />
             <Route path="/admin/returns" element={<OrderManager />} />
+            <Route path="/admin/promocodes" element={<CuponManager />} />
+            <Route path="/admin/users" element={<UserManagement />} />
+
+
             <Route path="/admin/earnings" element={<EarningsManager />} />
             <Route path="/admin/profile" element={<ProfileManager />} />
             {/* Catch-all: redirect /admin/* → /admin/dashboard */}

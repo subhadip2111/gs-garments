@@ -62,6 +62,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     ? (product.brand as any).name
     : (product.brand || 'GS Archive');
 
+
+
+
+
+
+
   return (
     <div
       className="group relative flex flex-col h-full cursor-pointer animate-in fade-in duration-1000"

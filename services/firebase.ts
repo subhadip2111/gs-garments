@@ -19,7 +19,7 @@ import { getMessaging, getToken, isSupported, Messaging } from "firebase/messagi
  * Firebase configuration.
  * For the React frontend, we use VITE_ environment variables.
  */
-const firebaseConfig = {
+  export const firebaseConfig = {
     apiKey: process.env.VITE_FIREBASE_API_KEY || "",
     authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || "",
     projectId: process.env.VITE_FIREBASE_PROJECT_ID || "",
