@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, UserCheck, Crown, Search, Eye, ShoppingBag, Mail, Phone, MapPin, Calendar } from 'lucide-react';
 import AdminModal from './AdminModal';
-import { getCategoriesUser, getUserAnalytics } from '@/api/auth/usersApi';
+import { getCategoriesUser, getUserAnalytics, getUserOrders } from '@/api/auth/usersApi';
 import Pagination from './Pagination';
 
 interface DummyOrder {
@@ -36,8 +36,12 @@ const UserManagement: React.FC = () => {
     const [users, setUsers] = useState([])
     const [page, setPage] = useState(1)
     const [limit, setLimit] = useState(5)
+      const [UserOrderPage, setUserOrderPage] = useState(1)
+    const [UserOrderLimit, setUserOrderLimit] = useState(5)
     const [totalPages, setTotalPages] = useState(0)
     const [debouncedSearch, setDebouncedSearch] = useState("");
+
+    const [userOrdersData,setUserOrdersData]=useState([])
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(searchTerm);
@@ -76,8 +80,14 @@ const UserManagement: React.FC = () => {
     useEffect(() => {
         fecthCategoriesUser()
     }, [debouncedSearch, filterParams, page])
-
-
+const fetchUserOrders=async()=>{
+    const data=await getUserOrders(selectedUser?.id,UserOrderPage,UserOrderLimit)
+    setUserOrdersData(data)
+    console.log(data)
+}
+useEffect(()=>{
+    fetchUserOrders()
+},[selectedUser])
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
             {/* Header */}
@@ -293,19 +303,23 @@ bg-white/20 backdrop-blur-md rounded-[2.5rem] shadow-2xl shadow-slate-200/50 bor
                         {/* Order History */}
                         <div className="space-y-4">
                             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 flex items-center gap-2">
-                                <ShoppingBag size={12} /> Recent Orders ({selectedUser.recentOrders.length})
+                                <ShoppingBag size={12} /> Recent Orders ({userOrdersData?.length})
                             </p>
 
-                            {selectedUser.recentOrders.length > 0 ? (
+                            {userOrdersData?.length > 0 ? (
                                 <div className="bg-white/50 border border-gray-100 rounded-2xl overflow-hidden shadow-sm divide-y divide-gray-50">
-                                    {selectedUser.recentOrders.map(order => (
+                                    {userOrdersData?.map(order => (
                                         <div key={order.id} className="p-4 flex items-center justify-between group hover:bg-gray-50 transition-colors">
                                             <div>
                                                 <div className="font-black text-gray-900 text-sm tracking-widest font-mono uppercase mb-0.5">{order.id}</div>
                                                 <div className="text-[10px] text-zinc-400 font-bold flex items-center gap-2">
-                                                    <span>{order.date}</span>
+                                                    <span>{order.createdAt}</span>
                                                     <span>•</span>
-                                                    <span>{order.itemsCount} {order.itemsCount === 1 ? 'item' : 'items'}</span>
+                                                    <span>{order.items?.length} {order.items?.length === 1 ? 'item' : 'items'}</span>
+                                                </div>
+
+                                                <div className="text-[10px] text-zinc-400 font-bold flex items-center gap-2">
+                                                    <span>{order.paymentMethod}</span>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-6">
@@ -316,7 +330,7 @@ bg-white/20 backdrop-blur-md rounded-[2.5rem] shadow-2xl shadow-slate-200/50 bor
                                                     {order.status}
                                                 </span>
                                                 <span className="font-serif italic font-black text-lg text-gray-900 w-24 text-right">
-                                                    ₹{order.total.toLocaleString('en-IN')}
+                                                    ₹{order?.totalAmount.toLocaleString('en-IN')}
                                                 </span>
                                             </div>
                                         </div>

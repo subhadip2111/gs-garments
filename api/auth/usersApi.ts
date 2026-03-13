@@ -47,3 +47,8 @@ export const getCategoriesUser = async (filterParams: string, search: string,pag
     const response = await apiClient.get(`/admin/customers/categorized?type=${filterParams}&keyword=${search}&page=${+page}&limit=${+limit}`);
     return response.data;
 }
+
+export const getUserOrders = async (userId: string,page?:number,limit?:number) => {
+    const response = await apiClient.get(`/admin/dashboard/user-order-history/${userId}?page=${+page}&limit=${+limit}`);
+    return response.data;
+}
