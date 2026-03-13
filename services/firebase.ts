@@ -83,13 +83,23 @@ export const requestNotificationPermission = async (): Promise<string | null> =>
             return null;
         }
 
-        // Ask the user for notification permission
-        console.log("[FCM] Requesting Notification.requestPermission()...");
-        const permission = await Notification.requestPermission();
-        console.log("[FCM] Permission result:", permission);
-        if (permission !== 'granted') {
-            console.log("[FCM] Notification permission denied by user.");
-            return null;
+        // Check if permission is already granted or denied
+        if (typeof window !== 'undefined' && 'Notification' in window) {
+            if (Notification.permission === 'granted') {
+                console.log("[FCM] Notification permission already granted.");
+            } else if (Notification.permission === 'denied') {
+                console.log("[FCM] Notification permission previously denied.");
+                return null;
+            } else {
+                // Ask the user for notification permission only if it's 'default'
+                console.log("[FCM] Requesting Notification.requestPermission()...");
+                const permission = await Notification.requestPermission();
+                console.log("[FCM] Permission result:", permission);
+                if (permission !== 'granted') {
+                    console.log("[FCM] Notification permission denied by user.");
+                    return null;
+                }
+            }
         }
 
         // Permission granted — get the FCM token

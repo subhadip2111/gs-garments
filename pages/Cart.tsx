@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store';
 import { removeFromCartServer, updateQuantityServer, recalculateDiscounts, fetchCart } from '../store/cartSlice';
-import { MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
+import { MOCK_COMBO_OFFERS } from '../constants';
 import { SmartOfferWidget } from './ProductDetail';
 
 const Cart: React.FC = () => {
@@ -47,15 +47,8 @@ const Cart: React.FC = () => {
 
   const shipping = subtotal > 999 ? 0 : 150;
 
-  const coupon = MOCK_COUPONS.find(c => c.id === appliedCouponId);
-  let couponDiscount = 0;
-  if (coupon) {
-    if (coupon.discountType === 'percentage') {
-      couponDiscount = Math.round((subtotal - comboDiscount) * coupon.discountValue / 100);
-    } else {
-      couponDiscount = coupon.discountValue;
-    }
-  }
+  const couponDiscount = 0; // Coupons are handled at Checkout
+  const coupon = null;
 
   const finalTotal = subtotal + shipping - comboDiscount - couponDiscount;
   if (cart.length === 0) {

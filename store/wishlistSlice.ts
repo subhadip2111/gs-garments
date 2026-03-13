@@ -119,7 +119,17 @@ const wishlistSlice = createSlice({
                     }
                 }
                 saveToStorage(state.items);
-            });
+            })
+            // Clear wishlist on logout
+            .addMatcher(
+                (action) => action.type === 'auth/logout' || (action.type === 'auth/setUser' && action.payload === null),
+                (state) => {
+                    state.items = [];
+                    state.loading = false;
+                    state.error = null;
+                    localStorage.removeItem('gs_wishlist');
+                }
+            );
     },
 });
 

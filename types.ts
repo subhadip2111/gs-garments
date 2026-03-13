@@ -85,11 +85,18 @@ export interface Address {
 
 export interface Coupon {
   id: string;
+  _id?: string;
   code: string;
   discountType: 'percentage' | 'fixed';
   discountValue: number;
-  minPurchase: number;
-  description: string;
+  minOrderAmount: number;
+  maxDiscountAmount?: number;
+  startDate?: string;
+  endDate?: string;
+  usageLimit?: number;
+  usedCount?: number;
+  isActive: boolean;
+  description?: string;
 }
 
 export interface ComboOffer {
@@ -117,6 +124,9 @@ export interface Order {
   }[];
   deliveryDate: string;
   appliedCoupon?: string;
+  couponCode?: string;
+  discount?: number;
+  totalAmount?: number;
   discountAmount?: number;
   shippingAddress?: {
     fullName: string;

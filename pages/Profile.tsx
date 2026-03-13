@@ -24,12 +24,6 @@ const Profile: React.FC = () => {
 
   const handleLogout = async () => {
     await signOut(auth!);
-    // Clear all persisted data from localStorage on logout
-    localStorage.removeItem('gs_cart');
-    localStorage.removeItem('gs_wishlist');
-    localStorage.removeItem('gs_orders');
-    dispatch(clearWishlist());
-    dispatch(clearCart());
     dispatch(logout());
     showToast("Logout successfully", "success");
     navigate('/shop');
@@ -350,8 +344,14 @@ const Profile: React.FC = () => {
                           </div>
                           <div className="space-y-1">
                             <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Total Amount</p>
-                            <p className="text-sm font-black">₹{(order.total || 0).toLocaleString('en-IN')}</p>
+                            <p className="text-sm font-black text-black">₹{(order.total || 0).toLocaleString('en-IN')}</p>
                           </div>
+                          {order.couponCode && (
+                            <div className="space-y-1">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-500">Coupon Applied</p>
+                              <p className="text-[10px] font-black tracking-widest bg-emerald-50 text-emerald-600 px-2 py-1 rounded inline-block uppercase">{order.couponCode}</p>
+                            </div>
+                          )}
                           <div className="flex items-center gap-3">
                             {/* Cancel button — disabled if Shipped or later */}
                             {order.status !== 'Delivered' && order.status !== 'Cancelled' && order.status !== 'Shipped' && order.status !== 'Out for Delivery' && (
@@ -437,6 +437,25 @@ const Profile: React.FC = () => {
                                   </div>
                                 );
                               })}
+
+                              {/* Order Summary Breakdown */}
+                              <div className="mt-8 pt-6 border-t border-zinc-100 space-y-3">
+                                <h5 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-4">Payment Summary</h5>
+                                <div className="flex justify-between text-xs font-medium">
+                                  <span className="text-zinc-500">Order Subtotal</span>
+                                  <span className="font-bold">₹{(order.items.reduce((acc: number, item: any) => acc + (item.priceAtPurchase || item.product?.price || 0) * (item.quantity || 1), 0)).toLocaleString('en-IN')}</span>
+                                </div>
+                                {(order.discount || 0) > 0 && (
+                                  <div className="flex justify-between text-xs font-bold text-emerald-600">
+                                    <span>Coupon Discount ({order.couponCode})</span>
+                                    <span>-₹{(order.discount || 0).toLocaleString('en-IN')}</span>
+                                  </div>
+                                )}
+                                <div className="flex justify-between text-sm font-black border-t border-zinc-50 pt-3">
+                                  <span className="uppercase tracking-widest text-[10px]">Total Paid</span>
+                                  <span className="text-zinc-900 font-black">₹{(order.total || 0).toLocaleString('en-IN')}</span>
+                                </div>
+                              </div>
                             </div>
 
                             <div className="bg-zinc-50/30 p-8 rounded-2xl">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
-import { LAUNCH_PROMOS, MOCK_REVIEWS, MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
+import { LAUNCH_PROMOS, MOCK_REVIEWS, MOCK_COMBO_OFFERS } from '../constants';
 import { useAppDispatch, useAppSelector } from '../store';
 import { addToCartServer } from '../store/cartSlice';
 import { toggleWishlistServer } from '../store/wishlistSlice';
@@ -11,6 +11,7 @@ import ProductDetailSkeleton from '../components/ProductDetailSkeleton';
 import { Product, Review } from '../types';
 import Product360View from '../components/Product360View';
 import { getProductById, getAllProducts, getSimilarProducts, getProductReviews } from '../api/auth/ProductApi';
+import { getMyPromocodes } from '../api/auth/promoCode.Api';
 import { setLoadingProducts } from '../store/productSlice';
 import { useToast } from '../components/Toast';
 
@@ -140,6 +141,8 @@ const ProductDetail: React.FC = () => {
   const [sortBy, setSortBy] = useState('createdAt:desc');
 
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [availablePromos, setAvailablePromos] = useState<any[]>([]);
+  const [loadingPromos, setLoadingPromos] = useState(false);
 
   // Dynamic Delivery Logic
   const estimatedDeliveryDate = useMemo(() => {
@@ -174,6 +177,35 @@ const ProductDetail: React.FC = () => {
     };
     fetchProduct();
   }, [id, dispatch]);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user?._id || user?.id) {
+        setLoadingPromos(true);
+        try {
+          const res = await getMyPromocodes(user?._id || user?.id);
+          const allPromos = res?.data || res || [];
+          
+          // Filter promos based on product price and active status
+          if (product) {
+            const filteredPromos = allPromos.filter((promo: any) => {
+              const matchesPrice = currentPrice >= (promo.minOrderAmount || 0);
+              const isActive = promo.isActive !== false; // Backend usually returns isActive: true
+              return matchesPrice && isActive;
+            });
+            setAvailablePromos(filteredPromos);
+          } else {
+            setAvailablePromos(allPromos);
+          }
+        } catch (err) {
+          console.error('Failed to fetch promos', err);
+        } finally {
+          setLoadingPromos(false);
+        }
+      }
+    };
+    fetchUserData();
+  }, [user]);
 
   useEffect(() => {
     if (id) fetchReviews(1);
@@ -535,6 +567,44 @@ const ProductDetail: React.FC = () => {
               </header>
 
               <SmartOfferWidget currentTotal={currentPrice} />
+
+              {availablePromos.length > 0 && (
+                <div className="space-y-4 py-6 border-y border-zinc-100">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-[9px] font-black uppercase tracking-[0.3em] text-black">Available Offers</h4>
+                    <span className="text-[10px] font-bold text-emerald-600">{availablePromos.length} Code(s) For You</span>
+                  </div>
+                  <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+                    {availablePromos.map((promo) => (
+                      <div key={promo._id} className="min-w-[240px] p-4 bg-zinc-50 rounded-2xl border border-zinc-100 group/promo relative overflow-hidden">
+                        <div className="relative z-10 flex justify-between items-start">
+                          <div className="space-y-1">
+                            <span className="block text-[10px] font-black text-zinc-950 font-mono tracking-widest uppercase">{promo.code}</span>
+                            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-tighter">
+                              {promo.discountType === 'percentage' ? `${promo.discountValue}% OFF` : `₹${promo.discountValue} OFF`}
+                            </p>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard.writeText(promo.code);
+                              showToast(`Code ${promo.code} copied!`, "success");
+                            }}
+                            className="bg-white border border-zinc-100 p-2 rounded-lg hover:border-black transition-colors"
+                          >
+                            <i className="fa-regular fa-copy text-[10px]"></i>
+                          </button>
+                        </div>
+                        <div className="mt-3 pt-3 border-t border-zinc-200/50">
+                          <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500">Min. Buy: ₹{promo.minOrderAmount}</p>
+                        </div>
+                        <div className="absolute -right-2 -bottom-2 opacity-[0.03] rotate-12 transition-transform group-hover/promo:scale-110">
+                           <i className="fa-solid fa-tag text-6xl text-black"></i>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Selector Interface */}
               <div className="space-y-8">

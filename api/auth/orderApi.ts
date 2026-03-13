@@ -28,6 +28,8 @@ export const createOrder = async (payload: {
         country?: string;
     };
     paymentMethod?: string;
+    couponCode?: string;
+    discount?: number;
 }) => {
     const response = await apiClient.post('/orders', payload);
     return response.data;

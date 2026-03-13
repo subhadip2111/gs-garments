@@ -46,7 +46,9 @@ apiClient.interceptors.response.use(
 );
 
 export const saveSocialLoginUserData = async (user: any) => {
+    console.log("[authApi] saveSocialLoginUserData called with:", user.email);
     const response = await apiClient.post(`/auth/social-login`, user);
+    console.log("[authApi] saveSocialLoginUserData successful for:", user.email);
     return response.data;
 }
 

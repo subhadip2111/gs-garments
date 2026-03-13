@@ -23,11 +23,12 @@ import {
     BadgePercent ,
     Loader2,
 } from "lucide-react";
-import { useAppDispatch } from "../store";
+import { useAppDispatch, useAppSelector } from "../store";
 import { logout } from "../store/authSlice";
 import { auth, signOut } from "../services/firebase";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import * as dashboardApi from "../api/auth/dashboardApi";
+import { notificationService, Notification } from "../services/NotificationService";
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
 
@@ -127,34 +128,91 @@ const AdminDashboard: React.FC = () => {
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: 'New Order Received', message: 'Order #1234 has been placed successfully.', time: '5m ago', read: false },
-    { id: 2, title: 'Flash Sale Alert', message: '50% off on all winter wear! Grab yours now.', time: '1h ago', read: false },
-    { id: 3, title: 'Item Restocked', message: 'The item "Vintage Leather Jacket" in your wishlist is now back in stock.', time: '2h ago', read: true },
-    { id: 4, title: 'Welcome to GS Archive', message: 'Thank you for signing up! Enjoy a 10% discount on your first order.', time: '1d ago', read: true },
-    { id: 5, title: 'Shipping Update', message: 'Your order #1230 is out for delivery.', time: '2d ago', read: true },
-    { id: 6, title: 'New Collection Live', message: 'Check out our exclusive Fall/Winter collection, now available.', time: '3d ago', read: true },
-    { id: 7, title: 'Review Reminder', message: 'How do you like your recent purchase? Leave a review and earn points!', time: '1w ago', read: true },
-  ]);
-   const ITEMS_PER_PAGE = 3;
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const user = useAppSelector((state) => state.auth.user);
+
+    useEffect(() => {
+        if (!user?._id && !user?.id) {
+            setNotifications([]);
+            setUnreadCount(0);
+            return;
+        }
+
+        const userId = user._id || user.id;
+
+        // Subscribe to notifications
+        const unsubscribeNotifications = notificationService.subscribeToNotifications(userId, (data) => {
+            console.log(`[AdminDashboard] Received ${data.length} notifications for ${userId}`);
+            setNotifications(data);
+        });
+
+        // Subscribe to unread count
+        const unsubscribeCount = notificationService.subscribeToUnreadCount(userId, (count) => {
+            console.log(`[AdminDashboard] Received unread count: ${count} for ${userId}`);
+            setUnreadCount(count);
+        });
+
+        return () => {
+            unsubscribeNotifications();
+            unsubscribeCount();
+        };
+    }, [user]);
+
     const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 5;
     const totalPages = Math.ceil(notifications.length / ITEMS_PER_PAGE);
     const paginatedNotifications = notifications.slice(
-      (currentPage - 1) * ITEMS_PER_PAGE,
-      currentPage * ITEMS_PER_PAGE
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
     );
 
-  const handleMarkAsRead = (e: React.MouseEvent, id: number) => {
-    e.stopPropagation();
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  };
+    const handleMarkAsRead = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        try {
+            await notificationService.markAsRead(id);
+        } catch (err) {
+            console.error("Failed to mark notification as read:", err);
+        }
+    };
 
-  const handleMarkAllAsRead = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
+    const handleMarkAllAsRead = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await notificationService.markAllAsRead(notifications);
+        } catch (err) {
+            console.error("Failed to mark all as read:", err);
+        }
+    };
 
-    const notificationCount = notifications.filter(n => !n.read).length;
+    const handleNotificationClick = async (notification: Notification) => {
+        await notificationService.markAsRead(notification.id);
+        setIsNotificationsOpen(false);
+
+        const payload = notification.payload;
+        if (!payload) return;
+
+        switch (payload.type) {
+            case 'newUser':
+            case 'adminNewUser':
+                navigate('/admin/users');
+                break;
+            case 'orderUpdate':
+            case 'adminNewOrder':
+                navigate('/admin/orders');
+                break;
+            case 'priceDrop':
+                if (payload.productId) navigate(`/product/${payload.productId}`);
+                break;
+            case 'newPromocode':
+                if (payload.code) navigate(`/admin/promocodes`);
+                break;
+            default:
+                break;
+        }
+    };
+
+    const notificationCount = unreadCount;
     return (
         <div className="flex min-h-screen bg-[#F8FAFC] font-sans">
             {/* ── Sidebar ── */}
@@ -242,19 +300,22 @@ const AdminDashboard: React.FC = () => {
                       {paginatedNotifications.map((notification) => (
                         <div 
                           key={notification.id} 
-                          className={`p-4 border-b border-zinc-50 hover:bg-zinc-50 transition-colors ${!notification.read ? 'bg-zinc-50/50' : ''}`}
+                          onClick={() => handleNotificationClick(notification)}
+                          className={`p-4 border-b border-zinc-50 hover:bg-zinc-50 transition-colors cursor-pointer ${notification.status === 'unread' ? 'bg-zinc-50/50' : ''}`}
                         >
                           <div className="flex justify-between items-start mb-1">
-                            <h4 className={`text-sm tracking-wide m-0 ${!notification.read ? 'font-bold text-zinc-900' : 'font-semibold text-zinc-700'} flex items-center`}>
-                              {!notification.read && <span className="inline-block w-2 h-2 bg-red-500 rounded-full mr-2"></span>}
+                            <h4 className={`text-sm tracking-wide m-0 ${notification.status === 'unread' ? 'font-bold text-zinc-900' : 'font-semibold text-zinc-700'} flex items-center`}>
+                              {notification.status === 'unread' && <span className="inline-block w-2 h-2 bg-red-500 rounded-full mr-2"></span>}
                               {notification.title}
                             </h4>
-                            <span className="text-[10px] whitespace-nowrap text-zinc-400 font-medium ml-2">{notification.time}</span>
+                            <span className="text-[10px] whitespace-nowrap text-zinc-400 font-medium ml-2 uppercase">
+                                {notification.createdAt?.toDate ? new Date(notification.createdAt.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                            </span>
                           </div>
-                          <p className={`text-xs leading-relaxed m-0 ${!notification.read ? 'text-zinc-600' : 'text-zinc-500 ml-4'}`}>
-                            {notification.message}
+                          <p className={`text-xs leading-relaxed m-0 ${notification.status === 'unread' ? 'text-zinc-600' : 'text-zinc-500 ml-4'}`}>
+                            {notification.body}
                           </p>
-                          {!notification.read && (
+                          {notification.status === 'unread' && (
                             <button
                               onClick={(e) => handleMarkAsRead(e, notification.id)}
                               className="mt-2 text-[10px] font-bold text-red-500 hover:text-red-700 transition-colors uppercase tracking-wider ml-4"
@@ -295,15 +356,15 @@ const AdminDashboard: React.FC = () => {
                   </div>
                 )}
 
-                <div className="p-4 border-t border-zinc-100">
-                  <button 
-                    onClick={handleMarkAllAsRead}
-                    disabled={notificationCount === 0}
-                    className="w-full block text-center text-xs font-bold uppercase tracking-widest text-zinc-900 hover:text-zinc-500 disabled:opacity-40 disabled:hover:text-zinc-900 transition-colors"
-                  >
-                    Mark all as read
-                  </button>
-                </div>
+                  <div className="p-4 border-t border-zinc-100">
+                    <button 
+                      onClick={handleMarkAllAsRead}
+                      disabled={notificationCount === 0}
+                      className="w-full block text-center text-xs font-bold uppercase tracking-widest text-zinc-900 hover:text-zinc-600 disabled:opacity-40 disabled:hover:text-zinc-900 transition-colors"
+                    >
+                      Mark all as read
+                    </button>
+                  </div>
               </div>
             </>
           )}

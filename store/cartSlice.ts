@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { CartItem, Order, Product } from '../types';
-import { MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
+import { MOCK_COMBO_OFFERS } from '../constants';
 import * as cartApi from '../api/auth/cartApi';
 import * as orderApi from '../api/auth/orderApi';
 
@@ -166,6 +166,9 @@ const cartSlice = createSlice({
       state.orders = state.orders.filter(o => o.id !== orderId);
       localStorage.setItem('gs_orders', JSON.stringify(state.orders));
     },
+    applyCoupon: (state, action: PayloadAction<string | null>) => {
+      state.appliedCouponId = action.payload;
+    },
     recalculateDiscounts: (state, action: PayloadAction<Product[]>) => {
       const products = action.payload;
       const baseTotal = state.cart.reduce((acc, item) => {
@@ -180,28 +183,7 @@ const cartSlice = createSlice({
         }
       });
       state.comboDiscount = bestCombo;
-
-      const totalAfterCombo = baseTotal - bestCombo;
-      let bestCouponId = null;
-      let maxDiscount = 0;
-
-      MOCK_COUPONS.forEach(coupon => {
-        if (totalAfterCombo >= coupon.minPurchase) {
-          let currentDiscount = 0;
-          if (coupon.discountType === 'percentage') {
-            currentDiscount = (totalAfterCombo * coupon.discountValue) / 100;
-          } else {
-            currentDiscount = coupon.discountValue;
-          }
-
-          if (currentDiscount > maxDiscount) {
-            maxDiscount = currentDiscount;
-            bestCouponId = coupon.id;
-          }
-        }
-      });
-
-      state.appliedCouponId = bestCouponId;
+      // We don't auto-apply real coupons here yet as they are fetch-based per user
     }
   },
   extraReducers: (builder) => {
@@ -303,6 +285,8 @@ const cartSlice = createSlice({
         state.orders = Array.isArray(orders) ? orders.map((o: any) => ({
           ...o,
           total: o.total ?? o.totalAmount ?? 0,
+          discount: o.discount ?? o.discountAmount ?? 0,
+          couponCode: o.couponCode ?? o.appliedCoupon ?? '',
           date: o.date ?? (o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '')
         })) : [];
       })
@@ -312,6 +296,8 @@ const cartSlice = createSlice({
           const normalizedOrder = {
             ...order,
             total: order.total ?? order.totalAmount ?? 0,
+            discount: order.discount ?? order.discountAmount ?? 0,
+            couponCode: order.couponCode ?? order.appliedCoupon ?? '',
             date: order.date ?? (order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }))
           };
           state.orders.unshift(normalizedOrder);
@@ -326,7 +312,19 @@ const cartSlice = createSlice({
         if (idx !== -1) {
           state.orders[idx] = { ...state.orders[idx], status: 'Cancelled' };
         }
-      });
+      })
+      // Clear cart on logout
+      .addMatcher(
+        (action) => action.type === 'auth/logout' || (action.type === 'auth/setUser' && action.payload === null),
+        (state) => {
+          state.cart = [];
+          state.orders = [];
+          state.appliedCouponId = null;
+          state.comboDiscount = 0;
+          localStorage.removeItem('gs_cart');
+          localStorage.removeItem('gs_orders');
+        }
+      );
   }
 });
 
@@ -337,6 +335,7 @@ export const {
   placeOrder,
   cancelOrder,
   clearCart,
+  applyCoupon,
   recalculateDiscounts
 } = cartSlice.actions;
 export default cartSlice.reducer;

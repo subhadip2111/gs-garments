@@ -55,6 +55,7 @@ import { getProfileDetails, saveSocialLoginUserData } from './api/auth/authApi';
 import { PersistGate } from "redux-persist/integration/react";
 import AdminDashboard, { AdminHome } from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
+import PromoCodeDetail from './pages/PromoCodeDetail';
 
 
 // Admin section managers
@@ -174,37 +175,55 @@ function AppContent() {
     if (!isConfigured) return;
 
     const unsubscribe = onAuthStateChanged(auth!, async (firebaseUser) => {
-      if (firebaseUser && !accessToken) {
+      console.log("[App] 🔔 onAuthStateChanged triggered. FirebaseUser:", firebaseUser?.email, "| AccessToken:", !!accessToken, "| UserState:", !!user);
+      
+      // CRITICAL FIX: Sync if we have a Firebase user but are missing backend session OR profile
+      // We also check if the firebase user is DIFFERENT from the one currently in state (if any)
+      const isWrongUser = user && firebaseUser && user.email !== firebaseUser.email;
+      
+      if (firebaseUser && (!accessToken || !user || isWrongUser)) {
         try {
-          // Request Push Notification Permission and get FCM Token
-          console.log("[App] Firebase user detected, requesting FCM token...");
-          const fcmToken = await requestNotificationPermission();
+          if (isWrongUser) console.log("[App] 🔄 User mismatch detected. Current:", user.email, "New:", firebaseUser.email);
+          console.log("[App] ⏳ Starting social login synchronization for:", firebaseUser.email);
+          
+          let fcmToken = null;
+          if (typeof window !== 'undefined' && 'Notification' in window) {
+            if (Notification.permission === 'granted') {
+              fcmToken = await requestNotificationPermission();
+            }
+          }
           const fcmTokensArray = fcmToken ? [fcmToken] : [];
-          console.log("[App] FCM token result:", fcmToken ? fcmToken.substring(0, 20) + "..." : "null");
-          console.log("[App] fcmTokens array being sent:", fcmTokensArray.length, "token(s)");
-
+          
           const response = await saveSocialLoginUserData({
             email: firebaseUser.email,
             fullName: firebaseUser.displayName,
             avatar: firebaseUser.photoURL,
             role: "user",
             socialId: firebaseUser.uid,
-            fcmTokens: fcmTokensArray, // Pass the token to the backend
+            fcmTokens: fcmTokensArray,
           });
-          console.log("[App] Social login API response received. Tokens set.");
+          
+          console.log("[App] ✅ Social login API sync successful. Tokens received.");
 
           const tokens = {
             accessToken: response.accessToken,
             refreshToken: response.refreshToken
           };
+          
+          if (response.user) {
+            console.log("[App] 📦 Setting user in Redux store:", response.user.email);
+            dispatch(setUser(response.user));
+          } else {
+            console.warn("[App] ⚠️ No user object returned from social-login API.");
+          }
+          
+          console.log("[App] 🔑 Setting tokens in Redux store.");
           dispatch(setToken(tokens));
         } catch (error) {
-          console.log("Error syncing user data:", error);
+          console.error("[App] ❌ Social login sync failed:", error);
         }
       } else if (!firebaseUser && !accessToken) {
-        // Only clear state if there's no existing token.
-        // Admin users login via backend API (not Firebase), so firebaseUser
-        // will be null on refresh — we must NOT wipe their persisted tokens.
+        console.log("[App] 🚪 No Firebase user and no token. Clearing state.");
         dispatch(setUser(null));
         dispatch(setToken(null));
       }
@@ -227,7 +246,7 @@ function AppContent() {
 
     fetchProductsData();
     return () => unsubscribe();
-  }, [dispatch]);
+  }, [dispatch, accessToken, user]);
 
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -262,6 +281,7 @@ function AppContent() {
           <Route path="/shipping" element={<Shipping />} />
           <Route path="/returns" element={<Returns />} />
           <Route path="/track-order" element={<TrackOrder />} />
+          <Route path="/promocodes/:promoCodeId" element={<PromoCodeDetail />} />
         </Route>
 
         {/* Admin Routes — AdminDashboard is the layout shell, children use <Outlet /> */}

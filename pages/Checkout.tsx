@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store';
-import { createOrderServer, fetchOrders } from '../store/cartSlice';
+import { createOrderServer, fetchOrders, applyCoupon } from '../store/cartSlice';
 import { useToast } from '../components/Toast';
-import { MOCK_COUPONS, MOCK_COMBO_OFFERS } from '../constants';
+import { MOCK_COMBO_OFFERS } from '../constants';
+import { getMyPromocodes } from '../api/auth/promoCode.Api';
 import { CartItem, Address } from '../types';
 import * as addressApi from '../api/auth/addressApi';
 
@@ -21,6 +22,9 @@ const Checkout: React.FC = () => {
   const [step, setStep] = useState(1);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [availableCoupons, setAvailableCoupons] = useState<any[]>([]);
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [isCouponLoading, setIsCouponLoading] = useState(false);
 
   // Helper to get name parts safely
   const getNameParts = () => {
@@ -75,6 +79,24 @@ const Checkout: React.FC = () => {
     return () => { active = false; };
   }, [user]);
 
+  // Fetch Available Promocodes
+  React.useEffect(() => {
+    const fetchPromos = async () => {
+      if (user?._id || user?.id) {
+        setIsCouponLoading(true);
+        try {
+          const res = await getMyPromocodes(user?._id || user?.id);
+          setAvailableCoupons(res?.data || res || []);
+        } catch (err) {
+          console.error("Failed to fetch coupons:", err);
+        } finally {
+          setIsCouponLoading(false);
+        }
+      }
+    };
+    fetchPromos();
+  }, [user]);
+
   if (!buyNowItem && cart.length === 0) {
     navigate('/shop');
     return null;
@@ -104,13 +126,16 @@ const Checkout: React.FC = () => {
   const bagDiscount = totalMrp - subtotal;
   const shipping = subtotal > 999 ? 0 : 150;
 
-  const coupon = MOCK_COUPONS.find(c => c.id === appliedCouponId);
+  const coupon = availableCoupons.find(c => (c._id || c.id) === appliedCouponId);
   let couponDiscount = 0;
   if (coupon) {
-    if (coupon.discountType === 'percentage') {
-      couponDiscount = Math.round((subtotal - comboDiscount) * coupon.discountValue / 100);
-    } else {
-      couponDiscount = coupon.discountValue;
+    if (subtotal >= coupon.minOrderAmount) {
+      if (coupon.discountType === 'percentage') {
+        const calculatedDiscount = Math.round((subtotal - comboDiscount) * coupon.discountValue / 100);
+        couponDiscount = coupon.maxDiscountAmount ? Math.min(calculatedDiscount, coupon.maxDiscountAmount) : calculatedDiscount;
+      } else {
+        couponDiscount = coupon.discountValue;
+      }
     }
   }
 
@@ -238,6 +263,8 @@ const Checkout: React.FC = () => {
         })),
         shippingAddress: finalShippingAddress,
         paymentMethod: 'COD',
+        couponCode: coupon?.code,
+        discount: comboDiscount + couponDiscount
       })).unwrap();
 
       // Refresh the orders list so Profile.tsx immediately has the latest fully-populated data
@@ -580,6 +607,26 @@ const Checkout: React.FC = () => {
                 </div>
               )}
 
+              <div className="pt-4 pb-2">
+                <button 
+                  onClick={() => setShowCouponModal(true)}
+                  className="w-full py-3 px-4 bg-zinc-50 border border-dashed border-zinc-300 rounded-xl flex items-center justify-between hover:bg-zinc-100 transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <i className="fa-solid fa-ticket text-zinc-400 group-hover:text-black transition-colors"></i>
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      {coupon ? `Applied: ${coupon.code}` : 'Apply Coupon'}
+                    </span>
+                  </div>
+                  <i className="fa-solid fa-chevron-right text-[10px] text-zinc-300 group-hover:translate-x-1 transition-transform"></i>
+                </button>
+                {coupon && subtotal < coupon.minOrderAmount && (
+                  <p className="text-[8px] text-red-500 font-bold mt-2 uppercase tracking-widest">
+                    Add ₹{(coupon.minOrderAmount - subtotal).toLocaleString('en-IN')} more to use this code
+                  </p>
+                )}
+              </div>
+
               {comboDiscount > 0 && (
                 <div className="flex justify-between text-sm text-orange-600 font-bold">
                   <span>Combo Discount</span>
@@ -624,6 +671,78 @@ const Checkout: React.FC = () => {
         </div>
       </div>
 
+      {/* Coupon Modal */}
+      {showCouponModal && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowCouponModal(false)}></div>
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[80vh]">
+            <div className="p-6 border-b border-zinc-100 flex justify-between items-center">
+              <h3 className="text-sm font-black uppercase tracking-[0.2em]">Available Coupons</h3>
+              <button onClick={() => setShowCouponModal(false)} className="text-zinc-400 hover:text-black">
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto space-y-4 no-scrollbar">
+              {availableCoupons.filter(c => c.isActive !== false).length > 0 ? (
+                availableCoupons.filter(c => c.isActive !== false).map((c) => {
+                  const isApplied = appliedCouponId === (c._id || c.id);
+                  const isEligible = subtotal >= (c.minOrderAmount || 0);
+                  return (
+                    <div 
+                      key={c._id || c.id} 
+                      className={`p-4 rounded-xl border-2 transition-all ${isApplied ? 'border-black bg-zinc-50' : 'border-zinc-100'}`}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <span className="inline-block px-3 py-1 bg-zinc-950 text-white text-[10px] font-black tracking-widest font-mono rounded-md uppercase">
+                            {c.code}
+                          </span>
+                          <p className="text-[11px] font-black text-emerald-600 mt-2">
+                            {c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `₹${c.discountValue} OFF`}
+                          </p>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            if (isApplied) {
+                              dispatch(applyCoupon(null));
+                            } else {
+                              if (!isEligible) {
+                                showToast(`Min order ₹${c.minOrderAmount} required`, "error");
+                                return;
+                              }
+                              dispatch(applyCoupon(c._id || c.id));
+                              showToast(`Coupon ${c.code} applied!`, "success");
+                            }
+                            setShowCouponModal(false);
+                          }}
+                          className={`text-[9px] font-black uppercase tracking-widest underline underline-offset-4 ${isApplied ? 'text-zinc-400' : 'text-black'}`}
+                        >
+                          {isApplied ? 'Remove' : 'Apply'}
+                        </button>
+                      </div>
+                      <p className="text-[9px] text-zinc-400 font-medium">
+                        Min. order ₹{(c.minOrderAmount || 0).toLocaleString('en-IN')}
+                        {c.maxDiscountAmount ? ` | Max Discount ₹${c.maxDiscountAmount.toLocaleString('en-IN')}` : ''}
+                      </p>
+                      {!isEligible && (
+                        <p className="text-[8px] text-red-400 font-bold mt-2 uppercase tracking-tighter italic">
+                          Need ₹{((c.minOrderAmount || 0) - subtotal).toLocaleString('en-IN')} more to unlock
+                        </p>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-12">
+                  <i className="fa-solid fa-ticket-simple text-3xl text-zinc-100 mb-4 block"></i>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">No active coupons available for you</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confirmation Modal */}
       {showConfirmModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -659,6 +778,7 @@ const Checkout: React.FC = () => {
           </div>
         </div>
       )}
+
     </div>
   );
 };

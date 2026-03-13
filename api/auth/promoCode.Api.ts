@@ -219,3 +219,7 @@ export const getPromocodeByIsActiveAndIsExpiredAndIsDeletedAndIsUsedCountAndIsMi
     const response = await apiClient.get("/promo-code/get", payload)
     return response.data
 }
+export const getPromocodeByCodeName = async (codeName: string) => {
+    const response = await apiClient.get(`/promocodes/code/${codeName}`);
+    return response.data;
+};
