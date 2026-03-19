@@ -11,7 +11,7 @@ import { getHomeConfig } from '@/api/auth/HomeConfigApi';
 import { fetchBanners } from '@/store/homeConfigSlice';
 import OptimizedImage from '../components/OptimizedImage';
 
-const Home: React.FC = () => {
+const Home: React.FC =() => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
   const products = useAppSelector((state) => state.products.items);
@@ -420,6 +420,6 @@ const Home: React.FC = () => {
       </section>
     </div>
   );
-};
+} 
 
 export default Home;

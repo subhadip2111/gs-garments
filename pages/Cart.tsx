@@ -203,9 +203,15 @@ const Cart: React.FC = () => {
             >
               Secure Checkout
             </button>
-            <p className="text-[10px] text-gray-400 text-center uppercase tracking-tighter">
+            <p className="text-[10px] text-gray-400 text-center uppercase tracking-tighter mb-4">
               <i className="fa-solid fa-lock mr-2"></i> Encrypted Secure Payments
             </p>
+            <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 flex gap-2 items-start">
+              <i className="fa-solid fa-circle-info text-amber-500 mt-0.5 text-[10px]"></i>
+              <p className="text-[9px] text-amber-700 font-bold uppercase tracking-widest leading-relaxed">
+                Note: We currently only offer store pickup. Home delivery is not yet available.
+              </p>
+            </div>
           </div>
         </div>
       </div>

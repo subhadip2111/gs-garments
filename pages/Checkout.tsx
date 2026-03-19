@@ -507,11 +507,16 @@ const Checkout: React.FC = () => {
                 </label>
               </div>
 
-              <div className="p-4 bg-zinc-100/50 rounded-lg flex gap-3 items-start">
-                <i className="fa-solid fa-circle-info text-zinc-400 mt-1 text-xs"></i>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold leading-relaxed">
-                  Note: Digital payment methods are currently disabled for maintenance. We only accept Cash on Delivery at this time.
-                </p>
+              <div className="p-5 bg-amber-50 rounded-2xl border border-amber-100 flex gap-4 items-start shadow-sm">
+                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 text-amber-600">
+                  <i className="fa-solid fa-store"></i>
+                </div>
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-700 mb-1">Important Notice</p>
+                  <p className="text-xs text-amber-800 font-bold leading-relaxed">
+                    Please purchase your products from our exclusive store. Currently, we have not started the home delivery option. We will implement it later; please understand and consider this.
+                  </p>
+                </div>
               </div>
 
               <div className="flex space-x-6 pt-6">
@@ -530,9 +535,18 @@ const Checkout: React.FC = () => {
             <div className="space-y-8 animate-in fade-in duration-500">
               <h2 className="text-2xl font-serif font-bold tracking-tight">Final Review</h2>
               <div className="p-6 bg-gray-50 space-y-4">
+                <div className="mb-6 p-4 border border-amber-200 bg-amber-50/50 rounded-xl">
+                  <p className="text-[10px] font-bold text-amber-800 uppercase tracking-widest flex items-center gap-2">
+                    <i className="fa-solid fa-circle-exclamation"></i>
+                    Reminder: Store Pickup Only
+                  </p>
+                  <p className="text-[11px] text-amber-700 mt-1 leading-relaxed">
+                    Please visit our exclusive store to complete your purchase. Home delivery is currently unavailable.
+                  </p>
+                </div>
                 <p className="text-xs text-gray-500 leading-relaxed uppercase tracking-tighter">
                   By clicking 'Place Order', you agree to our Terms of Service and Privacy Policy.
-                  Shipment will be handled by our premium pan-India logistics partners.
+                  Your order will be ready for pickup at our Paschim Medinipur store.
                 </p>
                 {/* <div className="flex space-x-4">
                   <button onClick={() => setStep(2)} className="text-xs font-bold uppercase tracking-widest underline">Back</button>
@@ -753,6 +767,12 @@ const Checkout: React.FC = () => {
                 <i className="fa-solid fa-shopping-bag text-zinc-400"></i>
               </div>
               <h3 className="text-xl font-serif font-bold mb-2">Confirm Your Order</h3>
+              <div className="bg-amber-50 p-4 rounded-xl mb-6 text-left border border-amber-100">
+                <p className="text-[9px] font-black text-amber-800 uppercase tracking-widest mb-1">Store Purchase Notice</p>
+                <p className="text-[11px] text-amber-700 leading-relaxed font-bold">
+                  Please purchase your products from our exclusive store. Currently, we have not started the home delivery option.
+                </p>
+              </div>
               <p className="text-sm text-zinc-500 mb-8">
                 Are you sure you want to place this order for <span className="font-bold text-black">₹{(finalTotal || 0).toLocaleString('en-IN')}</span>?
               </p>

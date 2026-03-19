@@ -265,7 +265,7 @@ function AppContent() {
       <Routes>
         {/* User Routes */}
         <Route element={<UserLayout />}>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Home/>} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/product/:id" element={<ProductDetail />} />
