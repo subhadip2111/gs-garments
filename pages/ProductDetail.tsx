@@ -14,6 +14,7 @@ import { getProductById, getAllProducts, getSimilarProducts, getProductReviews }
 import { getMyPromocodes } from '../api/auth/promoCode.Api';
 import { setLoadingProducts } from '../store/productSlice';
 import { useToast } from '../components/Toast';
+import OptimizedImage from '../components/OptimizedImage';
 
 const RatingHistogram: React.FC<{ reviews: any[], totalReviews: number }> = ({ reviews, totalReviews }) => {
   // Calculate distribution based on available reviews
@@ -439,7 +440,13 @@ const ProductDetail: React.FC = () => {
                     onClick={() => { setActiveImg(i); setIs360Active(false); }}
                     className={`flex-shrink-0 w-12 lg:w-14 aspect-[3/4] overflow-hidden transition-all duration-700 relative ${activeImg === i && !is360Active ? 'ring-2 ring-black ring-offset-2 scale-105' : 'opacity-40 hover:opacity-100 hover:scale-105'}`}
                   >
-                    <img src={img} className="w-full h-full object-cover" alt={`${product.name} view ${i + 1}`} />
+                    <OptimizedImage 
+                      src={img} 
+                      className="w-full h-full object-cover" 
+                      alt={`${product.name} view ${i + 1}`} 
+                      aspectRatio="aspect-[3/4]"
+                      showShimmer={false}
+                    />
                     {activeImg === i && !is360Active && <div className="absolute inset-0 bg-white/10"></div>}
                   </button>
                 ))}
@@ -461,7 +468,13 @@ const ProductDetail: React.FC = () => {
                 ) : (
                   <>
                     <div className={`w-full h-full transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] ${isZoomed ? 'scale-[2] origin-center' : 'scale-100'}`} onClick={() => setIsZoomed(!isZoomed)}>
-                      <img src={displayImages[activeImg] || displayImages[0]} className="w-full h-full object-cover" alt={product.name} />
+                      <OptimizedImage 
+                        src={displayImages[activeImg] || displayImages[0]} 
+                        className="w-full h-full object-cover" 
+                        alt={product.name} 
+                        aspectRatio="aspect-[3/4]"
+                        loading="eager"
+                      />
                     </div>
 
                     <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-700 translate-y-4 group-hover:translate-y-0">

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useToast } from './Toast';
+import OptimizedImage from './OptimizedImage';
 import { submitProductReview } from '../api/auth/ProductApi';
 import { Loader2, Star, X, Upload, Trash2 } from 'lucide-react';
 
@@ -149,7 +150,13 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ isOpen, onClose, productId, p
                         <div className="flex flex-wrap gap-4">
                             {previews.map((src, idx) => (
                                 <div key={idx} className="relative w-20 h-24 rounded-xl overflow-hidden group shadow-sm">
-                                    <img src={src} className="w-full h-full object-cover" alt="Preview" />
+                                    <OptimizedImage 
+                                      src={src} 
+                                      className="w-full h-full object-cover" 
+                                      alt="Preview" 
+                                      aspectRatio="aspect-[20/24]"
+                                      showShimmer={false}
+                                    />
                                     <button
                                         type="button"
                                         onClick={() => removeImage(idx)}

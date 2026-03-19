@@ -139,9 +139,18 @@
 }
 
 @keyframes shimmer {
-  100% {
-    transform: translateX(100%);
+  0% {
+    background-position: -1000px 0;
   }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(to right, #f6f6f6 8%, #f0f0f0 18%, #f6f6f6 33%);
+  background-size: 1000px 100%;
 }
 
 .animate-fade-in {

@@ -12,6 +12,7 @@ import { Address } from '../types';
 import { updateProfileDetails } from '@/api/auth/authApi';
 import * as addressApi from '../api/auth/addressApi';
 import ReviewModal from '../components/ReviewModal';
+import OptimizedImage from '../components/OptimizedImage';
 
 const Profile: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -223,7 +224,12 @@ const Profile: React.FC = () => {
       <div className="flex flex-col md:flex-row justify-between items-end mb-12">
         <div className="flex items-center space-x-6">
           <div className="relative group">
-            <img src={`${userAvatar}`} className="w-24 h-24 rounded-full border-4 border-white shadow-xl group-hover:opacity-80 transition-opacity object-cover" alt={userName} />
+            <OptimizedImage 
+              src={`${userAvatar}`} 
+              className="w-24 h-24 rounded-full border-4 border-white shadow-xl group-hover:opacity-80 transition-opacity" 
+              alt={userName} 
+              aspectRatio="aspect-square"
+            />
             <button className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-bold uppercase bg-black/40 rounded-full">Change</button>
           </div>
           <div>
@@ -391,7 +397,12 @@ const Profile: React.FC = () => {
                                   <div key={idx} className="flex gap-4 group">
                                     <div className="w-20 aspect-[3/4] bg-zinc-100 rounded-lg overflow-hidden flex-shrink-0">
                                       {imageUrl ? (
-                                        <img src={imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={product?.name} />
+                                        <OptimizedImage 
+                                          src={imageUrl} 
+                                          className="group-hover:scale-110 transition-transform duration-500" 
+                                          alt={product?.name} 
+                                          aspectRatio="aspect-[3/4]"
+                                        />
                                       ) : (
                                         <div className="w-full h-full flex items-center justify-center text-zinc-300"><i className="fa-solid fa-image"></i></div>
                                       )}

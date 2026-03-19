@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useConnectionQuality } from '../hooks/useConnectionQuality';
+import OptimizedImage from './OptimizedImage';
 
 const DOG_IMAGE_URL = 'https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif'; // Loading dog gif
 
@@ -23,10 +24,11 @@ const SlowConnectionBanner: React.FC = () => {
                 {/* Dog image */}
                 <div className="relative flex-shrink-0">
                     <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-zinc-100 shadow-inner bg-zinc-50">
-                        <img
+                        <OptimizedImage
                             src={DOG_IMAGE_URL}
                             alt="Slow connection dog"
-                            className="w-full h-full object-cover"
+                            aspectRatio="aspect-square"
+                            showShimmer={false}
                         />
                     </div>
                     {/* Animated indicator dot */}

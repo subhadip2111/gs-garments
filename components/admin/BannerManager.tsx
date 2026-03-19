@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Edit2, Trash2, Image, Upload, X, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import AdminModal from './AdminModal';
 import { useToast } from '../Toast';
+import OptimizedImage from '../OptimizedImage';
 import { getALlBanners, addBanner, updateBanner, deleteBanner, uploadBannerImage, uploadsBulkImages } from '@/api/auth/Banner.api';
 import { getAllcategoryList } from '@/api/auth/categoryApi';
 
@@ -334,12 +335,26 @@ const BannerManager: React.FC = () => {
                         <div key={banner.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-lg transition-all">
                             <div className="h-44 relative overflow-hidden">
                                 {banner.imageUrl ? (
-                                    <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                    <OptimizedImage 
+                                        src={banner.imageUrl} 
+                                        alt={banner.title} 
+                                        className="group-hover:scale-105 transition-transform duration-500" 
+                                        aspectRatio="aspect-video"
+                                    />
                                 ) : banner.type === 'brands' && banner.brands?.length ? (
                                     <div className="w-full h-full bg-gray-50 grid grid-cols-3 gap-0.5 p-1">
                                         {banner.brands.slice(0, 3).map((b, i) => (
                                             <div key={i} className="rounded-lg overflow-hidden bg-gray-100">
-                                                {b.imageUrl ? <img src={b.imageUrl} alt={b.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs font-black text-gray-300">{b.name?.[0]}</div>}
+                                                {b.imageUrl ? (
+                                                    <OptimizedImage 
+                                                        src={b.imageUrl} 
+                                                        alt={b.name} 
+                                                        aspectRatio="aspect-square"
+                                                        showShimmer={false}
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-xs font-black text-gray-300">{b.name?.[0]}</div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
@@ -460,7 +475,12 @@ const BannerManager: React.FC = () => {
                                 <label className={labelCls}>Banner Image</label>
                                 {imagePreview ? (
                                     <div className="relative rounded-xl overflow-hidden border border-gray-200 group">
-                                        <img src={imagePreview} alt="Preview" className="w-full h-36 object-cover" />
+                                        <OptimizedImage 
+                                            src={imagePreview} 
+                                            alt="Preview" 
+                                            aspectRatio="aspect-video"
+                                            showShimmer={false}
+                                        />
                                         <button type="button" onClick={clearImage} className="absolute top-2 right-2 w-7 h-7 bg-black/60 hover:bg-black text-white rounded-full flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"><X size={12} /></button>
                                         <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-3">
                                             <p className="text-white text-[10px] font-bold truncate">{imageFile ? imageFile.name : 'Current image'}</p>

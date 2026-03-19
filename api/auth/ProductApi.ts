@@ -77,8 +77,18 @@ export const deleteProduct = async (id: string) => {
 }
 
 export const getSimilarProducts = async (productId: string) => {
-    const response = await apiClient.get(`/products/${productId}/similar`);
-    return response.data;
+    // first call will be form ai 
+    // if in any case it fails then call the normal api 
+    // if the ai response is empty then call the normal api  or getting err like 429 ,500 or geting empty result call the normal api /similar
+    try {
+        const response = await apiClient.get(`/products/${productId}/ai-recommendations`);
+        return response.data;
+    } catch (error) {
+        const response = await apiClient.get(`/products/${productId}/similar`);
+        return response.data;
+    }
+
+
 }
 
 export const getAllBannerList = async () => {

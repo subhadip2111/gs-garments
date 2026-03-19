@@ -9,6 +9,7 @@ import { getTrendingProducts, getNewArrivals } from '../api/auth/ProductApi';
 import { setProducts, setLoadingProducts } from '../store/productSlice';
 import { getHomeConfig } from '@/api/auth/HomeConfigApi';
 import { fetchBanners } from '@/store/homeConfigSlice';
+import OptimizedImage from '../components/OptimizedImage';
 
 const Home: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -167,10 +168,11 @@ const Home: React.FC = () => {
 
             <div className="lg:w-1/2 relative">
               <div className="aspect-[4/5] bg-gray-100 overflow-hidden shadow-2xl">
-                <img
+                <OptimizedImage
                   src={config.imageUrl}
-                  className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000 scale-110"
+                  className="grayscale hover:grayscale-0 transition-all duration-1000 scale-110"
                   alt={config.title}
+                  aspectRatio="aspect-[4/5]"
                 />
                 {config.brandName && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -259,10 +261,11 @@ const Home: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {config.brands.map((brand, bIndex) => (
               <div key={bIndex} className="group relative h-[700px] overflow-hidden bg-gray-100 flex items-center justify-center">
-                <img
+                <OptimizedImage
                   src={brand.imageUrl}
-                  className="absolute inset-0 w-full h-full object-cover transition-all duration-[3000ms] group-hover:scale-110 group-hover:rotate-1 grayscale group-hover:grayscale-0"
+                  className="absolute inset-0 transition-all duration-[3000ms] group-hover:scale-110 group-hover:rotate-1 grayscale group-hover:grayscale-0"
                   alt={brand.name}
+                  containerClassName="absolute inset-0"
                 />
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-700"></div>
                 <div className="relative z-10 flex flex-col items-center text-center px-12 transform transition-all duration-700 translate-y-8 group-hover:translate-y-0">
@@ -325,10 +328,11 @@ const Home: React.FC = () => {
             </div>
             <div className="lg:w-1/2 relative group">
               <div className="aspect-square overflow-hidden shadow-2xl relative">
-                <img
+                <OptimizedImage
                   src="https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?q=80&w=1200&auto=format&fit=crop"
                   alt="GS Flagship Store Interior"
-                  className="w-full h-full object-cover transition-transform duration-[4000ms] group-hover:scale-110"
+                  className="transition-transform duration-[4000ms] group-hover:scale-110"
+                  aspectRatio="aspect-square"
                 />
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-all duration-1000"></div>
               </div>
@@ -358,8 +362,13 @@ const Home: React.FC = () => {
               "https://images.pexels.com/photos/19600936/pexels-photo-19600936.jpeg"
             ].map((img, i) => (
               <div key={i} className="group relative aspect-square overflow-hidden bg-gray-100 shadow-sm hover:shadow-2xl transition-all duration-700">
-                <img src={img} loading="eager"
-                  className="w-full h-full object-cover object-center transition-all duration-[2000ms] group-hover:scale-110 grayscale-[0.5] group-hover:grayscale-0" alt={`Social Feed ${i}`} />
+                <OptimizedImage 
+                  src={img} 
+                  loading={i < 2 ? "eager" : "lazy"}
+                  className="transition-all duration-[2000ms] group-hover:scale-110 grayscale-[0.5] group-hover:grayscale-0" 
+                  alt={`Social Feed ${i}`} 
+                  aspectRatio="aspect-square"
+                />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                   <span className="text-[9px] font-bold uppercase tracking-[0.5em] border border-white/40 px-6 py-3 backdrop-blur-md">View Post</span>
                 </div>

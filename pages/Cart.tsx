@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../store';
 import { removeFromCartServer, updateQuantityServer, recalculateDiscounts, fetchCart } from '../store/cartSlice';
 import { MOCK_COMBO_OFFERS } from '../constants';
 import { SmartOfferWidget } from './ProductDetail';
+import OptimizedImage from '../components/OptimizedImage';
 
 const Cart: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -71,10 +72,10 @@ const Cart: React.FC = () => {
           {cartDetails.map((item) => (
             <div key={`${item.productId}-${item.selectedSize}-${item.selectedColor}`} className="flex gap-6 border-b border-gray-100 pb-8">
               <div className="w-32 aspect-[3/4] bg-gray-100 flex-shrink-0">
-                <img
+                <OptimizedImage
                   src={item?.product?.images?.[0] || 'https://via.placeholder.com/300x400?text=No+Image'}
-                  className="w-full h-full object-cover"
                   alt={item?.product?.name || 'Product'}
+                  aspectRatio="aspect-[3/4]"
                 />
               </div>
               <div className="flex-grow flex flex-col justify-between">

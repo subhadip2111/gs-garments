@@ -5,6 +5,7 @@ import { Product } from '../types';
 import { useAppDispatch, useAppSelector } from '../store';
 import { toggleWishlistServer } from '../store/wishlistSlice';
 import { useToast } from '../components/Toast';
+import OptimizedImage from './OptimizedImage';
 
 interface ProductCardProps {
   product: Product;
@@ -75,10 +76,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     >
       {/* Image Container */}
       <div className="relative aspect-[3/4] overflow-hidden bg-zinc-50 rounded-sm group/img">
-        <img
+        <OptimizedImage
           src={product.images[0]}
           alt={product.name}
-          className="w-full h-full object-cover transition-all duration-[1.5s] cubic-bezier(0.23,1,0.32,1) group-hover/img:scale-105"
+          className="transition-all duration-[1.5s] cubic-bezier(0.23,1,0.32,1) group-hover/img:scale-105"
+          aspectRatio="aspect-[3/4]"
         />
 
         {/* Action Buttons - Persistent on Mobile, Hover on Desktop */}

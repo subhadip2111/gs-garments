@@ -1,5 +1,6 @@
 
 import React from 'react';
+import OptimizedImage from '../components/OptimizedImage';
 
 const Sustainability: React.FC = () => {
   return (
@@ -31,11 +32,12 @@ const Sustainability: React.FC = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-20 items-center">
-          <div className="lg:w-1/2">
-            <img 
+          <div className="lg:w-1/2 overflow-hidden rounded-sm">
+            <OptimizedImage 
               src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=1000&auto=format&fit=crop" 
-              className="w-full aspect-square object-cover rounded-sm grayscale hover:grayscale-0 transition-all duration-1000" 
+              className="grayscale hover:grayscale-0 transition-all duration-1000" 
               alt="Sustainable fabric"
+              aspectRatio="aspect-square"
             />
           </div>
           <div className="lg:w-1/2 space-y-8">

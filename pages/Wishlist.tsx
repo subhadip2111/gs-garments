@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store';
 import { fetchWishlist, toggleWishlistServer } from '../store/wishlistSlice';
 import { addToCartServer } from '../store/cartSlice';
+import OptimizedImage from '../components/OptimizedImage';
 
 const Wishlist: React.FC = () => {
     const dispatch = useAppDispatch();
@@ -95,10 +96,11 @@ const Wishlist: React.FC = () => {
                 {wishlistProducts.map(product => (
                     <div key={product._id || product.id} className="group flex flex-col h-full bg-white transition-all duration-500">
                         <div className="relative aspect-[3/4] overflow-hidden bg-stone-50 rounded-sm mb-6">
-                            <img
+                            <OptimizedImage
                                 src={product?.images?.[0] || 'https://via.placeholder.com/300x400?text=No+Image'}
-                                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                                className="transition-transform duration-1000 group-hover:scale-105"
                                 alt={product?.name || 'Product'}
+                                aspectRatio="aspect-[3/4]"
                             />
                             <button
                                 onClick={() => dispatch(toggleWishlistServer(product?._id || product?.id || ''))}

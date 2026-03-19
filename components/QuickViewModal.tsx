@@ -5,6 +5,7 @@ import { setQuickViewProduct } from '../store/uiSlice';
 import { addToCart } from '../store/cartSlice';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '../components/Toast';
+import OptimizedImage from './OptimizedImage';
 
 const QuickViewModal: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -81,10 +82,11 @@ const QuickViewModal: React.FC = () => {
 
         <div className="md:w-1/2 bg-vogue-50 relative group">
           <div className="aspect-[3/4] overflow-hidden">
-            <img
+            <OptimizedImage
               src={quickViewProduct.images[activeImg]}
-              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+              className="transition-transform duration-1000 group-hover:scale-105"
               alt={quickViewProduct.name}
+              aspectRatio="aspect-[3/4]"
             />
           </div>
           {quickViewProduct.images.length > 1 && (
@@ -95,7 +97,13 @@ const QuickViewModal: React.FC = () => {
                   onClick={() => setActiveImg(i)}
                   className={`w-16 h-20 flex-shrink-0 border-2 transition-all ${activeImg === i ? 'border-black scale-105 shadow-md' : 'border-transparent opacity-40 hover:opacity-100'}`}
                 >
-                  <img src={img} className="w-full h-full object-cover" alt="Gallery thumbnail" />
+                  <OptimizedImage 
+                    src={img} 
+                    className="w-full h-full object-cover" 
+                    alt="Gallery thumbnail" 
+                    aspectRatio="aspect-[4/5]"
+                    showShimmer={false}
+                  />
                 </button>
               ))}
             </div>

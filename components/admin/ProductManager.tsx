@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import AdminModal from './AdminModal';
 import { useToast } from '../Toast';
+import OptimizedImage from '../OptimizedImage';
 import { getAllProducts, addProduct, updateProduct, deleteProduct, uploadsBulkImages } from '@/api/auth/ProductApi';
 import { getAllCategories } from '@/api/auth/categoryApi';
 import { getAllSubCategories } from '@/api/auth/subcategory.Api';
@@ -922,7 +923,12 @@ const ProductManager: React.FC = () => {
                                 <div key={pid} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden group relative">
                                     <div className="relative aspect-[3/4] bg-gray-50 overflow-hidden">
                                         {prod.images?.[0] ? (
-                                            <img src={prod.images[0]} alt={prod.name} className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" />
+                                            <OptimizedImage 
+                                                src={prod.images[0]} 
+                                                alt={prod.name} 
+                                                className="grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" 
+                                                aspectRatio="aspect-[3/4]"
+                                            />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center">
                                                 <ImageIcon size={32} className="text-gray-200" />
@@ -985,7 +991,16 @@ const ProductManager: React.FC = () => {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-14 rounded-xl overflow-hidden bg-gray-50 flex-shrink-0 border border-gray-100">
-                                                        {prod.images?.[0] ? <img src={prod.images[0]} alt="" className="w-full h-full object-cover" /> : <ImageIcon size={14} className="m-auto text-gray-200 mt-4" />}
+                                                        {prod.images?.[0] ? (
+                                                            <OptimizedImage 
+                                                                src={prod.images[0]} 
+                                                                alt="" 
+                                                                aspectRatio="aspect-[3/4]"
+                                                                showShimmer={false}
+                                                            />
+                                                        ) : (
+                                                            <ImageIcon size={14} className="m-auto text-gray-200 mt-4" />
+                                                        )}
                                                     </div>
                                                     <div>
                                                         <p className="font-black text-gray-900 text-sm tracking-tight line-clamp-1">{prod.name}</p>
@@ -1169,19 +1184,29 @@ const ProductManager: React.FC = () => {
                             {vp.images && vp.images.length > 0 && (
                                 <div className="space-y-2">
                                     <div className="aspect-[16/9] rounded-xl overflow-hidden border border-gray-100 bg-gray-50 cursor-pointer" onClick={() => window.open(vp.images[selectedImageIdx >= vp.images.length ? 0 : selectedImageIdx], '_blank')}>
-                                        <img src={vp.images[selectedImageIdx >= vp.images.length ? 0 : selectedImageIdx]} alt={vp.name} className="w-full h-full object-cover transition-all duration-300" />
+                                        <OptimizedImage 
+                                            src={vp.images[selectedImageIdx >= vp.images.length ? 0 : selectedImageIdx]} 
+                                            alt={vp.name} 
+                                            className="transition-all duration-300" 
+                                            aspectRatio="aspect-video"
+                                        />
                                     </div>
                                     {vp.images.length > 1 && (
                                         <div className="grid grid-cols-5 gap-2">
                                             {vp.images?.slice(0, 5).map((img, i) => (
-                                                <div key={i}
-                                                    onClick={() => setSelectedImageIdx(i)}
-                                                    className={`aspect-square rounded-lg overflow-hidden border-2 bg-gray-50 cursor-pointer transition-all duration-200 hover:opacity-80 ${(selectedImageIdx >= vp.images.length ? 0 : selectedImageIdx) === i
-                                                        ? 'border-black shadow-md scale-[1.03]'
-                                                        : 'border-gray-100 opacity-70 hover:opacity-100'
-                                                        }`}>
-                                                    <img src={img} alt="" className="w-full h-full object-cover" />
-                                                </div>
+                                                    <div key={i}
+                                                        onClick={() => setSelectedImageIdx(i)}
+                                                        className={`aspect-square rounded-lg overflow-hidden border-2 bg-gray-50 cursor-pointer transition-all duration-200 hover:opacity-80 ${(selectedImageIdx >= vp.images.length ? 0 : selectedImageIdx) === i
+                                                            ? 'border-black shadow-md scale-[1.03]'
+                                                            : 'border-gray-100 opacity-70 hover:opacity-100'
+                                                            }`}>
+                                                        <OptimizedImage 
+                                                            src={img} 
+                                                            alt="" 
+                                                            aspectRatio="aspect-square"
+                                                            showShimmer={false}
+                                                        />
+                                                    </div>
                                             ))}
                                         </div>
                                     )}
@@ -1252,7 +1277,12 @@ const ProductManager: React.FC = () => {
                                                                 {(variant.color.images || []).map((img: string, imgI: number) => (
                                                                     <div key={imgI} className="aspect-square rounded-lg overflow-hidden border border-gray-100 bg-gray-50 cursor-pointer hover:ring-2 hover:ring-black transition-all"
                                                                         onClick={() => { setSelectedImageIdx(0); /* show variant img in main gallery */ window.open(img, '_blank'); }}>
-                                                                        <img src={img} alt="" className="w-full h-full object-cover" />
+                                                                        <OptimizedImage 
+                                                                            src={img} 
+                                                                            alt="" 
+                                                                            aspectRatio="aspect-square"
+                                                                            showShimmer={false}
+                                                                        />
                                                                     </div>
                                                                 ))}
                                                             </div>
