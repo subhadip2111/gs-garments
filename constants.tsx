@@ -2,9 +2,9 @@
 import { Product, Review, HomeConfig, Coupon, ComboOffer } from './types';
 
 export const MOCK_COUPONS: Coupon[] = [
-  { id: 'c1', code: 'HI-FASHION', discountType: 'percentage', discountValue: 10, minPurchase: 1000, description: '10% OFF on orders above ₹1000' },
-  { id: 'c2', code: 'GS-FIRST', discountType: 'fixed', discountValue: 200, minPurchase: 1999, description: 'Flat ₹200 OFF on orders above ₹1999' },
-  { id: 'c3', code: 'LUXE-GS', discountType: 'percentage', discountValue: 15, minPurchase: 4999, description: '15% OFF on luxury collection above ₹4999' }
+  { id: 'c1', code: 'HI-FASHION', discountType: 'percentage', discountValue: 10, minOrderAmount: 1000, isActive: true, description: '10% OFF on orders above ₹1000' },
+  { id: 'c2', code: 'GS-FIRST', discountType: 'fixed', discountValue: 200, minOrderAmount: 1999, isActive: true, description: 'Flat ₹200 OFF on orders above ₹1999' },
+  { id: 'c3', code: 'LUXE-GS', discountType: 'percentage', discountValue: 15, minOrderAmount: 4999, isActive: true, description: '15% OFF on luxury collection above ₹4999' }
 ];
 
 export const MOCK_COMBO_OFFERS: ComboOffer[] = [
