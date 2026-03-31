@@ -130,9 +130,9 @@ export const HOME_CONFIG: HomeConfig = {
       subtitle: 'Premium Handloom Sarees \n Established 2012 — The GS Heritage',
       description: 'Discover our exclusive collection of Banarasi, Kanjeevaram and Silk sarees. A celebration of Indian craftsmanship.',
       ctaText: 'Shop Sarees',
-      ctaLink: '/shop?category=Sarees',
+      ctaLink: 'https://main.d17r13372a1uin.amplifyapp.com/shop?category=Sarees',
       secondaryCtaText: "The Blouse Edit",
-      secondaryCtaLink: '/shop?category=Blouses',
+      secondaryCtaLink: 'https://main.d17r13372a1uin.amplifyapp.com/shop?category=Blouses',
       badge: 'Boutique Special: Free Custom Fitting'
     },
     {
@@ -141,7 +141,7 @@ export const HOME_CONFIG: HomeConfig = {
       title: 'Modern \n Heritage.',
       subtitle: 'Exclusive Designer Blouses \n Spring Summer 2026 Collection',
       ctaText: 'Explore Collection',
-      ctaLink: '/shop?category=Blouses',
+      ctaLink: 'https://main.d17r13372a1uin.amplifyapp.com/shop?category=Blouses',
       badge: 'New Season'
     },
     {
@@ -153,28 +153,28 @@ export const HOME_CONFIG: HomeConfig = {
           name: 'GS Heritage',
           imageUrl: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=1200',
           description: 'Timeless Silks',
-          link: '/shop?brand=GS Heritage',
+          link: 'https://main.d17r13372a1uin.amplifyapp.com/shop?brand=GS Heritage',
           tagline: 'Timeless Silks'
         },
         {
           name: 'GS Boutique',
           imageUrl: 'https://images.pexels.com/photos/27575174/pexels-photo-27575174.jpeg',
           description: 'Designer Ethnic',
-          link: '/shop?brand=GS Boutique',
+          link: 'https://main.d17r13372a1uin.amplifyapp.com/shop?brand=GS Boutique',
           tagline: 'Designer Ethnic'
         },
         {
           name: 'GS Traditional',
           imageUrl: 'https://images.pexels.com/photos/27118152/pexels-photo-27118152.jpeg',
           description: 'Contemporary Draping',
-          link: '/shop?brand=GS Traditional',
+          link: 'https://main.d17r13372a1uin.amplifyapp.com/shop?brand=GS Traditional',
           tagline: 'Contemporary Draping'
         },
         {
           name: 'GS Heritage',
           imageUrl: 'https://images.pexels.com/photos/12579915/pexels-photo-12579915.jpeg',
           description: 'Timeless Silks',
-          link: '/shop?brand=GS Heritage',
+          link: 'https://main.d17r13372a1uin.amplifyapp.com/shop?brand=GS Heritage',
           tagline: 'Timeless Silks'
         },
       ]
